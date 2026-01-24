@@ -17,11 +17,6 @@ import com.lagradost.cloudstream3.ui.settings.Globals.EMULATOR
 import com.lagradost.cloudstream3.ui.settings.Globals.TV
 import com.lagradost.cloudstream3.ui.settings.Globals.isLayout
 import com.lagradost.cloudstream3.utils.AppContextUtils.openBrowser
-import com.lagradost.cloudstream3.utils.DataStore.getKey
-import com.lagradost.cloudstream3.utils.DataStore.getKeys
-import com.lagradost.cloudstream3.utils.DataStore.removeKey
-import com.lagradost.cloudstream3.utils.DataStore.removeKeys
-import com.lagradost.cloudstream3.utils.DataStore.setKey
 import com.lagradost.cloudstream3.utils.ImageLoader.buildImageLoader
 import java.io.File
 import java.io.FileNotFoundException
@@ -57,7 +52,7 @@ class ExceptionHandler(
 }
 
 /* =======================
-   APPLICATION (FINAL FIX)
+   APPLICATION (FINAL & SAFE)
    ======================= */
 @Prerelease
 class CloudStreamApp : Application(), SingletonImageLoader.Factory {
@@ -71,10 +66,14 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
     override fun onCreate() {
         super.onCreate()
 
-        // 🔥 INIT AUTO REPO + AUTO PLUGIN (1x ONLY)
+        // ✅ SET GLOBAL CONTEXT FIRST (WAJIB)
+        context = applicationContext
+        AcraApplication.context = applicationContext
+
+        // ✅ INIT AUTO REPO (AMAN, 1x)
         Initializer.start(applicationContext)
 
-        // 🔥 CRASH HANDLER
+        // ✅ CRASH HANDLER
         ExceptionHandler(filesDir.resolve("last_error")) {
             val intent = packageManager
                 .getLaunchIntentForPackage(packageName)
@@ -111,23 +110,33 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
         }
 
         fun <T : Any> setKeyClass(path: String, value: T) {
-            context?.setKey(path, value)
+            context?.let {
+                com.lagradost.cloudstream3.utils.DataStore.setKey(path, value)
+            }
         }
 
         inline fun <reified T : Any> getKey(path: String): T? {
-            return context?.getKey(path)
+            return context?.let {
+                com.lagradost.cloudstream3.utils.DataStore.getKey(path)
+            }
         }
 
         fun getKeys(folder: String): List<String>? {
-            return context?.getKeys(folder)
+            return context?.let {
+                com.lagradost.cloudstream3.utils.DataStore.getKeys(folder)
+            }
         }
 
         fun removeKey(path: String) {
-            context?.removeKey(path)
+            context?.let {
+                com.lagradost.cloudstream3.utils.DataStore.removeKey(path)
+            }
         }
 
         fun removeKeys(folder: String): Int? {
-            return context?.removeKeys(folder)
+            return context?.let {
+                com.lagradost.cloudstream3.utils.DataStore.removeKeys(folder)
+            }
         }
 
         fun openBrowser(
