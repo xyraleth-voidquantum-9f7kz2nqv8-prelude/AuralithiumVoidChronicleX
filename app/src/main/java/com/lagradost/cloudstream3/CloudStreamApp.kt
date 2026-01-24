@@ -23,9 +23,6 @@ import com.lagradost.cloudstream3.utils.DataStore.removeKey
 import com.lagradost.cloudstream3.utils.DataStore.removeKeys
 import com.lagradost.cloudstream3.utils.DataStore.setKey
 import com.lagradost.cloudstream3.utils.ImageLoader.buildImageLoader
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintStream
@@ -60,24 +57,24 @@ class ExceptionHandler(
 }
 
 /* =======================
-   APPLICATION (FINAL)
+   APPLICATION (FINAL FIX)
    ======================= */
 @Prerelease
 class CloudStreamApp : Application(), SingletonImageLoader.Factory {
 
+    override fun attachBaseContext(base: Context?) {
+        super.attachBaseContext(base)
+        context = base
+        AcraApplication.context = base
+    }
+
     override fun onCreate() {
         super.onCreate()
 
-        // 🔥 1️⃣ INIT GLOBAL CONTEXT
-        context = applicationContext
-        AcraApplication.context = applicationContext
+        // 🔥 INIT AUTO REPO + AUTO PLUGIN (1x ONLY)
+        Initializer.start(applicationContext)
 
-        // 🔥 2️⃣ AUTO REPO + AUTO PLUGIN (PALING AMAN)
-        CoroutineScope(Dispatchers.Default).launch {
-            Initializer.start(applicationContext)
-        }
-
-        // 🔥 3️⃣ CRASH HANDLER
+        // 🔥 CRASH HANDLER
         ExceptionHandler(filesDir.resolve("last_error")) {
             val intent = packageManager
                 .getLaunchIntentForPackage(packageName)
@@ -86,12 +83,6 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
             exceptionHandler = it
             Thread.setDefaultUncaughtExceptionHandler(it)
         }
-    }
-
-    override fun attachBaseContext(base: Context?) {
-        super.attachBaseContext(base)
-        context = base
-        AcraApplication.context = base
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {
