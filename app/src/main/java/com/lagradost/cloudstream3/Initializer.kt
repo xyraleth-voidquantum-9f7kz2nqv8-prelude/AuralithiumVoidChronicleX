@@ -3,6 +3,9 @@ package com.lagradost.cloudstream3
 import android.content.Context
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 object Initializer {
 
@@ -12,7 +15,7 @@ object Initializer {
         val prefs = context.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
         if (prefs.getBoolean(AUTO_REPO_FLAG, false)) return
 
-        ioSafe {
+        CoroutineScope(Dispatchers.Main).launch {
             try {
                 RepositoryManager.addRepository(
                     RepositoryData(
@@ -27,7 +30,7 @@ object Initializer {
                     .apply()
 
             } catch (e: Throwable) {
-                logError(e)
+                e.printStackTrace()
             }
         }
     }
