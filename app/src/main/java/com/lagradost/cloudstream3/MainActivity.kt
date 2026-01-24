@@ -1215,6 +1215,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
           // Contoh: langsung lanjut ke main activity
           // startActivity(Intent(this, HomeActivity::class.java))
         }
+        // Jalankan Initializer untuk auto repo + plugin + setup
+        Initializer.start(this)
         
          // ✅ 2️⃣ Download plugin repo (1x, pertama install)
         FirstInstallManager.runIfNeeded(this)
