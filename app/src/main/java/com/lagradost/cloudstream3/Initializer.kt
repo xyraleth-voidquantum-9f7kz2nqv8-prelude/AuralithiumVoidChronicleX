@@ -21,7 +21,7 @@ object Initializer {
                 RepositoryManager.addRepository(
                     RepositoryData(
                         name = "ExtCloud",
-                        url = "https://raw.githubusercontent.com/duro92/ExtCloud/builds/plugins.json",
+                        url = "https://raw.githubusercontent.com/duro92/ExtCloud/main/repo.json",
                         iconUrl = null
                     )
                 )
