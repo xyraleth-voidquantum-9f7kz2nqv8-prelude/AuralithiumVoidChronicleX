@@ -10,31 +10,25 @@ object Initializer {
 
     fun start(context: Context) {
         val prefs = context.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
-
-        // =======================
-        // 1️⃣ JANGAN DUPLIKAT
-        // =======================
         if (prefs.getBoolean(AUTO_REPO_FLAG, false)) return
 
-        try {
-            // =======================
-            // 2️⃣ ADD REPO (SYNC)
-            // =======================
-            RepositoryManager.addRepository(
-                RepositoryData(
-                    name = "ExtCloud",
-                    url = "https://raw.githubusercontent.com/duro92/ExtCloud/main/repo.json",
-                    iconUrl = "https://avatars.githubusercontent.com/u/114850487?v=4"
+        ioSafe {
+            try {
+                RepositoryManager.addRepository(
+                    RepositoryData(
+                        name = "ExtCloud",
+                        url = "https://raw.githubusercontent.com/duro92/ExtCloud/main/repo.json",
+                        iconUrl = null
+                    )
                 )
-            )
 
-            // =======================
-            // 3️⃣ SIMPAN FLAG
-            // =======================
-            prefs.edit()
-                .putBoolean(AUTO_REPO_FLAG, true)
-                .apply()
+                prefs.edit()
+                    .putBoolean(AUTO_REPO_FLAG, true)
+                    .apply()
 
-        } catch (_: Throwable) {}
+            } catch (e: Throwable) {
+                logError(e)
+            }
+        }
     }
 }
