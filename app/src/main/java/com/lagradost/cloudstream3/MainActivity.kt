@@ -1219,7 +1219,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         Initializer.start(this)
         
          // ✅ 2️⃣ Download plugin repo (1x, pertama install)
-        FirstInstallManager.runIfNeeded(this)
+       // FirstInstallManager.runIfNeeded(this) Deled
         
         //VipPopup.show(this)  // tampilkan popup sesuai status
         
