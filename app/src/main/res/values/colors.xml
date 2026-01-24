@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ================== UNGU NEON UTAMA ================== -->
+    <color name="colorPrimary">#C77DFF</color>
+    <color name="colorPrimaryDark">#9B4DCC</color>
+    <color name="colorPrimarySecond">#C77DFF</color>
+
+    <!-- Aksen -->
+    <color name="colorAccent">#C77DFF</color>
+    <color name="colorOngoing">#C77DFF</color>
+
+    <!-- ================== BACKGROUND ================== -->
+    <color name="primaryGrayBackground">#141414</color>
+    <color name="primaryBlackBackground">#000000</color>
+    <color name="iconGrayBackground">#333333</color>
+    <color name="boxItemBackground">#191919</color>
+
+    <!-- ================== TEXT ================== -->
+    <color name="textColor">#FFFFFF</color>
+    <color name="grayTextColor">#B3B3B3</color>
+    <color name="whiteText">#FFFFFF</color>
+
+    <!-- ================== DUB / SUB ================== -->
+    <color name="dubColorText">#E53935</color>
+    <color name="dubColorBg">#200000</color>
+    <color name="subColorText">#C77DFF</color>
+    <color name="subColorBg">#2A0033</color>
+
+    <!-- ================== SEARCH & UI ================== -->
+    <color name="colorSearch">#141414</color>
+    <color name="grayShimmer">#404040</color>
+    <color name="searchColorTransparent">#1AFFFFFF</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- ================== BASE ================== -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="blackText">#000000</color>
+
+    <!-- ================== PROGRESS (GARIS VIDEO FIX) ================== -->
+    <color name="progressBackgroundColor">#1AFFFFFF</color>
+    <color name="videoProgress">#66B5B5B5</color> <!-- TIDAK UNGU -->
+
+    <!-- ================== AMOLED ================== -->
+    <color name="amoledModeLight">#121213</color>
+
+    <!-- ================== TYPE / BADGE ================== -->
+    <color name="typeColorText">#E5E5E5</color>
+    <color name="typeColorBg">#C77DFF</color>
+    <color name="adultColor">#E53935</color>
+
+    <!-- ================== RIPPLE ================== -->
+    <color name="video_ripple">#80C77DFF</color>
+    <color name="video_button_ripple">#32C77DFF</color>
+
+    <!-- ================== OVERLAY ================== -->
+    <color name="black_overlay">#99000000</color>
+    <color name="darkBarTransparent">#C0000000</color>
+    <color name="skipOpTransparent">#4D000000</color>
+    <color name="darkBar">#121212</color>
+
+    <!-- ================== ICON ================== -->
+    <color name="iconColor">#C77DFF</color>
+
+    <!-- ================== LIGHT MODE ================== -->
+    <color name="lightPrimaryGrayBackground">#f1f1f1</color>
+    <color name="lightBitDarkerGrayBackground">#ffffff</color>
+    <color name="lightGrayBackground">#eeeeee</color>
+    <color name="lightItemBackground">#eeeeee</color>
+    <color name="lightTextColor">#202125</color>
+    <color name="lightGrayTextColor">#5f6267</color>
+    <color name="lightIconColor">#C77DFF</color>
+
+    <!-- ================== DRACULA THEME ================== -->
+    <color name="DraculaPrimaryGrayBackground">#414450</color>
+    <color name="DraculaBitDarkerGrayBackground">#282a36</color>
+    <color name="DraculaGrayBackground">#44475A</color>
+    <color name="DraculaItemBackground">#373844</color>
+    <color name="DraculaTextColor">#F8F8F2</color>
+    <color name="DraculaGrayTextColor">#C77DFF</color>
+    <color name="DraculaIconColor">#C77DFF</color>
+
+    <!-- ================== LAVENDER ================== -->
+    <color name="LavenderPrimaryGrayBackground">#f7eefc</color>
+    <color name="LavenderBitDarkerGrayBackground">#fdf0fb</color>
+    <color name="LavenderGrayBackground">#b794f6</color>
+    <color name="LavenderItemBackground">#f8f5ff</color>
+    <color name="LavenderTextColor">#2d1b47</color>
+    <color name="LavenderGrayTextColor">#C77DFF</color>
+    <color name="LavenderIconColor">#C77DFF</color>
+
+    <!-- ================== PALET (DISERAGAMKAN) ================== -->
+    <color name="colorPrimaryBlue">#C77DFF</color>
+    <color name="colorPrimaryGreen">#C77DFF</color>
+    <color name="colorPrimaryPurple">#C77DFF</color>
+    <color name="colorPrimaryGreenApple">#C77DFF</color>
+    <color name="colorPrimaryParty">#C77DFF</color>
+    <color name="colorPrimaryPink">#C77DFF</color>
+    <color name="colorPrimaryDarkGreen">#C77DFF</color>
+    <color name="colorPrimaryMaroon">#C77DFF</color>
+    <color name="colorPrimaryNavyBlue">#C77DFF</color>
+    <color name="colorPrimaryGrey">#C77DFF</color>
+    <color name="colorPrimaryWhite">#FFFFFF</color>
+    <color name="colorPrimaryOrange">#C77DFF</color>
+    <color name="colorPrimaryDandelionYellow">#C77DFF</color>
+    <color name="colorPrimaryLavender">#C77DFF</color>
+
+    <!-- ================== STATUS ================== -->
+    <color name="colorTestPass">#C77DFF</color>
+    <color name="colorTestFail">#EA596E</color>
+    <color name="colorTestWarning">#FF9800</color>
+
+    <!-- ================== PLAYER ================== -->
+    <color name="playIconBackground">#B3000000</color>
+
+    <!-- ================== LEGACY (WAJIB ADA) ================== -->
+    <color name="colorPrimaryRed">#C77DFF</color>
+    <color name="colorPrimaryBanana">#C77DFF</color>
+    <color name="colorPrimaryBrown">#C77DFF</color>
+    <color name="colorPrimaryCarnationPink">#C77DFF</color>
+    <color name="colorPrimaryCoolBlue">#C77DFF</color>
+
+</resources>

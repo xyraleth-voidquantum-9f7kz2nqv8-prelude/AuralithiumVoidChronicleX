@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Kategori Ekstensi tetap dipertahankan -->
+    <PreferenceCategory
+        android:title="@string/pref_category_extensions">
+
+        <SwitchPreference
+            android:defaultValue="true"
+            android:icon="@drawable/ic_baseline_extension_24"
+            android:key="@string/auto_update_plugins_key"
+            android:title="@string/automatic_plugin_updates" />
+
+        <Preference
+            android:icon="@drawable/ic_baseline_extension_24"
+            android:key="@string/auto_download_plugins_key"
+            android:title="@string/automatic_plugin_download"
+            android:summary="@string/automatic_plugin_download_summary" />
+
+        <Preference
+            android:icon="@drawable/ic_baseline_extension_24"
+            android:key="@string/manual_update_plugins_key"
+            android:title="@string/update_plugins"
+            android:summary="@string/update_plugins_manually"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>
