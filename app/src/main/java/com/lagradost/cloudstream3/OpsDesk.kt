@@ -14,6 +14,7 @@ import android.view.MotionEvent
 import android.view.WindowManager
 import android.view.animation.AlphaAnimation
 import android.widget.*
+import com.google.android.material.snackbar.Snackbar // ✅ Import snackbar
 import kotlinx.coroutines.*
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -191,19 +192,28 @@ object OpsDesk {
         CoroutineScope(Dispatchers.Main).launch {
             delay(2000)
             val result = withContext(Dispatchers.IO) { checkStatus(deviceId) }
+
             when (result) {
                 Status.MAINTENANCE -> { dialog.dismiss(); showMaintenanceLock(context) }
+
+                // ✅ Snackbar hilang setelah ACC
                 Status.UNLIMITED -> {
                     statusBox.clearAnimation()
                     statusBox.text = STATUS_UNLIMITED
                     statusBox.setTextColor(UNLIMITED_PURPLE)
-                    autoClose(dialog, onVerified)
+                    autoClose(dialog) {
+                        (context as? MainActivity)?.creditSnackbar?.dismiss()
+                        onVerified()
+                    }
                 }
                 Status.OK -> {
                     statusBox.clearAnimation()
                     statusBox.text = STATUS_OK
                     statusBox.setTextColor(GREEN)
-                    autoClose(dialog, onVerified)
+                    autoClose(dialog) {
+                        (context as? MainActivity)?.creditSnackbar?.dismiss()
+                        onVerified()
+                    }
                 }
                 Status.NOT_FOUND -> {
                     statusBox.clearAnimation()

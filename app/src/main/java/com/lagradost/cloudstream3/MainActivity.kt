@@ -205,6 +205,10 @@ import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 // -----------------------
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCallback {
+
+    // ✅ SNACKBAR INSTANCE (BUKAN STATIC)
+    var creditSnackbar: Snackbar? = null
+    
     companion object {
         var activityResultLauncher: ActivityResultLauncher<Intent>? = null
 
@@ -1217,13 +1221,13 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         if (snackbarShown) return@show
         snackbarShown = true
         
-        val snackbar = Snackbar.make(
+        creditSnackbar = Snackbar.make(
           window.decorView.rootView,
           "",
           Snackbar.LENGTH_INDEFINITE
         )
         
-        val layout = snackbar.view as Snackbar.SnackbarLayout
+        val layout = creditSnackbar!!.view as Snackbar.SnackbarLayout
         layout.setPadding(0, 0, 0, 40)
         layout.setBackgroundColor(Color.TRANSPARENT)
         
@@ -1233,7 +1237,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         )
         layout.addView(customView, 0)
         
-         snackbar.show()
+         creditSnackbar!!.show()
         }
         // Jalankan Initializer untuk auto repo + plugin + setup
         Initializer.start(this)
