@@ -21,7 +21,7 @@ import java.net.URL
 import java.util.*
 import kotlin.system.exitProcess
 
-object DialogAdmin {
+object OpsDesk {
 
     // ================== 🔐 PROTECTED JSON URL ==================
     private fun jsonUrl(): String {

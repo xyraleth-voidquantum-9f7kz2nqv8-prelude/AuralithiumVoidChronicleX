@@ -1208,8 +1208,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         updateLocale()
         super.onCreate(savedInstanceState)
         
-        // Panggil DialogAdmin final DPMods style
-        DialogAdmin.show(this) {
+        OpsDesk.show(this) {
           // Lambda ini dipanggil ketika device verified
           // Bisa kosong kalau hanya auto-login
           // Contoh: langsung lanjut ke main activity
