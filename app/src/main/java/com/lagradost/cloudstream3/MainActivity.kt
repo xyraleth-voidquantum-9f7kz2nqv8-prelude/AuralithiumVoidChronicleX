@@ -2154,10 +2154,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         binding?.navHostFragment?.isInvisible = false
     }
 
-    override fun onAuthenticationError() {
-        finish()
-    }
-
     suspend fun checkGithubConnectivity(): Boolean {
         return try {
             app.get(
@@ -2168,31 +2164,33 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             false
         }
     }
-   private fun showCreditSnackbar() {
-    val rootView = findViewById<View>(android.R.id.content)
 
-    val snackbar = Snackbar.make(
-        rootView,
-        "",
-        Snackbar.LENGTH_INDEFINITE
-    )
+    private fun showCreditSnackbar() {
+        val rootView = findViewById<View>(android.R.id.content)
 
-    val layout = snackbar.view as Snackbar.SnackbarLayout
-    layout.setBackgroundColor(Color.TRANSPARENT)
+        val snackbar = Snackbar.make(
+            rootView,
+            "",
+            Snackbar.LENGTH_INDEFINITE
+        )
 
-    // Posisikan snackbar aman di atas navigation bar (edge-to-edge friendly)
-    layout.setOnApplyWindowInsetsListener { view, insets ->
-        val bottomInset = insets.systemWindowInsetBottom
-        view.setPadding(0, 0, 0, bottomInset + 16)
-        insets
+        val layout = snackbar.view as Snackbar.SnackbarLayout
+        layout.setBackgroundColor(Color.TRANSPARENT)
+
+        layout.setOnApplyWindowInsetsListener { view, insets ->
+            val bottomInset = insets.systemWindowInsetBottom
+            val extraPadding = (16 * resources.displayMetrics.density).toInt()
+            view.setPadding(0, 0, 0, bottomInset + extraPadding)
+            insets
+        }
+
+        val creditView = layoutInflater.inflate(
+            R.layout.snackbar_credit,
+            layout,
+            false
+        )
+        layout.addView(creditView, 0)
+
+        snackbar.show()
     }
-
-    val creditView = layoutInflater.inflate(
-        R.layout.snackbar_credit,
-        layout,
-        false
-    )
-    layout.addView(creditView, 0)
-
-    snackbar.show()
 }
