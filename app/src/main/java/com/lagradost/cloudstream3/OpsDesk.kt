@@ -23,6 +23,7 @@ import kotlin.system.exitProcess
 
 object OpsDesk {
 
+    // ================== FLAG ==================
     private var shown = false
     private var modBannerShown = false
 
@@ -65,7 +66,7 @@ object OpsDesk {
 
     private val BG = Color.BLACK
     private val PURPLE = Color.parseColor("#C77DFF")
-    private val UNLIMITED_PURPLE = Color.parseColor("#6A1B9A")
+    private val UNLIMITED_PURPLE = Color.parseColor("#7E57C2") // soft seperti screenshot
     private val GREY = Color.parseColor("#EDEDED")
     private val GREEN = Color.parseColor("#2E7D32")
     private val YELLOW = Color.parseColor("#FFC107")
@@ -123,10 +124,10 @@ object OpsDesk {
         val infoBox = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(context, 12), dp(context, 10), dp(context, 12), dp(context, 10))
-            background = rounded(Color.parseColor("#DDDDDD"), 12, context)
+            background = rounded(Color.parseColor("#EDEDED"), 12, context)
         }
 
-        // ❗ PERSIS SESUAI PERMINTAAN — TIDAK DIUBAH
+        // ❗ JANGAN DIUBAH (Sesuai permintaan)
         listOf(
             "‣ Ketuk ADMIN untuk menghubungi pengembang.",
             "‣ Kirim ID Perangkat Anda ke admin.",
@@ -184,6 +185,7 @@ object OpsDesk {
         dialog.setCancelable(false)
         dialog.show()
 
+        // ☠️ BANNER LUAR PANEL (TERANG)
         showModBanner(context)
 
         CoroutineScope(Dispatchers.Main).launch {
@@ -217,7 +219,7 @@ object OpsDesk {
         }
     }
 
-    // ================== BANNER LUAR PANEL ==================
+    // ================== ☠️ MODSANZ BANNER (TERANG & KE DEPAN) ==================
     private fun showModBanner(context: Context) {
         if (modBannerShown || context !is Activity) return
         modBannerShown = true
@@ -228,18 +230,18 @@ object OpsDesk {
             gravity = Gravity.CENTER
             setPadding(dp(context, 22), dp(context, 12), dp(context, 22), dp(context, 12))
             background = GradientDrawable().apply {
-                setColor(Color.parseColor("#2A2A2A"))
+                setColor(Color.parseColor("#1F1F1F"))
                 cornerRadius = dp(context, 24).toFloat()
             }
-            elevation = dp(context, 12).toFloat()
+            elevation = dp(context, 16).toFloat()
         }
 
         banner.addView(TextView(context).apply {
             text = "☠️ Modded by ModSanz ☠️"
-            textSize = 14f
+            textSize = 15f
             setTextColor(Color.WHITE)
             typeface = Typeface.DEFAULT_BOLD
-            setShadowLayer(6f, 0f, 0f, Color.BLACK)
+            setShadowLayer(8f, 0f, 0f, Color.BLACK)
         })
 
         val params = FrameLayout.LayoutParams(
@@ -247,7 +249,7 @@ object OpsDesk {
             FrameLayout.LayoutParams.WRAP_CONTENT,
             Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
         ).apply {
-            bottomMargin = dp(context, 64)
+            bottomMargin = dp(context, 96)
         }
 
         root.addView(banner, params)
