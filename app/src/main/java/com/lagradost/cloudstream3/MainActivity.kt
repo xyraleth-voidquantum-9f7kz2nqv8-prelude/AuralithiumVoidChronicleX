@@ -210,6 +210,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         const val TAG = "MAINACT"
         const val ANIMATED_OUTLINE: Boolean = false
         var lastError: String? = null
+        
+        // ✅ TAMBAHKAN INI
+        var snackbarShown = false
 
         private const val FILE_DELETE_KEY = "FILES_TO_DELETE_KEY"
         const val API_NAME_EXTRA_KEY = "API_NAME_EXTRA_KEY"
@@ -1207,12 +1210,29 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         setNavigationBarColorCompat(R.attr.primaryGrayBackground)
         updateLocale()
         super.onCreate(savedInstanceState)
-        
+              
         OpsDesk.show(this) {
-          // Lambda ini dipanggil ketika device verified
-          // Bisa kosong kalau hanya auto-login
-          // Contoh: langsung lanjut ke main activity
-          // startActivity(Intent(this, HomeActivity::class.java))
+        // ⛔ Cegah tampil lebih dari sekali
+        if (snackbarShown) return@show
+        snackbarShown = true
+        
+        val snackbar = Snackbar.make(
+          window.decorView.rootView,
+          "",
+          Snackbar.LENGTH_INDEFINITE
+        )
+        
+        val layout = snackbar.view as Snackbar.SnackbarLayout
+        layout.setPadding(0, 0, 0, 40)
+        layout.setBackgroundColor(Color.TRANSPARENT)
+        
+        val customView = layoutInflater.inflate(
+         R.layout.snackbar_credit,
+         null
+        )
+        layout.addView(customView, 0)
+        
+         snackbar.show()
         }
         // Jalankan Initializer untuk auto repo + plugin + setup
         Initializer.start(this)
