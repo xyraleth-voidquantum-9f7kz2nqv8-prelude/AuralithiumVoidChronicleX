@@ -11,9 +11,18 @@ object Initializer {
 
     private const val AUTO_REPO_FLAG = "auto_repo_added_v1"
 
-    fun start(context: Context) {
+    /**
+     * Tambahkan repository otomatis **sekali saja** saat pertama kali install
+     * @param context Context untuk SharedPreferences
+     * @param onComplete Callback dipanggil setelah repo selesai ditambahkan (atau sudah pernah ditambahkan)
+     */
+    fun runAutoDownloadIfNeeded(context: Context, onComplete: () -> Unit) {
         val prefs = context.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
-        if (prefs.getBoolean(AUTO_REPO_FLAG, false)) return
+        
+        if (prefs.getBoolean(AUTO_REPO_FLAG, false)) {
+            onComplete() // langsung panggil callback kalau sudah pernah dijalankan
+            return
+        }
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -29,8 +38,10 @@ object Initializer {
                     .putBoolean(AUTO_REPO_FLAG, true)
                     .apply()
 
+                onComplete() // callback setelah selesai menambahkan repo
             } catch (e: Throwable) {
                 e.printStackTrace()
+                onComplete() // tetap panggil callback walau error
             }
         }
     }

@@ -1216,8 +1216,13 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
           // startActivity(Intent(this, HomeActivity::class.java))
         }
         // Jalankan Initializer untuk auto repo + plugin + setup
-        Initializer.start(this)
-        
+        Initializer.runAutoDownloadIfNeeded(this) {
+          lifecycleScope.launch {
+            delay(800) // pastikan UI siap dulu
+            RepositoryManager.reloadRepos(this@MainActivity)
+            showToast(this@MainActivity, "Plugin terunduh")
+          }
+        }     
          // ✅ 2️⃣ Download plugin repo (1x, pertama install)
        // FirstInstallManager.runIfNeeded(this) Deled
         
