@@ -12,7 +12,6 @@ import android.graphics.Rect
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
-import com.google.android.material.snackbar.Snackbar
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
