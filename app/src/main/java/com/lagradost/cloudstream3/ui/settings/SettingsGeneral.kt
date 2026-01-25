@@ -166,7 +166,7 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 true
             }
-            isVisible = false
+            isVisible = true
         }
 
         /* ================= DONASI ================= */
@@ -180,7 +180,7 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 true
             }
-            isVisible = false
+            isVisible = true
         }
 
         /* ================= BATTERY ================= */
