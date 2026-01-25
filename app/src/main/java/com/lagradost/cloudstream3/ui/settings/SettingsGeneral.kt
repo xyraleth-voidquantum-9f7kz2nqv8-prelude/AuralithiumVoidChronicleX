@@ -158,9 +158,9 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
         /* ================= TELEGRAM ================= */
         getPref(R.string.telegram_key)?.apply {
             summary = getString(R.string.telegram_desc)
-            val t1 = "CxgbBRdKQ04aDwMaERQcDRgJAgIKGQUUAQgX"
-            val t2 = "TggKEwUFABVUERgLF0oRHwgYTh8AABAYCQAK"
-            val t3 = "F11BEw0CCQMYEAkLFBARDgAK"
+            val t1 = "CxgbBRdKQ0"
+            val t2 = "4NTQEKWjAV"
+            val t3 = "DQw6DwMaETQcDRg="
             setOnPreferenceClickListener {
                 val url = decodeUrl(t1, t2, t3)
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
