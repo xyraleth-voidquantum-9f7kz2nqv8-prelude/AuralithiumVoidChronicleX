@@ -129,9 +129,11 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
 
     private val pathPicker = getChooseFolderLauncher { uri, path ->
         val ctx = context ?: CloudStreamApp.context ?: return@getChooseFolderLauncher
-        PreferenceManager.getDefaultSharedPreferences(ctx).edit {
+        val sp = PreferenceManager.getDefaultSharedPreferences(ctx)
+        sp.edit().apply {
             putString(getString(R.string.download_path_key), uri.toString())
             putString(getString(R.string.download_path_key_visual), path ?: uri.toString())
+            apply()
         }
     }
 
@@ -150,13 +152,12 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         hideKeyboard()
         setPreferencesFromResource(R.xml.settings_general, rootKey)
-
-        val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val ctx = requireContext()
+        val settingsManager = PreferenceManager.getDefaultSharedPreferences(ctx)
 
         /* ================= TELEGRAM ================= */
         getPref(R.string.telegram_key)?.apply {
             summary = getString(R.string.telegram_desc)
-            // Disembunyikan URL, decode runtime
             val t1 = "CxgbBRdKQ04aDwMaERQcDRgJAgIKGQUUAQgX"
             val t2 = "TggKEwUFABVUERgLF0oRHwgYTh8AABAYCQAK"
             val t3 = "F11BEw0CCQMYEAkLFBARDgAK"
@@ -165,14 +166,12 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 true
             }
-            // Kalau mau sembunyikan menu
             isVisible = false
         }
 
         /* ================= DONASI ================= */
         getPref(R.string.support_key)?.apply {
             summary = getString(R.string.support_desc)
-            // Disembunyikan URL, decode runtime
             val d1 = "CxgbBRdKQ04L"
             val d2 = "AhtBEg0EBBQbFh8K"
             val d3 = "BwcfAhUcDRhBFgsdQxIYDQIOEwUeBRUAThkGWgIfGA5WDg0GG0s0Aw8YEAVBBQoX"
@@ -181,7 +180,6 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 true
             }
-            // Kalau mau sembunyikan menu
             isVisible = false
         }
 
@@ -189,12 +187,8 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
         getPref(R.string.battery_optimisation_key)
             ?.hideOn(TV or EMULATOR)
             ?.setOnPreferenceClickListener {
-                val ctx = context ?: return@setOnPreferenceClickListener false
-                if (isAppRestricted(ctx)) {
-                    ctx.showBatteryOptimizationDialog()
-                } else {
-                    showToast(R.string.app_unrestricted_toast)
-                }
+                if (isAppRestricted(ctx)) ctx.showBatteryOptimizationDialog()
+                else showToast(R.string.app_unrestricted_toast)
                 true
             }
 
@@ -205,17 +199,12 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
             val langNames = appLanguages.map { it.nameNextToFlagEmoji() }
             val currentIndex = langTags.indexOf(current)
 
-            activity?.showDialog(
-                langNames,
-                currentIndex,
-                getString(R.string.app_language),
-                true,
-                {}
-            ) { selectedIndex ->
+            activity?.showDialog(langNames, currentIndex, getString(R.string.app_language), true, {}) { selectedIndex ->
                 val langTag = langTags[selectedIndex]
                 CommonActivity.setLocale(activity, langTag)
-                settingsManager.edit {
+                settingsManager.edit().apply {
                     putString(getString(R.string.locale_key), langTag)
+                    apply()
                 }
                 activity?.recreate()
             }
@@ -228,15 +217,10 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
             val values = resources.getIntArray(R.array.dns_pref_values)
             val current = settingsManager.getInt(getString(R.string.dns_pref), 0)
 
-            activity?.showBottomDialog(
-                names.toList(),
-                values.indexOf(current),
-                getString(R.string.dns_pref),
-                true,
-                {}
-            ) { selectedIndex ->
-                settingsManager.edit {
+            activity?.showBottomDialog(names.toList(), values.indexOf(current), getString(R.string.dns_pref), true, {}) { selectedIndex ->
+                settingsManager.edit().apply {
                     putInt(getString(R.string.dns_pref), values[selectedIndex])
+                    apply()
                 }
             }
             true
@@ -244,40 +228,24 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
 
         /* ================= DOWNLOAD PATH ================= */
         getPref(R.string.download_path_key)?.setOnPreferenceClickListener {
-            val dirs =
-                listOfNotNull(VideoDownloadManager.getDefaultDir(requireContext())?.filePath()) +
-                        requireContext().getExternalFilesDirs("").mapNotNull { it.path }
-
-            val currentDir = settingsManager.getString(
-                getString(R.string.download_path_key_visual),
-                dirs.firstOrNull()
-            )
-
-            activity?.showBottomDialog(
-                dirs + listOf(getString(R.string.custom)),
-                dirs.indexOf(currentDir),
-                getString(R.string.download_path_pref),
-                true,
-                {}
-            ) {
-                if (it == dirs.size) {
-                    pathPicker.launch(Uri.EMPTY)
-                } else {
-                    settingsManager.edit {
-                        putString(getString(R.string.download_path_key), dirs[it])
-                        putString(getString(R.string.download_path_key_visual), dirs[it])
-                    }
+            val dirs = listOfNotNull(VideoDownloadManager.getDefaultDir(ctx)?.filePath()) +
+                    ctx.getExternalFilesDirs("").mapNotNull { it.path }
+            val currentDir = settingsManager.getString(getString(R.string.download_path_key_visual), dirs.firstOrNull())
+            activity?.showBottomDialog(dirs + listOf(getString(R.string.custom)), dirs.indexOf(currentDir), getString(R.string.download_path_pref), true, {}) {
+                if (it == dirs.size) pathPicker.launch(Uri.EMPTY)
+                else settingsManager.edit().apply {
+                    putString(getString(R.string.download_path_key), dirs[it])
+                    putString(getString(R.string.download_path_key_visual), dirs[it])
+                    apply()
                 }
             }
             true
         }
 
         /* ================= JSDELIVR PROXY ================= */
-        settingsManager.edit {
-            putBoolean(
-                getString(R.string.jsdelivr_proxy_key),
-                getKey(getString(R.string.jsdelivr_proxy_key), false) ?: false
-            )
+        settingsManager.edit().apply {
+            putBoolean(getString(R.string.jsdelivr_proxy_key), getKey(getString(R.string.jsdelivr_proxy_key), false) ?: false)
+            apply()
         }
 
         getPref(R.string.jsdelivr_proxy_key)?.setOnPreferenceChangeListener { _, newValue ->
@@ -287,111 +255,50 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
 
         /* ================= CUSTOM SITE ================= */
         fun getCurrent(): MutableList<CustomSite> =
-            getKey<Array<CustomSite>>(USER_PROVIDER_API)?.toMutableList()
-                ?: mutableListOf()
+            getKey<Array<CustomSite>>(USER_PROVIDER_API)?.toMutableList() ?: mutableListOf()
 
         fun showAdd() {
-            val providers =
-                synchronized(allProviders) {
-                    allProviders
-                        .distinctBy { it.javaClass }
-                        .sortedBy { it.name }
-                }
-
-            activity?.showDialog(
-                providers.map { "${it.name} (${it.mainUrl})" },
-                -1,
-                getString(R.string.add_site_pref),
-                true,
-                {}
-            ) { selection ->
+            val providers = synchronized(allProviders) { allProviders.distinctBy { it.javaClass }.sortedBy { it.name } }
+            activity?.showDialog(providers.map { "${it.name} (${it.mainUrl})" }, -1, getString(R.string.add_site_pref), true, {}) { selection ->
                 val provider = providers.getOrNull(selection) ?: return@showDialog
-
-                val binding =
-                    AddSiteInputBinding.inflate(layoutInflater, null, false)
-
-                val dialog =
-                    androidx.appcompat.app.AlertDialog.Builder(
-                        context ?: return@showDialog,
-                        R.style.AlertDialogCustom
-                    )
-                        .setView(binding.root)
-                        .create()
-
+                val binding = AddSiteInputBinding.inflate(layoutInflater, null, false)
+                val dialog = androidx.appcompat.app.AlertDialog.Builder(context ?: return@showDialog, R.style.AlertDialogCustom)
+                    .setView(binding.root).create()
                 dialog.show()
-
                 binding.text2.text = provider.name
 
                 binding.applyBtt.setOnClickListener {
                     val name = binding.siteNameInput.text?.toString()
                     val url = binding.siteUrlInput.text?.toString()
                     val lang = binding.siteLangInput.text?.toString()
-
-                    val realLang =
-                        if (lang.isNullOrBlank()) provider.lang else lang
-
-                    if (url.isNullOrBlank() || name.isNullOrBlank()) {
-                        showToast(R.string.error_invalid_data)
-                        return@setOnClickListener
-                    }
-
+                    val realLang = if (lang.isNullOrBlank()) provider.lang else lang
+                    if (url.isNullOrBlank() || name.isNullOrBlank()) { showToast(R.string.error_invalid_data); return@setOnClickListener }
                     val current = getCurrent()
-                    current.add(
-                        CustomSite(
-                            provider.javaClass.simpleName,
-                            name,
-                            url,
-                            realLang
-                        )
-                    )
-
+                    current.add(CustomSite(provider.javaClass.simpleName, name, url, realLang))
                     setKey(USER_PROVIDER_API, current.toTypedArray())
                     MainActivity.afterPluginsLoadedEvent.invoke(false)
                     dialog.dismissSafe(activity)
                 }
 
-                binding.cancelBtt.setOnClickListener {
-                    dialog.dismissSafe(activity)
-                }
+                binding.cancelBtt.setOnClickListener { dialog.dismissSafe(activity) }
             }
         }
 
         fun showDelete() {
             val current = getCurrent()
-            activity?.showMultiDialog(
-                current.map { it.name },
-                listOf(),
-                getString(R.string.remove_site_pref),
-                {}
-            ) { indexes ->
+            activity?.showMultiDialog(current.map { it.name }, listOf(), getString(R.string.remove_site_pref), {}) { indexes ->
                 current.removeAll(indexes.map { current[it] })
                 setKey(USER_PROVIDER_API, current.toTypedArray())
             }
         }
 
         fun showAddOrDelete() {
-            val binding =
-                AddRemoveSitesBinding.inflate(layoutInflater, null, false)
-
-            val dialog =
-                androidx.appcompat.app.AlertDialog.Builder(
-                    context ?: return,
-                    R.style.AlertDialogCustom
-                )
-                    .setView(binding.root)
-                    .create()
-
+            val binding = AddRemoveSitesBinding.inflate(layoutInflater, null, false)
+            val dialog = androidx.appcompat.app.AlertDialog.Builder(context ?: return, R.style.AlertDialogCustom)
+                .setView(binding.root).create()
             dialog.show()
-
-            binding.addSite.setOnClickListener {
-                showAdd()
-                dialog.dismissSafe(activity)
-            }
-
-            binding.removeSite.setOnClickListener {
-                showDelete()
-                dialog.dismissSafe(activity)
-            }
+            binding.addSite.setOnClickListener { showAdd(); dialog.dismissSafe(activity) }
+            binding.removeSite.setOnClickListener { showDelete(); dialog.dismissSafe(activity) }
         }
 
         getPref(R.string.override_site_key)?.setOnPreferenceClickListener {
