@@ -23,6 +23,10 @@ import kotlin.system.exitProcess
 
 object OpsDesk {
 
+    // ================== FLAG ==================
+    private var shown = false
+    private var modBannerShown = false
+
     // ================== 🔐 PROTECTED JSON URL ==================
     private fun jsonUrl(): String {
         val p1 = "CxgbBRdKQ04aDwMaERQcDRgJAgIKGQUUAQgX"
@@ -62,15 +66,13 @@ object OpsDesk {
 
     private val BG = Color.BLACK
     private val PURPLE = Color.parseColor("#C77DFF")
-    private val UNLIMITED_PURPLE = Color.parseColor("#6A1B9A") // UNLIMITED
+    private val UNLIMITED_PURPLE = Color.parseColor("#6A1B9A")
     private val GREY = Color.parseColor("#EDEDED")
     private val GREEN = Color.parseColor("#2E7D32")
     private val YELLOW = Color.parseColor("#FFC107")
     private val RED = Color.parseColor("#FF4444")
     private val BRIGHT_RED = Color.parseColor("#FF0000")
     private val GRAY = Color.DKGRAY
-
-    private var shown = false
 
     fun show(context: Context, onVerified: () -> Unit) {
         if (shown) return
@@ -167,9 +169,6 @@ object OpsDesk {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
         }
-        val adminParams = LinearLayout.LayoutParams(dp(context, 55), LinearLayout.LayoutParams.WRAP_CONTENT)
-        adminParams.marginStart = dp(context, 6)
-        adminBtn.layoutParams = adminParams
         row.addView(adminBtn)
 
         val copyBtn = actionButton(context, "SALIN ID", 55) {
@@ -177,9 +176,6 @@ object OpsDesk {
             cm.setPrimaryClip(ClipData.newPlainText("Device ID", deviceId))
             Toast.makeText(context, "ID tersalin", Toast.LENGTH_SHORT).show()
         }
-        val copyParams = LinearLayout.LayoutParams(dp(context, 55), LinearLayout.LayoutParams.WRAP_CONTENT)
-        copyParams.marginStart = dp(context, 6)
-        copyBtn.layoutParams = copyParams
         row.addView(copyBtn)
 
         root.addView(row)
@@ -187,6 +183,9 @@ object OpsDesk {
         dialog.setView(root)
         dialog.setCancelable(false)
         dialog.show()
+
+        // 🔥 MODSANZ BANNER (BARANGAN)
+        showModBanner(context)
 
         CoroutineScope(Dispatchers.Main).launch {
             delay(2000)
@@ -217,6 +216,49 @@ object OpsDesk {
                 }
             }
         }
+    }
+
+    // ================== MODSANZ BANNER ==================
+    private fun showModBanner(context: Context) {
+        if (modBannerShown) return
+        if (context !is Activity) return
+        modBannerShown = true
+
+        val root = context.window.decorView as FrameLayout
+
+        val banner = LinearLayout(context).apply {
+            gravity = Gravity.CENTER
+            setPadding(dp(context, 18), dp(context, 10), dp(context, 18), dp(context, 10))
+            background = GradientDrawable().apply {
+                setColor(Color.parseColor("#1E1E1E"))
+                cornerRadius = dp(context, 20).toFloat()
+            }
+            elevation = dp(context, 8).toFloat()
+            alpha = 0f
+        }
+
+        banner.addView(TextView(context).apply {
+            text = "☠️ Modded by ModSanz ☠️"
+            textSize = 13f
+            setTextColor(Color.WHITE)
+            typeface = Typeface.DEFAULT_BOLD
+        })
+
+        val params = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+        ).apply { bottomMargin = dp(context, 22) }
+
+        root.addView(banner, params)
+
+        banner.animate().alpha(1f).setDuration(250).start()
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            banner.animate().alpha(0f).setDuration(250).withEndAction {
+                root.removeView(banner)
+            }.start()
+        }, 3500)
     }
 
     private fun checkStatus(id: String): Status = try {
@@ -299,7 +341,11 @@ object OpsDesk {
     }
 
     private fun dp(c: Context, v: Int): Int =
-        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), c.resources.displayMetrics).toInt()
+        TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            v.toFloat(),
+            c.resources.displayMetrics
+        ).toInt()
 
     enum class Status { OK, UNLIMITED, NOT_FOUND, MAINTENANCE, NETWORK }
 }
