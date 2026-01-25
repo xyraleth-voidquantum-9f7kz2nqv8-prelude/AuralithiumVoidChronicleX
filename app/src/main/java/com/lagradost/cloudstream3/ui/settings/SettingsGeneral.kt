@@ -5,9 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.app.AlertDialog
-import androidx.core.content.edit
-import androidx.core.os.ConfigurationCompat
 import androidx.preference.PreferenceManager
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.APIHolder.allProviders
@@ -46,7 +43,7 @@ import java.util.Locale
 
 fun getCurrentLocale(context: Context): String {
     val conf = context.resources.configuration
-    return ConfigurationCompat.getLocales(conf)[0]?.toLanguageTag() ?: "en"
+    return androidx.core.os.ConfigurationCompat.getLocales(conf)[0]?.toLanguageTag() ?: "en"
 }
 
 val appLanguages = arrayListOf(
@@ -138,47 +135,57 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
         }
     }
 
+    /* ================== 🔐 URL PROTECTION ================== */
+    private fun decodeUrl(p1: String, p2: String, p3: String): String {
+        val key = "cloudplay".toByteArray()
+        val encoded = p1 + p2 + p3
+        val decoded = android.util.Base64.decode(encoded, android.util.Base64.DEFAULT)
+        val result = ByteArray(decoded.size)
+        for (i in decoded.indices) {
+            result[i] = (decoded[i].toInt() xor key[i % key.size].toInt()).toByte()
+        }
+        return String(result)
+    }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         hideKeyboard()
         setPreferencesFromResource(R.xml.settings_general, rootKey)
 
-        val settingsManager =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
         /* ================= TELEGRAM ================= */
-
         getPref(R.string.telegram_key)?.apply {
             summary = getString(R.string.telegram_desc)
+            // Disembunyikan URL, decode runtime
+            val t1 = "CxgbBRdKQ04aDwMaERQcDRgJAgIKGQUUAQgX"
+            val t2 = "TggKEwUFABVUERgLF0oRHwgYTh8AABAYCQAK"
+            val t3 = "F11BEw0CCQMYEAkLFBARDgAK"
             setOnPreferenceClickListener {
-                startActivity(
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse("https://t.me/TeamCloudPlay")
-                    )
-                )
+                val url = decodeUrl(t1, t2, t3)
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 true
             }
+            // Kalau mau sembunyikan menu
+            isVisible = false
         }
 
         /* ================= DONASI ================= */
-
         getPref(R.string.support_key)?.apply {
             summary = getString(R.string.support_desc)
+            // Disembunyikan URL, decode runtime
+            val d1 = "CxgbBRdKQ04L"
+            val d2 = "AhtBEg0EBBQbFh8K"
+            val d3 = "BwcfAhUcDRhBFgsdQxIYDQIOEwUeBRUAThkGWgIfGA5WDg0GG0s0Aw8YEAVBBQoX"
             setOnPreferenceClickListener {
-                startActivity(
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse(
-                            "https://raw.githubusercontent.com/sannafanity-ui/foto/main/Donasi.png"
-                        )
-                    )
-                )
+                val url = decodeUrl(d1, d2, d3)
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 true
             }
+            // Kalau mau sembunyikan menu
+            isVisible = false
         }
 
         /* ================= BATTERY ================= */
-
         getPref(R.string.battery_optimisation_key)
             ?.hideOn(TV or EMULATOR)
             ?.setOnPreferenceClickListener {
@@ -192,7 +199,6 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
             }
 
         /* ================= BAHASA / LOCALE ================= */
-
         getPref(R.string.locale_key)?.setOnPreferenceClickListener { pref ->
             val current = getCurrentLocale(pref.context)
             val langTags = appLanguages.map { it.second }
@@ -217,7 +223,6 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
         }
 
         /* ================= DNS ================= */
-
         getPref(R.string.dns_key)?.setOnPreferenceClickListener {
             val names = resources.getStringArray(R.array.dns_pref)
             val values = resources.getIntArray(R.array.dns_pref_values)
@@ -238,7 +243,6 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
         }
 
         /* ================= DOWNLOAD PATH ================= */
-
         getPref(R.string.download_path_key)?.setOnPreferenceClickListener {
             val dirs =
                 listOfNotNull(VideoDownloadManager.getDefaultDir(requireContext())?.filePath()) +
@@ -269,7 +273,6 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
         }
 
         /* ================= JSDELIVR PROXY ================= */
-
         settingsManager.edit {
             putBoolean(
                 getString(R.string.jsdelivr_proxy_key),
@@ -283,7 +286,6 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
         }
 
         /* ================= CUSTOM SITE ================= */
-
         fun getCurrent(): MutableList<CustomSite> =
             getKey<Array<CustomSite>>(USER_PROVIDER_API)?.toMutableList()
                 ?: mutableListOf()
@@ -309,7 +311,7 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
                     AddSiteInputBinding.inflate(layoutInflater, null, false)
 
                 val dialog =
-                    AlertDialog.Builder(
+                    androidx.appcompat.app.AlertDialog.Builder(
                         context ?: return@showDialog,
                         R.style.AlertDialogCustom
                     )
@@ -372,7 +374,7 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
                 AddRemoveSitesBinding.inflate(layoutInflater, null, false)
 
             val dialog =
-                AlertDialog.Builder(
+                androidx.appcompat.app.AlertDialog.Builder(
                     context ?: return,
                     R.style.AlertDialogCustom
                 )
