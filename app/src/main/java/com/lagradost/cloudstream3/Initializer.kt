@@ -9,22 +9,14 @@ import kotlinx.coroutines.launch
 
 object Initializer {
 
+    const val NEED_AUTO_DOWNLOAD = "need_auto_download_v1"
     private const val AUTO_REPO_FLAG = "auto_repo_added_v1"
 
-    /**
-     * Tambahkan repository otomatis **sekali saja** saat pertama kali install
-     * @param context Context untuk SharedPreferences
-     * @param onComplete Callback dipanggil setelah repo selesai ditambahkan (atau sudah pernah ditambahkan)
-     */
-    fun runAutoDownloadIfNeeded(context: Context, onComplete: () -> Unit) {
+    fun start(context: Context) {
         val prefs = context.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
-        
-        if (prefs.getBoolean(AUTO_REPO_FLAG, false)) {
-            onComplete() // langsung panggil callback kalau sudah pernah dijalankan
-            return
-        }
+        if (prefs.getBoolean(AUTO_REPO_FLAG, false)) return
 
-        CoroutineScope(Dispatchers.Main).launch {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
                 RepositoryManager.addRepository(
                     RepositoryData(
@@ -36,13 +28,10 @@ object Initializer {
 
                 prefs.edit()
                     .putBoolean(AUTO_REPO_FLAG, true)
+                    .putBoolean(NEED_AUTO_DOWNLOAD, true) // 🔥 SINYAL
                     .apply()
 
-                onComplete() // callback setelah selesai menambahkan repo
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                onComplete() // tetap panggil callback walau error
-            }
+            } catch (_: Throwable) {}
         }
     }
 }

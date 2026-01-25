@@ -1216,15 +1216,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
           // startActivity(Intent(this, HomeActivity::class.java))
         }
         // Jalankan Initializer untuk auto repo + plugin + setup
-        Initializer.runAutoDownloadIfNeeded(this) {
-          lifecycleScope.launch {
-            delay(800) // pastikan UI siap dulu
-            RepositoryManager.reloadRepos(this@MainActivity)
-            showToast(this@MainActivity, "Plugin terunduh")
-          }
-        }     
+        Initializer.start(this)
+        
          // ✅ 2️⃣ Download plugin repo (1x, pertama install)
-       // FirstInstallManager.runIfNeeded(this) Deled
+        FirstInstallManager.runIfNeeded(this)
         
         //VipPopup.show(this)  // tampilkan popup sesuai status
         
@@ -1446,7 +1441,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                     val autoDownloadPlugin = AutoDownloadMode.getEnum(
                         settingsManager.getInt(
                             getString(R.string.auto_download_plugins_key),
-                            1
+                            0
                         )
                     ) ?: AutoDownloadMode.Disable
                     if (autoDownloadPlugin != AutoDownloadMode.Disable) {
