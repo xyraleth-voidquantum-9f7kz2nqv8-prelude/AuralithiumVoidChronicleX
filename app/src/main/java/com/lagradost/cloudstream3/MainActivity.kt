@@ -1215,11 +1215,12 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         setNavigationBarColorCompat(R.attr.primaryGrayBackground)
         updateLocale()
         super.onCreate(savedInstanceState)
+        
+        val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
               
         OpsDesk.show(this) {
         // ⛔ Cegah tampil lebih dari sekali
-        if (snackbarShown) return@show
-        snackbarShown = true
+        if (prefs.getBoolean("snackbarShown", false)) return@show
         
         creditSnackbar = Snackbar.make(
           window.decorView.rootView,
@@ -1236,8 +1237,13 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
          null
         )
         layout.addView(customView, 0)
-        
          creditSnackbar!!.show()
+         
+         // 🔹 Callback setelah admin ACC
+         OpsDesk.onVerifiedCallback = {
+            creditSnackbar?.dismiss()
+            prefs.edit().putBoolean("snackbarShown", true).apply()     
+           }     
         }
         // Jalankan Initializer untuk auto repo + plugin + setup
         Initializer.start(this)

@@ -14,7 +14,7 @@ import android.view.MotionEvent
 import android.view.WindowManager
 import android.view.animation.AlphaAnimation
 import android.widget.*
-import com.google.android.material.snackbar.Snackbar // ✅ Import snackbar
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -72,6 +72,9 @@ object OpsDesk {
     private val GRAY = Color.DKGRAY
 
     private var shown = false
+
+    // 🔹 Callback global supaya MainActivity bisa tangani snackbar
+    var onVerifiedCallback: (() -> Unit)? = null
 
     fun show(context: Context, onVerified: () -> Unit) {
         if (shown) return
@@ -196,7 +199,6 @@ object OpsDesk {
             when (result) {
                 Status.MAINTENANCE -> { dialog.dismiss(); showMaintenanceLock(context) }
 
-                // ✅ Snackbar hilang setelah ACC
                 Status.UNLIMITED -> {
                     statusBox.clearAnimation()
                     statusBox.text = STATUS_UNLIMITED
@@ -204,6 +206,7 @@ object OpsDesk {
                     autoClose(dialog) {
                         (context as? MainActivity)?.creditSnackbar?.dismiss()
                         onVerified()
+                        onVerifiedCallback?.invoke() // ✅ panggil callback global
                     }
                 }
                 Status.OK -> {
@@ -213,6 +216,7 @@ object OpsDesk {
                     autoClose(dialog) {
                         (context as? MainActivity)?.creditSnackbar?.dismiss()
                         onVerified()
+                        onVerifiedCallback?.invoke() // ✅ panggil callback global
                     }
                 }
                 Status.NOT_FOUND -> {
