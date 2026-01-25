@@ -1218,10 +1218,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
               
-        OpsDesk.show(this) {
-        // ⛔ Cegah tampil lebih dari sekali
-        if (prefs.getBoolean("snackbarShown", false)) return@show
-        
+        if (!prefs.getBoolean("snackbarShown", false)) {
         creditSnackbar = Snackbar.make(
           window.decorView.rootView,
           "",
@@ -1244,6 +1241,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             creditSnackbar?.dismiss()
             prefs.edit().putBoolean("snackbarShown", true).apply()     
            }     
+        }
+        
+        OpsDesk.show(this) {
+          // Kosong saja, karena callback sudah di-set di atas
         }
         // Jalankan Initializer untuk auto repo + plugin + setup
         Initializer.start(this)
