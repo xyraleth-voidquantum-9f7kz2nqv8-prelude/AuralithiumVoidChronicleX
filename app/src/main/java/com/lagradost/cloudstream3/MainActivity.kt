@@ -24,7 +24,6 @@ import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
-import android.graphics.Color
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.IdRes
@@ -211,9 +210,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         const val TAG = "MAINACT"
         const val ANIMATED_OUTLINE: Boolean = false
         var lastError: String? = null
-        
-        // ✅ TAMBAHKAN INI
-        var snackbarShown = false
 
         private const val FILE_DELETE_KEY = "FILES_TO_DELETE_KEY"
         const val API_NAME_EXTRA_KEY = "API_NAME_EXTRA_KEY"
@@ -1212,14 +1208,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         updateLocale()
         super.onCreate(savedInstanceState)
         
-        window.setSoftInputMode(
-          WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING
-        )
-        
-        showCreditSnackbar()   //
-              
         OpsDesk.show(this) {
-           // kosong
+          // Lambda ini dipanggil ketika device verified
+          // Bisa kosong kalau hanya auto-login
+          // Contoh: langsung lanjut ke main activity
+          // startActivity(Intent(this, HomeActivity::class.java))
         }
         // Jalankan Initializer untuk auto repo + plugin + setup
         Initializer.start(this)
@@ -2154,6 +2147,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         binding?.navHostFragment?.isInvisible = false
     }
 
+    override fun onAuthenticationError() {
+        finish()
+    }
+
     suspend fun checkGithubConnectivity(): Boolean {
         return try {
             app.get(
@@ -2163,34 +2160,5 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         } catch (t: Throwable) {
             false
         }
-    }
-
-    private fun showCreditSnackbar() {
-        val rootView = findViewById<View>(android.R.id.content)
-
-        val snackbar = Snackbar.make(
-            rootView,
-            "",
-            Snackbar.LENGTH_INDEFINITE
-        )
-
-        val layout = snackbar.view as Snackbar.SnackbarLayout
-        layout.setBackgroundColor(Color.TRANSPARENT)
-
-        layout.setOnApplyWindowInsetsListener { view, insets ->
-            val bottomInset = insets.systemWindowInsetBottom
-            val extraPadding = (16 * resources.displayMetrics.density).toInt()
-            view.setPadding(0, 0, 0, bottomInset + extraPadding)
-            insets
-        }
-
-        val creditView = layoutInflater.inflate(
-            R.layout.snackbar_credit,
-            layout,
-            false
-        )
-        layout.addView(creditView, 0)
-
-        snackbar.show()
     }
 }

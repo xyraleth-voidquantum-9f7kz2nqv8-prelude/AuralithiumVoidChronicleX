@@ -40,12 +40,12 @@ object OpsDesk {
         return String(result)
     }
 
-    // ================== CONFIG ==================
+    // ================== ADMIN ==================
     private const val ADMIN_URL = "https://t.me/dp_mods"
     private const val AUTO_CLOSE_DELAY = 4000L
 
     private const val TITLE = "VERIFIKASI PERANGKAT"
-    private const val SUBTITLE = "Proses Pendaftaran"
+    private const val SUBTITLE = "Proses Pendaftaran:"
 
     private const val STATUS_PENDING =
         "⏳ Status : Sedang memeriksa status verifikasi perangkat Anda..."
@@ -60,20 +60,18 @@ object OpsDesk {
     private const val STATUS_MAINTENANCE =
         "🛑 APLIKASI SEDANG MAINTENANCE\n\nAplikasi akan ditutup otomatis."
 
-    // ================== COLORS ==================
     private val BG = Color.BLACK
     private val PURPLE = Color.parseColor("#C77DFF")
-    private val UNLIMITED_PURPLE = Color.parseColor("#6A1B9A")
+    private val UNLIMITED_PURPLE = Color.parseColor("#6A1B9A") // UNLIMITED
     private val GREY = Color.parseColor("#EDEDED")
     private val GREEN = Color.parseColor("#2E7D32")
     private val YELLOW = Color.parseColor("#FFC107")
     private val RED = Color.parseColor("#FF4444")
-    private val BRIGHT_RED = Color.RED
+    private val BRIGHT_RED = Color.parseColor("#FF0000")
     private val GRAY = Color.DKGRAY
 
     private var shown = false
 
-    // ================== MAIN ==================
     fun show(context: Context, onVerified: () -> Unit) {
         if (shown) return
         shown = true
@@ -110,7 +108,7 @@ object OpsDesk {
             typeface = Typeface.DEFAULT_BOLD
         })
 
-        space(root, context, 6)
+        space(root, context, 10)
 
         root.addView(TextView(context).apply {
             text = SUBTITLE
@@ -118,7 +116,7 @@ object OpsDesk {
             typeface = Typeface.DEFAULT_BOLD
         })
 
-        space(root, context, 8)
+        space(root, context, 6)
 
         val infoBox = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -130,7 +128,7 @@ object OpsDesk {
             "‣ Ketuk ADMIN untuk menghubungi pengembang.",
             "‣ Kirim ID Perangkat Anda ke admin.",
             "‣ Tunggu hingga perangkat Anda terdaftar.",
-            "‣ Tutup aplikasi & buka kembali setelah ACC."
+            "‣ Tutup aplikasi & buka kembali setelah admin memberi ACC."
         ).forEach {
             infoBox.addView(TextView(context).apply {
                 text = it
@@ -163,18 +161,26 @@ object OpsDesk {
         }
         row.addView(idBox)
 
-        row.addView(actionButton(context, "ADMIN") {
+        val adminBtn = actionButton(context, "ADMIN", 55) {
             context.startActivity(
                 Intent(Intent.ACTION_VIEW, android.net.Uri.parse(ADMIN_URL))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
-        })
+        }
+        val adminParams = LinearLayout.LayoutParams(dp(context, 55), LinearLayout.LayoutParams.WRAP_CONTENT)
+        adminParams.marginStart = dp(context, 6)
+        adminBtn.layoutParams = adminParams
+        row.addView(adminBtn)
 
-        row.addView(actionButton(context, "SALIN") {
+        val copyBtn = actionButton(context, "SALIN ID", 55) {
             val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             cm.setPrimaryClip(ClipData.newPlainText("Device ID", deviceId))
             Toast.makeText(context, "ID tersalin", Toast.LENGTH_SHORT).show()
-        })
+        }
+        val copyParams = LinearLayout.LayoutParams(dp(context, 55), LinearLayout.LayoutParams.WRAP_CONTENT)
+        copyParams.marginStart = dp(context, 6)
+        copyBtn.layoutParams = copyParams
+        row.addView(copyBtn)
 
         root.addView(row)
 
@@ -183,49 +189,44 @@ object OpsDesk {
         dialog.show()
 
         CoroutineScope(Dispatchers.Main).launch {
-            delay(1500)
-            when (withContext(Dispatchers.IO) { checkStatus(deviceId) }) {
-                Status.MAINTENANCE -> {
-                    dialog.dismiss()
-                    showMaintenanceLock(context)
+            delay(2000)
+            val result = withContext(Dispatchers.IO) { checkStatus(deviceId) }
+            when (result) {
+                Status.MAINTENANCE -> { dialog.dismiss(); showMaintenanceLock(context) }
+                Status.UNLIMITED -> {
+                    statusBox.clearAnimation()
+                    statusBox.text = STATUS_UNLIMITED
+                    statusBox.setTextColor(UNLIMITED_PURPLE)
+                    autoClose(dialog, onVerified)
                 }
-                Status.UNLIMITED -> finish(statusBox, dialog, STATUS_UNLIMITED, UNLIMITED_PURPLE, onVerified)
-                Status.OK -> finish(statusBox, dialog, STATUS_OK, GREEN, onVerified)
-                Status.NOT_FOUND -> update(statusBox, STATUS_FAIL, RED)
-                Status.NETWORK -> update(statusBox, STATUS_NET, YELLOW)
+                Status.OK -> {
+                    statusBox.clearAnimation()
+                    statusBox.text = STATUS_OK
+                    statusBox.setTextColor(GREEN)
+                    autoClose(dialog, onVerified)
+                }
+                Status.NOT_FOUND -> {
+                    statusBox.clearAnimation()
+                    statusBox.text = STATUS_FAIL
+                    statusBox.setTextColor(RED)
+                }
+                Status.NETWORK -> {
+                    statusBox.clearAnimation()
+                    statusBox.text = STATUS_NET
+                    statusBox.setTextColor(YELLOW)
+                }
             }
         }
-    }
-
-    // ================== HELPERS ==================
-    private fun finish(
-        tv: TextView,
-        d: AlertDialog,
-        msg: String,
-        color: Int,
-        cb: () -> Unit
-    ) {
-        tv.clearAnimation()
-        tv.text = msg
-        tv.setTextColor(color)
-        Handler(Looper.getMainLooper()).postDelayed({
-            d.dismiss()
-            cb()
-        }, AUTO_CLOSE_DELAY)
-    }
-
-    private fun update(tv: TextView, msg: String, color: Int) {
-        tv.clearAnimation()
-        tv.text = msg
-        tv.setTextColor(color)
     }
 
     private fun checkStatus(id: String): Status = try {
         val conn = URL(jsonUrl()).openConnection() as HttpURLConnection
         val json = JSONObject(conn.inputStream.bufferedReader().readText())
         when {
-            json.optJSONObject("MAINTENANCE")?.optBoolean("enabled") == true -> Status.MAINTENANCE
-            json.optJSONObject(id)?.optBoolean("limit") == true -> Status.UNLIMITED
+            json.has("MAINTENANCE") && json.getJSONObject("MAINTENANCE").optBoolean("enabled", false) ->
+                Status.MAINTENANCE
+            json.has(id) && json.getJSONObject(id).optBoolean("limit", false) ->
+                Status.UNLIMITED
             json.has(id) -> Status.OK
             else -> Status.NOT_FOUND
         }
@@ -235,17 +236,25 @@ object OpsDesk {
 
     private fun showMaintenanceLock(context: Context) {
         val dialog = AlertDialog.Builder(context).create()
-        dialog.setView(TextView(context).apply {
+        val root = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setBackgroundColor(BG)
+        }
+        root.addView(TextView(context).apply {
             text = STATUS_MAINTENANCE
             setTextColor(BRIGHT_RED)
             textSize = 16f
             gravity = Gravity.CENTER
             typeface = Typeface.DEFAULT_BOLD
-            setBackgroundColor(Color.BLACK)
         })
+        dialog.setView(root)
         dialog.setCancelable(false)
+        dialog.window?.apply {
+            setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
+            setBackgroundDrawableResource(android.R.color.black)
+        }
         dialog.show()
-
         Handler(Looper.getMainLooper()).postDelayed({
             if (context is Activity) context.finishAffinity()
             android.os.Process.killProcess(android.os.Process.myPid())
@@ -253,16 +262,25 @@ object OpsDesk {
         }, 2500)
     }
 
+    private fun autoClose(d: AlertDialog, onVerified: () -> Unit) {
+        Handler(Looper.getMainLooper()).postDelayed({
+            d.dismiss()
+            onVerified()
+        }, AUTO_CLOSE_DELAY)
+    }
+
     private fun getDeviceId(c: Context): String =
         Settings.Secure.getString(c.contentResolver, Settings.Secure.ANDROID_ID)
             ?.take(16) ?: UUID.randomUUID().toString().take(16)
 
-    private fun actionButton(c: Context, text: String, click: () -> Unit) =
+    private fun actionButton(c: Context, text: String, widthDp: Int, click: () -> Unit) =
         Button(c).apply {
             this.text = text
             textSize = 12f
             setTextColor(Color.WHITE)
+            setPadding(dp(c, 12), dp(c, 10), dp(c, 12), dp(c, 10))
             background = rounded(PURPLE, 14, c)
+            layoutParams = LinearLayout.LayoutParams(dp(c, widthDp), LinearLayout.LayoutParams.WRAP_CONTENT)
             setOnTouchListener { v, e ->
                 when (e.action) {
                     MotionEvent.ACTION_DOWN -> { v.scaleX = 0.95f; v.scaleY = 0.95f }
@@ -273,21 +291,15 @@ object OpsDesk {
             setOnClickListener { click() }
         }
 
-    private fun rounded(color: Int, r: Int, c: Context) =
-        GradientDrawable().apply {
-            setColor(color)
-            cornerRadius = dp(c, r).toFloat()
-        }
+    private fun rounded(color: Int, radius: Int, c: Context) =
+        GradientDrawable().apply { setColor(color); cornerRadius = dp(c, radius).toFloat() }
 
-    private fun space(p: LinearLayout, c: Context, d: Int) =
-        p.addView(Space(c).apply { minimumHeight = dp(c, d) })
+    private fun space(parent: LinearLayout, c: Context, dp: Int) {
+        parent.addView(Space(c).apply { minimumHeight = dp(c, dp) })
+    }
 
     private fun dp(c: Context, v: Int): Int =
-        TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            v.toFloat(),
-            c.resources.displayMetrics
-        ).toInt()
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), c.resources.displayMetrics).toInt()
 
     enum class Status { OK, UNLIMITED, NOT_FOUND, MAINTENANCE, NETWORK }
 }
