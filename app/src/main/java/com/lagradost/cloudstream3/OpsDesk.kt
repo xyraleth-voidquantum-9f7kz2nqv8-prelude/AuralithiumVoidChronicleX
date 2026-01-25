@@ -14,7 +14,6 @@ import android.view.MotionEvent
 import android.view.WindowManager
 import android.view.animation.AlphaAnimation
 import android.widget.*
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -72,9 +71,6 @@ object OpsDesk {
     private val GRAY = Color.DKGRAY
 
     private var shown = false
-
-    // 🔹 Callback global supaya MainActivity bisa tangani snackbar
-    var onVerifiedCallback: (() -> Unit)? = null
 
     fun show(context: Context, onVerified: () -> Unit) {
         if (shown) return
@@ -195,29 +191,19 @@ object OpsDesk {
         CoroutineScope(Dispatchers.Main).launch {
             delay(2000)
             val result = withContext(Dispatchers.IO) { checkStatus(deviceId) }
-
             when (result) {
                 Status.MAINTENANCE -> { dialog.dismiss(); showMaintenanceLock(context) }
-
                 Status.UNLIMITED -> {
                     statusBox.clearAnimation()
                     statusBox.text = STATUS_UNLIMITED
                     statusBox.setTextColor(UNLIMITED_PURPLE)
-                    autoClose(dialog) {
-                        (context as? MainActivity)?.creditSnackbar?.dismiss()
-                        onVerified()
-                        onVerifiedCallback?.invoke() // ✅ panggil callback global
-                    }
+                    autoClose(dialog, onVerified)
                 }
                 Status.OK -> {
                     statusBox.clearAnimation()
                     statusBox.text = STATUS_OK
                     statusBox.setTextColor(GREEN)
-                    autoClose(dialog) {
-                        (context as? MainActivity)?.creditSnackbar?.dismiss()
-                        onVerified()
-                        onVerifiedCallback?.invoke() // ✅ panggil callback global
-                    }
+                    autoClose(dialog, onVerified)
                 }
                 Status.NOT_FOUND -> {
                     statusBox.clearAnimation()

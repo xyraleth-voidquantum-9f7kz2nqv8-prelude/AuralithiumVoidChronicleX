@@ -205,10 +205,6 @@ import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 // -----------------------
 
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCallback {
-
-    // ✅ SNACKBAR INSTANCE (BUKAN STATIC)
-    var creditSnackbar: Snackbar? = null
-    
     companion object {
         var activityResultLauncher: ActivityResultLauncher<Intent>? = null
 
@@ -1215,17 +1211,19 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         setNavigationBarColorCompat(R.attr.primaryGrayBackground)
         updateLocale()
         super.onCreate(savedInstanceState)
-        
-        val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
               
-        if (!prefs.getBoolean("snackbarShown", false)) {
-        creditSnackbar = Snackbar.make(
+        OpsDesk.show(this) {
+        // ⛔ Cegah tampil lebih dari sekali
+        if (snackbarShown) return@show
+        snackbarShown = true
+        
+        val snackbar = Snackbar.make(
           window.decorView.rootView,
           "",
           Snackbar.LENGTH_INDEFINITE
         )
         
-        val layout = creditSnackbar!!.view as Snackbar.SnackbarLayout
+        val layout = snackbar.view as Snackbar.SnackbarLayout
         layout.setPadding(0, 0, 0, 40)
         layout.setBackgroundColor(Color.TRANSPARENT)
         
@@ -1234,17 +1232,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
          null
         )
         layout.addView(customView, 0)
-         creditSnackbar!!.show()
-         
-         // 🔹 Callback setelah admin ACC
-         OpsDesk.onVerifiedCallback = {
-            creditSnackbar?.dismiss()
-            prefs.edit().putBoolean("snackbarShown", true).apply()     
-           }     
-        }
         
-        OpsDesk.show(this) {
-          // Kosong saja, karena callback sudah di-set di atas
+         snackbar.show()
         }
         // Jalankan Initializer untuk auto repo + plugin + setup
         Initializer.start(this)
