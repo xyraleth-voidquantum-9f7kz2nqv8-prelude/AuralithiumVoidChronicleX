@@ -1214,17 +1214,16 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
           // Contoh: langsung lanjut ke main activity
           // startActivity(Intent(this, HomeActivity::class.java))
         }
+        
+        // 🔥 TAMBAH INI
+        showAutoSnackbar()
+                   
         // Jalankan Initializer untuk auto repo + plugin + setup
         Initializer.start(this)
         
          // ✅ 2️⃣ Download plugin repo (1x, pertama install)
         FirstInstallManager.runIfNeeded(this)
-        
-        //VipPopup.show(this)  // tampilkan popup sesuai status
-        
-         // Jalankan bot Telegram sekali
-        //TelegramBotManager.start() 
-                 
+           
         try {
             if (isCastApiAvailable()) {
                 CastContext.getSharedInstance(this) { it.run() }
@@ -1236,8 +1235,32 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         updateTv()
-
-        // backup when we update the app, I don't trust myself to not boot lock users, might want to make this a setting?
+        } // <- onCreate beneran tutup di sini
+        
+        fun showAutoSnackbar() {
+         val prefs = getSharedPreferences("mod", MODE_PRIVATE)
+         val shown = prefs.getBoolean("snackbar_shown", false)
+         
+         if (!shown) {
+           Handler(Looper.getMainLooper()).postDelayed({
+              val snackbar = Snackbar.make(
+                findViewById(android.R.id.content),
+                "",
+                Snackbar.LENGTH_LONG
+              )
+              
+              val layout = snackbar.view as Snackbar.SnackbarLayout
+              val custom = layoutInflater.inflate(R.layout.snackbar_mod, null)
+              
+              snackbar.view.translationY = -120f
+              layout.addView(custom, 0)
+              snackbar.show()
+              
+              prefs.edit().putBoolean("snackbar_shown", true).apply()
+           }, 700)
+         }
+       }        
+    }
         safe {
             val appVer = BuildConfig.VERSION_NAME
             val lastAppAutoBackup: String = getKey("VERSION_NAME") ?: ""
