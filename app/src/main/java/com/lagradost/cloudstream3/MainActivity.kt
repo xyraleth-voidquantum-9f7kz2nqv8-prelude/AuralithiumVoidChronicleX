@@ -10,8 +10,6 @@ import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Rect
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
@@ -1216,13 +1214,17 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
           // Contoh: langsung lanjut ke main activity
           // startActivity(Intent(this, HomeActivity::class.java))
         }
-                   
         // Jalankan Initializer untuk auto repo + plugin + setup
         Initializer.start(this)
         
          // ✅ 2️⃣ Download plugin repo (1x, pertama install)
         FirstInstallManager.runIfNeeded(this)
-           
+        
+        //VipPopup.show(this)  // tampilkan popup sesuai status
+        
+         // Jalankan bot Telegram sekali
+        //TelegramBotManager.start() 
+                 
         try {
             if (isCastApiAvailable()) {
                 CastContext.getSharedInstance(this) { it.run() }
@@ -1234,7 +1236,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
 
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
         updateTv()
-        
+
+        // backup when we update the app, I don't trust myself to not boot lock users, might want to make this a setting?
         safe {
             val appVer = BuildConfig.VERSION_NAME
             val lastAppAutoBackup: String = getKey("VERSION_NAME") ?: ""
@@ -1317,9 +1320,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
                 padTop = false
             )
         }
-        
-        // 🔥 TAMBAH INI
-        showAutoSnackbar()
 
         // --- KODE MODIFIKASI: AUTO REPO & BYPASS SETUP (FINAL FIX V3) ---
         
@@ -2159,34 +2159,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             ).text.trim() == "ok"
         } catch (t: Throwable) {
             false
-        }
-    }
-
-    private fun showAutoSnackbar() {
-        val prefs = getSharedPreferences("mod", MODE_PRIVATE)
-        val shown = prefs.getBoolean("snackbar_shown", false)
-
-        if (!shown) {
-            Handler(Looper.getMainLooper()).postDelayed({
-                val snackbar = Snackbar.make(
-                    findViewById(android.R.id.content),
-                    "",
-                    Snackbar.LENGTH_LONG
-                )
-
-                val layout = snackbar.view as Snackbar.SnackbarLayout
-                val custom = layoutInflater.inflate(
-                    R.layout.snackbar_mod,
-                    layout,
-                    false
-                )
-
-                snackbar.view.translationY = -120f
-                layout.addView(custom, 0)
-                snackbar.show()
-
-                prefs.edit().putBoolean("snackbar_shown", true).apply()
-            }, 700)
         }
     }
 }
