@@ -626,6 +626,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(
 
     @SuppressLint("SetTextI18n")
     override fun onBindingCreated(binding: FragmentHomeBinding) {
+      ModSnackbar.show(binding.root)
         context?.let { HomeChildItemAdapter.updatePosterSize(it) }
         binding.apply {
             //homeChangeApiLoading.setOnClickListener(apiChangeClickListener)
