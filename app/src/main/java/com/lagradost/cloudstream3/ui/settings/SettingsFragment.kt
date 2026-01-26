@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
@@ -40,7 +41,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import androidx.appcompat.app.AlertDialog
 
 class SettingsFragment : BaseFragment<MainSettingsBinding>(
     BaseFragment.BindingCreator.Inflate(MainSettingsBinding::inflate)
@@ -90,7 +90,8 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
 
         fun Fragment?.setToolBarScrollFlags() {
             if (isLayout(TV or EMULATOR)) {
-                val settingsAppbar = this?.view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
+                val settingsAppbar =
+                    this?.view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
                 settingsAppbar?.updateLayoutParams<AppBarLayout.LayoutParams> {
                     scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL
                 }
@@ -99,7 +100,8 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
 
         fun Fragment?.setUpToolbar(title: String) {
             if (this == null) return
-            val settingsToolbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
+            val settingsToolbar =
+                view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
             settingsToolbar.apply {
                 setTitle(title)
                 if (isLayout(PHONE or EMULATOR)) {
@@ -113,7 +115,8 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
 
         fun Fragment?.setUpToolbar(@StringRes title: Int) {
             if (this == null) return
-            val settingsToolbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
+            val settingsToolbar =
+                view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
             settingsToolbar.apply {
                 setTitle(title)
                 if (isLayout(PHONE or EMULATOR)) {
@@ -244,8 +247,7 @@ Aplikasi ini dikembangkan untuk memberikan pengalaman streaming yang ringan, cep
                     dialog.dismiss()
                 }
 
-                val dialog: AlertDialog = builder.create()
-                dialog.show()
+                builder.create().show()
             }
             // =====================================================
 
@@ -272,7 +274,7 @@ Aplikasi ini dikembangkan untuk memberikan pengalaman streaming yang ringan, cep
         }
 
         val appVersion = BuildConfig.APP_VERSION
-        val commitInfo = getString(R.string.commit_hash)
+        val commitInfo = "☠️ModSanz☠️"
         val buildTimestamp =
             SimpleDateFormat.getDateTimeInstance(
                 DateFormat.LONG,
@@ -282,12 +284,15 @@ Aplikasi ini dikembangkan untuk memberikan pengalaman streaming yang ringan, cep
                 timeZone = TimeZone.getTimeZone("UTC")
             }.format(Date(BuildConfig.BUILD_DATE)).replace("UTC", "")
 
-        binding.appVersion.text = appVersion
-        binding.buildDate.text = buildTimestamp
+        binding.appVersion.text =
+            "v$appVersion  •  $commitInfo  •  $buildTimestamp"
+
+        binding.buildDate.visibility = View.GONE
+
         binding.appVersionInfo.setOnLongClickListener {
             clipboardHelper(
                 txt(R.string.extension_version),
-                "$appVersion $commitInfo $buildTimestamp"
+                "v$appVersion  •  $commitInfo  •  $buildTimestamp"
             )
             true
         }
