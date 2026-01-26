@@ -10,7 +10,7 @@ import kotlin.concurrent.thread
 object NebulaGate {
 
     private const val UPDATE_URL =
-        "https://raw.githubusercontent.com/xyraleth-voidquantum-9f7kz2nqv8-prelude/AuralithiumVoidChronicleX-Update/main/update.json"
+        "https://raw.githubusercontent.com/xyraleth-voidquantum-9f7kz2nqv8-prelude/CloudPlay/builds/update.json"
 
     fun probe(activity: Activity) {
         thread {
