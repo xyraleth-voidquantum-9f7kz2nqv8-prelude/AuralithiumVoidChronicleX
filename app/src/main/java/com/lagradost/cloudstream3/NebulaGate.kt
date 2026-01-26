@@ -16,19 +16,25 @@ object NebulaGate {
         thread {
             try {
                 val json = URL(UPDATE_URL).readText()
+                println("NebulaGate: JSON fetched -> $json") // Debug
                 val data = JSONObject(json)
 
                 val serverCode = data.getInt("versionCode")
                 val changelog = data.getString("changelog")
                 val apkUrl = data.getString("apk")
 
+                println("NebulaGate: serverCode=$serverCode, localCode=${BuildConfig.VERSION_CODE}")
+
                 if (serverCode > BuildConfig.VERSION_CODE) {
                     Handler(Looper.getMainLooper()).post {
                         AstraFlag.dispatch(activity, changelog, apkUrl)
                     }
+                } else {
+                    println("NebulaGate: no update available")
                 }
 
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                e.printStackTrace() // Debug kalau error fetch / parse
             }
         }
     }
