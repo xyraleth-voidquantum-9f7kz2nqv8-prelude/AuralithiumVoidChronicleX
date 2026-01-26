@@ -237,7 +237,9 @@ Aplikasi ini dikembangkan untuk memberikan pengalaman streaming yang ringan, cep
 🙏 Terima kasih sudah mendukung CloudPlay.
                     """.trimIndent()
                 )
-                builder.setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                builder.setPositiveButton("OK") { dialog, _ ->
+                    dialog.dismiss()
+                }
                 builder.create().show()
             }
 
@@ -263,23 +265,20 @@ Aplikasi ini dikembangkan untuk memberikan pengalaman streaming yang ringan, cep
             }
         }
 
-        // ================== VERSION DISPLAY FINAL ==================
         val appVersion = BuildConfig.APP_VERSION
-        val commitInfo = "☠️ModSanz☠️"
-        val buildTimestamp = SimpleDateFormat(
-            "dd MMMM yyyy HH.mm.ss",
-            Locale("id", "ID")
-        ).format(Date(BuildConfig.BUILD_DATE))
+        val buildTimestamp =
+            SimpleDateFormat("dd MMMM yyyy HH.mm.ss", Locale("id", "ID"))
+                .format(Date(BuildConfig.BUILD_DATE))
 
-        binding.appVersion.text = "v$appVersion • $commitInfo • $buildTimestamp"
+        binding.appVersion.text = "v$appVersion • ☠️ModSanz☠️ • $buildTimestamp"
         binding.buildDate.visibility = View.GONE
+
         binding.appVersionInfo.setOnLongClickListener {
             clipboardHelper(
                 txt(R.string.extension_version),
-                "v$appVersion • $commitInfo • $buildTimestamp"
+                "v$appVersion • ☠️ModSanz☠️ • $buildTimestamp"
             )
             true
         }
-        // ===========================================================
     }
 }
