@@ -1,23 +1,21 @@
 package com.lagradost.cloudstream3
 
 import android.app.Activity
-import android.content.Context
 import android.graphics.Color
-import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.TypedValue
 import android.view.Gravity
-import android.view.WindowManager
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
 
 object DevToast {
 
     fun show(activity: Activity, text: String = "☠️ Modded by ModSanz ☠️") {
-        val wm = activity.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val root = activity.findViewById<ViewGroup>(android.R.id.content)
 
         val badge = TextView(activity).apply {
             this.text = text
@@ -33,28 +31,24 @@ object DevToast {
             elevation = dp(activity, 20).toFloat()
         }
 
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                WindowManager.LayoutParams.TYPE_APPLICATION_PANEL
-            else
-                WindowManager.LayoutParams.TYPE_PHONE,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            PixelFormat.TRANSLUCENT
+        val params = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT
         ).apply {
             gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-            y = dp(activity, 48)
+            bottomMargin = dp(activity, 48)
         }
 
-        wm.addView(badge, params)
+        root.addView(badge, params)
+
+        // anim masuk
+        badge.translationY = dp(activity, 40).toFloat()
+        badge.animate().translationY(0f).setDuration(350).start()
 
         // auto remove
         Handler(Looper.getMainLooper()).postDelayed({
             try {
-                wm.removeView(badge)
+                root.removeView(badge)
             } catch (_: Exception) {}
         }, 2500)
     }
