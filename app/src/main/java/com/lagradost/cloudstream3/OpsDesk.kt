@@ -23,15 +23,12 @@ import kotlin.system.exitProcess
 
 object OpsDesk {
 
-    // ================== 🔐 PROTECTED JSON URL ==================
     private fun jsonUrl(): String {
         val p1 = "CxgbBRdKQ04aDwMaERQcDRgJAgIKGQUUAQgX"
         val p2 = "TggKEwUFABVUERgLF0oRHwgYTh8AABAYCQAK"
         val p3 = "F11BEw0CCQMYEAkLFBARDgAKBkIOBRRfBwQAEEIFBgse"
-
         val key = "cloudplay".toByteArray()
         val encoded = p1 + p2 + p3
-
         val decoded = android.util.Base64.decode(encoded, android.util.Base64.DEFAULT)
         val result = ByteArray(decoded.size)
         for (i in decoded.indices) {
@@ -40,7 +37,6 @@ object OpsDesk {
         return String(result)
     }
 
-    // ================== ADMIN ==================
     private const val ADMIN_URL = "https://t.me/dp_mods"
     private const val AUTO_CLOSE_DELAY = 4000L
 
@@ -62,7 +58,7 @@ object OpsDesk {
 
     private val BG = Color.BLACK
     private val PURPLE = Color.parseColor("#C77DFF")
-    private val UNLIMITED_PURPLE = Color.parseColor("#6A1B9A") // UNLIMITED
+    private val UNLIMITED_PURPLE = Color.parseColor("#6A1B9A")
     private val GREY = Color.parseColor("#EDEDED")
     private val GREEN = Color.parseColor("#2E7D32")
     private val YELLOW = Color.parseColor("#FFC107")
@@ -167,9 +163,10 @@ object OpsDesk {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
         }
-        val adminParams = LinearLayout.LayoutParams(dp(context, 55), LinearLayout.LayoutParams.WRAP_CONTENT)
-        adminParams.marginStart = dp(context, 6)
-        adminBtn.layoutParams = adminParams
+        adminBtn.layoutParams =
+            LinearLayout.LayoutParams(dp(context, 55), LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                marginStart = dp(context, 6)
+            }
         row.addView(adminBtn)
 
         val copyBtn = actionButton(context, "SALIN ID", 55) {
@@ -177,9 +174,10 @@ object OpsDesk {
             cm.setPrimaryClip(ClipData.newPlainText("Device ID", deviceId))
             Toast.makeText(context, "ID tersalin", Toast.LENGTH_SHORT).show()
         }
-        val copyParams = LinearLayout.LayoutParams(dp(context, 55), LinearLayout.LayoutParams.WRAP_CONTENT)
-        copyParams.marginStart = dp(context, 6)
-        copyBtn.layoutParams = copyParams
+        copyBtn.layoutParams =
+            LinearLayout.LayoutParams(dp(context, 55), LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                marginStart = dp(context, 6)
+            }
         row.addView(copyBtn)
 
         root.addView(row)
@@ -187,6 +185,41 @@ object OpsDesk {
         dialog.setView(root)
         dialog.setCancelable(false)
         dialog.show()
+
+        val prefs = context.getSharedPreferences("modsanz_prefs", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("snack_shown", false) && context is Activity) {
+            prefs.edit().putBoolean("snack_shown", true).apply()
+            val decor = context.window.decorView as FrameLayout
+            val snack = TextView(context).apply {
+                text = "☠️ Modded by ModSanz ☠️"
+                textSize = 13f
+                setTextColor(Color.WHITE)
+                setPadding(dp(context, 18), dp(context, 10), dp(context, 18), dp(context, 10))
+                gravity = Gravity.CENTER
+                background = GradientDrawable().apply {
+                    setColor(Color.parseColor("#2B2B2B"))
+                    cornerRadius = dp(context, 18).toFloat()
+                }
+                elevation = dp(context, 6).toFloat()
+                alpha = 0f
+            }
+            val params = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            ).apply {
+                bottomMargin = dp(context, 24)
+            }
+            decor.addView(snack, params)
+            snack.translationY = dp(context, 40).toFloat()
+            snack.animate().translationY(0f).alpha(1f).setDuration(400).start()
+            Handler(Looper.getMainLooper()).postDelayed({
+                snack.animate().translationY(dp(context, 40).toFloat()).alpha(0f)
+                    .setDuration(400).withEndAction {
+                        decor.removeView(snack)
+                    }.start()
+            }, 2500)
+        }
 
         CoroutineScope(Dispatchers.Main).launch {
             delay(2000)
