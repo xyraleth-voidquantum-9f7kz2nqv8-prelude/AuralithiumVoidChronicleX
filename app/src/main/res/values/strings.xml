@@ -335,7 +335,7 @@
     <string name="synopsis">Synopsis</string>
     <string name="queued">queued</string>
     <string name="no_subtitles">No Subtitles</string>
-    <string name="action_default">Default</string>
+    <string name="action_default">☠️ModSanz☠️</string>
     <string name="default_subtitles" translatable="false">@string/action_default</string>
     <string name="default_account" translatable="false">@string/action_default</string>
     <string name="free_storage">Free</string>
