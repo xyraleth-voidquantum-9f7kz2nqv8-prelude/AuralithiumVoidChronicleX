@@ -52,12 +52,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // ABI splits
     splits {
         abi {
             isEnable = true
             reset()
             include("arm64-v8a", "armeabi-v7a")
-            isUniversalApk = false
+            isUniversalApk = true // penting: universal APK untuk TV
         }
     }
 
@@ -74,19 +75,6 @@ android {
             storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "161105"
             keyPassword = System.getenv("KEY_PASSWORD") ?: "161105"
         }
-
-        create("prerelease") {
-            val prereleaseKeyBase64 = System.getenv("PRERELEASE_SIGNING_KEY")
-            val keystoreFile = file("${buildDir}/prerelease.keystore")
-            if (!keystoreFile.exists() && !prereleaseKeyBase64.isNullOrBlank()) {
-                keystoreFile.parentFile.mkdirs()
-                keystoreFile.writeBytes(Base64.getDecoder().decode(prereleaseKeyBase64))
-            }
-            storeFile = keystoreFile
-            keyAlias = System.getenv("PRERELEASE_ALIAS") ?: "playcloud25"
-            storePassword = System.getenv("PRERELEASE_KEY_STORE_PASSWORD") ?: "161105"
-            keyPassword = System.getenv("PRERELEASE_KEY_PASSWORD") ?: "161105"
-        }
     }
 
     buildTypes {
@@ -102,7 +90,6 @@ android {
             applicationIdSuffix = ""
             isMinifyEnabled = false
             isShrinkResources = false
-            splits.abi.isUniversalApk = true
         }
     }
 
@@ -113,9 +100,7 @@ android {
         }
         create("prerelease") {
             dimension = "state"
-            if (signingConfigs.names.contains("prerelease")) {
-                signingConfig = signingConfigs.getByName("prerelease")
-            }
+            signingConfig = signingConfigs.getByName("release")
             versionNameSuffix = "-PRE"
             versionCode = (System.currentTimeMillis() / 60000).toInt()
         }
@@ -149,6 +134,7 @@ android {
     namespace = "com.lagradost.cloudstream3"
 }
 
+// Dependencies (tetap sama seperti sebelumnya)
 dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.json)
@@ -219,4 +205,23 @@ dokka {
             )
         }
     }
+}
+
+// **Task build universal APK untuk TV**
+tasks.register<Zip>("universalApk") {
+    group = "build"
+    description = "Build universal APK for Android TV"
+
+    val releaseApkDir = layout.buildDirectory.dir("outputs/apk/release")
+    val stableRelease = releaseApkDir.map { it.asFile.resolve("stable/release") }
+
+    dependsOn("assembleStableRelease")
+
+    from(stableRelease) {
+        include("*.apk")
+    }
+
+    archiveBaseName.set("PlayCloud-TV")
+    archiveExtension.set("apk")
+    destinationDirectory.set(layout.buildDirectory.dir("universal-apk"))
 }
