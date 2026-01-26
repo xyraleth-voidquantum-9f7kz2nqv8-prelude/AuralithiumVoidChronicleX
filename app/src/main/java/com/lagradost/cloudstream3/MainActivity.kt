@@ -2161,31 +2161,32 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
             false
         }
     }
-    
-private fun showAutoSnackbar() {
-    val prefs = getSharedPreferences("mod", MODE_PRIVATE)
-    val shown = prefs.getBoolean("snackbar_shown", false)
 
-    if (!shown) {
-        Handler(Looper.getMainLooper()).postDelayed({
-            val snackbar = Snackbar.make(
-                findViewById(android.R.id.content),
-                "",
-                Snackbar.LENGTH_LONG
-            )
+    private fun showAutoSnackbar() {
+        val prefs = getSharedPreferences("mod", MODE_PRIVATE)
+        val shown = prefs.getBoolean("snackbar_shown", false)
 
-            val layout = snackbar.view as Snackbar.SnackbarLayout
-            val custom = layoutInflater.inflate(
-                R.layout.snackbar_mod,
-                layout,
-                false
-            )
+        if (!shown) {
+            Handler(Looper.getMainLooper()).postDelayed({
+                val snackbar = Snackbar.make(
+                    findViewById(android.R.id.content),
+                    "",
+                    Snackbar.LENGTH_LONG
+                )
 
-            snackbar.view.translationY = -120f
-            layout.addView(custom, 0)
-            snackbar.show()
+                val layout = snackbar.view as Snackbar.SnackbarLayout
+                val custom = layoutInflater.inflate(
+                    R.layout.snackbar_mod,
+                    layout,
+                    false
+                )
 
-            prefs.edit().putBoolean("snackbar_shown", true).apply()
-        }, 700)
+                snackbar.view.translationY = -120f
+                layout.addView(custom, 0)
+                snackbar.show()
+
+                prefs.edit().putBoolean("snackbar_shown", true).apply()
+            }, 700)
+        }
     }
 }
