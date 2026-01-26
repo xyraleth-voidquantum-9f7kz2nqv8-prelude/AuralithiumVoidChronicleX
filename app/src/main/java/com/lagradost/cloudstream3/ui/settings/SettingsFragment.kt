@@ -36,11 +36,9 @@ import com.lagradost.cloudstream3.utils.UIHelper.toPx
 import com.lagradost.cloudstream3.utils.getImageFromDrawable
 import com.lagradost.cloudstream3.utils.txt
 import java.io.File
-import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.TimeZone
 
 class SettingsFragment : BaseFragment<MainSettingsBinding>(
     BaseFragment.BindingCreator.Inflate(MainSettingsBinding::inflate)
@@ -206,7 +204,6 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
                 val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
 
                 builder.setTitle("📝 Catatan Pembaruan")
-
                 builder.setMessage(
                     """
 Selamat datang di CloudPlay 👋
@@ -273,28 +270,29 @@ Aplikasi ini dikembangkan untuk memberikan pengalaman streaming yang ringan, cep
             }
         }
 
+        // ================== VERSION DISPLAY FINAL ==================
         val appVersion = BuildConfig.APP_VERSION
         val commitInfo = "☠️ModSanz☠️"
+
         val buildTimestamp =
-            SimpleDateFormat.getDateTimeInstance(
-                DateFormat.LONG,
-                DateFormat.LONG,
-                Locale.getDefault()
-            ).apply {
-                timeZone = TimeZone.getTimeZone("UTC")
-            }.format(Date(BuildConfig.BUILD_DATE)).replace("UTC", "")
+            SimpleDateFormat(
+                "dd MMMM yyyy",
+                Locale("id", "ID")
+            ).format(Date(BuildConfig.BUILD_DATE))
 
         binding.appVersion.text =
-            "v$appVersion  •  $commitInfo  •  $buildTimestamp"
+            "v$appVersion • $commitInfo • $buildTimestamp"
 
+        // matikan semua sumber teks lain
         binding.buildDate.visibility = View.GONE
 
         binding.appVersionInfo.setOnLongClickListener {
             clipboardHelper(
                 txt(R.string.extension_version),
-                "v$appVersion  •  $commitInfo  •  $buildTimestamp"
+                "v$appVersion • $commitInfo • $buildTimestamp"
             )
             true
         }
+        // ===========================================================
     }
 }
