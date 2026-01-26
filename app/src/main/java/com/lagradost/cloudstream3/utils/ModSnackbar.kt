@@ -1,4 +1,4 @@
-package com.lagradost.cloudstream3
+package com.lagradost.cloudstream3.utils
 
 import android.content.Context
 import android.view.LayoutInflater
