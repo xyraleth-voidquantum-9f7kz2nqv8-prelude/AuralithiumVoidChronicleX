@@ -42,7 +42,6 @@ android {
 
         manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
 
-       // resValue("string", "commit_hash", getGitCommitHash())
         resValue("string", "app_name", "PlayCloud")
         resValue("color", "blackBoarder", "#FF000000")
 
@@ -54,13 +53,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // ✅ ARM64 ONLY
+    // ABI splits
     splits {
         abi {
             isEnable = true
             reset()
-            include("arm64-v8a")
-            isUniversalApk = false
+            include("arm64-v8a", "armeabi-v7a") // TV lama support armeabi-v7a
+            isUniversalApk = false // release default
         }
     }
 
@@ -90,9 +89,11 @@ android {
 
         debug {
             isDebuggable = true
-            applicationIdSuffix = ".debug"
+            applicationIdSuffix = "" // sama dengan release supaya bisa install di TV
             isMinifyEnabled = false
             isShrinkResources = false
+            // universal APK untuk debug
+            splits.abi.isUniversalApk = true
         }
     }
 
