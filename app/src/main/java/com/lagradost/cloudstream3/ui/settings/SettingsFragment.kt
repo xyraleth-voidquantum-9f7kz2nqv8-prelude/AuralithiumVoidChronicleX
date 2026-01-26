@@ -263,17 +263,23 @@ Aplikasi ini dikembangkan untuk memberikan pengalaman streaming yang ringan, cep
             }
         }
 
+        // ================== VERSION DISPLAY FINAL ==================
         val appVersion = BuildConfig.APP_VERSION
         val commitInfo = "☠️ModSanz☠️"
-        val buildTimestamp = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
-            .format(Date(BuildConfig.BUILD_DATE))
+        val buildTimestamp = SimpleDateFormat(
+            "dd MMMM yyyy HH.mm.ss",
+            Locale("id", "ID")
+        ).format(Date(BuildConfig.BUILD_DATE))
 
-        val versionString = "v$appVersion • $commitInfo • $buildTimestamp"
-        binding.appVersion.text = versionString
+        binding.appVersion.text = "v$appVersion • $commitInfo • $buildTimestamp"
         binding.buildDate.visibility = View.GONE
         binding.appVersionInfo.setOnLongClickListener {
-            clipboardHelper(txt(R.string.extension_version), versionString)
+            clipboardHelper(
+                txt(R.string.extension_version),
+                "v$appVersion • $commitInfo • $buildTimestamp"
+            )
             true
         }
+        // ===========================================================
     }
 }
