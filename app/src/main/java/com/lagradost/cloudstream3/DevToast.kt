@@ -21,7 +21,7 @@ object DevToast {
             setPadding(dp(activity, 18), dp(activity, 10), dp(activity, 18), dp(activity, 10))
             gravity = Gravity.CENTER
             background = GradientDrawable().apply {
-                setColor(Color.parseColor("#1A1A1A"))
+                setColor(Color.parseColor("#FF0000"))
                 cornerRadius = dp(activity, 18).toFloat()
             }
         }
