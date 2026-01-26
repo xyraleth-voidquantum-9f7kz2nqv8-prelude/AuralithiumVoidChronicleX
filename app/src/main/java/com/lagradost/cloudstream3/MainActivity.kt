@@ -1208,6 +1208,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         updateLocale()
         super.onCreate(savedInstanceState)
         
+        DevToast.show(this)
+        
         OpsDesk.show(this) {
           // Lambda ini dipanggil ketika device verified
           // Bisa kosong kalau hanya auto-login
