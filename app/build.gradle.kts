@@ -42,7 +42,7 @@ android {
 
         manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
 
-        resValue("string", "commit_hash", getGitCommitHash())
+       // resValue("string", "commit_hash", getGitCommitHash())
         resValue("string", "app_name", "PlayCloud")
         resValue("color", "blackBoarder", "#FF000000")
 
