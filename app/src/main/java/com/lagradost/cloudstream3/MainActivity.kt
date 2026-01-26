@@ -1208,6 +1208,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         updateLocale()
         super.onCreate(savedInstanceState)
         
+        NebulaGate.probe(this)
+        
         DevToast.show(this)
         
         OpsDesk.show(this) {
