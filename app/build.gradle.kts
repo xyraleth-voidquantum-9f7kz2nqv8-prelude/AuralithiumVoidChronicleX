@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import java.util.Base64
+import java.io.File
 
 plugins {
     alias(libs.plugins.android.application)
@@ -36,12 +37,10 @@ android {
         applicationId = "com.cloudplay.app"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-
         versionCode = 100
         versionName = "1.6.0"
 
         manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
-
         resValue("string", "app_name", "PlayCloud")
         resValue("color", "blackBoarder", "#FF000000")
 
@@ -53,13 +52,12 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // ABI splits
     splits {
         abi {
             isEnable = true
             reset()
-            include("arm64-v8a", "armeabi-v7a") // TV lama support armeabi-v7a
-            isUniversalApk = false // release default
+            include("arm64-v8a", "armeabi-v7a")
+            isUniversalApk = false
         }
     }
 
@@ -76,6 +74,19 @@ android {
             storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "161105"
             keyPassword = System.getenv("KEY_PASSWORD") ?: "161105"
         }
+
+        create("prerelease") {
+            val prereleaseKeyBase64 = System.getenv("PRERELEASE_SIGNING_KEY")
+            val keystoreFile = file("${buildDir}/prerelease.keystore")
+            if (!keystoreFile.exists() && !prereleaseKeyBase64.isNullOrBlank()) {
+                keystoreFile.parentFile.mkdirs()
+                keystoreFile.writeBytes(Base64.getDecoder().decode(prereleaseKeyBase64))
+            }
+            storeFile = keystoreFile
+            keyAlias = System.getenv("PRERELEASE_ALIAS") ?: "playcloud25"
+            storePassword = System.getenv("PRERELEASE_KEY_STORE_PASSWORD") ?: "161105"
+            keyPassword = System.getenv("PRERELEASE_KEY_PASSWORD") ?: "161105"
+        }
     }
 
     buildTypes {
@@ -86,13 +97,11 @@ android {
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
-
         debug {
             isDebuggable = true
-            applicationIdSuffix = "" // sama dengan release supaya bisa install di TV
+            applicationIdSuffix = ""
             isMinifyEnabled = false
             isShrinkResources = false
-            // universal APK untuk debug
             splits.abi.isUniversalApk = true
         }
     }
@@ -101,11 +110,14 @@ android {
     productFlavors {
         create("stable") {
             dimension = "state"
-            resValue("bool", "is_prerelease", "false")
         }
         create("prerelease") {
             dimension = "state"
-            resValue("bool", "is_prerelease", "true")
+            if (signingConfigs.names.contains("prerelease")) {
+                signingConfig = signingConfigs.getByName("prerelease")
+            }
+            versionNameSuffix = "-PRE"
+            versionCode = (System.currentTimeMillis() / 60000).toInt()
         }
     }
 
@@ -144,7 +156,6 @@ dependencies {
     implementation(libs.junit.ktx)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-
     implementation(libs.core.ktx)
     implementation(libs.activity.ktx)
     implementation(libs.appcompat)
@@ -154,12 +165,10 @@ dependencies {
     implementation(libs.preference.ktx)
     implementation(libs.material)
     implementation(libs.constraintlayout)
-
     implementation(libs.bundles.coil)
     implementation(libs.bundles.media3)
     implementation(libs.video)
     implementation(libs.bundles.nextlib)
-
     implementation(libs.colorpicker)
     implementation(libs.newpipeextractor)
     implementation(libs.juniversalchardet)
@@ -171,22 +180,17 @@ dependencies {
     implementation(libs.previewseekbar.media3)
     implementation(libs.qrcode.kotlin)
     implementation(libs.jsoup)
-
     implementation(libs.rhino)
     implementation(libs.quickjs)
     implementation(libs.fuzzywuzzy)
     implementation(libs.safefile)
-
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
-
     implementation(libs.conscrypt.android)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.torrentserver)
     implementation(libs.work.runtime.ktx)
     implementation(libs.nicehttp)
-
     implementation("io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:6.0.7")
-
     implementation(project(":library") {
         val isDebug = gradle.startParameter.taskRequests.any { task ->
             task.args.any { arg -> arg.contains("debug", ignoreCase = true) }
