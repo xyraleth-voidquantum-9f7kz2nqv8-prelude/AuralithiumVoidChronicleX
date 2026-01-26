@@ -4,6 +4,7 @@ import android.app.Activity
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.util.Base64
 import android.util.TypedValue
 import android.view.Gravity
 import android.widget.TextView
@@ -11,14 +12,18 @@ import android.widget.Toast
 
 object DevToast {
 
-    fun show(activity: Activity, text: String = "☠️ Modded by ModSanz ☠️") {
-
+    fun show(activity: Activity, text: String = decodeText()) {
         val badge = TextView(activity).apply {
             this.text = text
             textSize = 15f
             setTextColor(Color.WHITE)
             setTypeface(Typeface.DEFAULT_BOLD)
-            setPadding(dp(activity, 18), dp(activity, 10), dp(activity, 18), dp(activity, 10))
+            setPadding(
+                dp(activity, 18),
+                dp(activity, 10),
+                dp(activity, 18),
+                dp(activity, 10)
+            )
             gravity = Gravity.CENTER
             background = GradientDrawable().apply {
                 setColor(Color.parseColor("#FF0000"))
@@ -26,17 +31,23 @@ object DevToast {
             }
         }
 
-        val toast = Toast(activity)
-        toast.view = badge
-        toast.duration = Toast.LENGTH_SHORT
-        toast.setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, dp(activity, 64))
-        toast.show()
+        Toast(activity).apply {
+            view = badge
+            duration = Toast.LENGTH_SHORT
+            setGravity(Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL, 0, dp(activity, 64))
+            show()
+        }
     }
 
-    private fun dp(activity: Activity, v: Int): Int =
+    private fun decodeText(): String {
+        val encoded = "4pqg77iPIE1vZGRlZCBieSBNb2RTYW56IOKYgO+4jw=="
+        return String(Base64.decode(encoded, Base64.DEFAULT))
+    }
+
+    private fun dp(activity: Activity, value: Int): Int =
         TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
-            v.toFloat(),
+            value.toFloat(),
             activity.resources.displayMetrics
         ).toInt()
 }
