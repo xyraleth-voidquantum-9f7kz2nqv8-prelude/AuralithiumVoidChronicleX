@@ -2162,7 +2162,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         }
     }
     
-    private fun showAutoSnackbar() {
+private fun showAutoSnackbar() {
     val prefs = getSharedPreferences("mod", MODE_PRIVATE)
     val shown = prefs.getBoolean("snackbar_shown", false)
 
