@@ -186,6 +186,11 @@ object OpsDesk {
         dialog.setCancelable(false)
         dialog.show()
 
+        dialog.window!!.setLayout(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT
+        )
+
         if (context is Activity) {
             val decor = dialog.window!!.decorView as FrameLayout
             val snack = TextView(context).apply {
@@ -202,6 +207,7 @@ object OpsDesk {
                 elevation = dp(context, 20).toFloat()
                 alpha = 1f
             }
+
             val params = FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,
