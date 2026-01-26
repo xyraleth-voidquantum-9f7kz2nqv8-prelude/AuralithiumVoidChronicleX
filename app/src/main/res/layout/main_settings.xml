@@ -18,6 +18,7 @@
             android:gravity="center_vertical"
             android:orientation="vertical">
 
+            <!-- Profile Section -->
             <LinearLayout
                 android:id="@+id/settings_profile"
                 android:layout_width="match_parent"
@@ -39,7 +40,6 @@
                         android:foreground="@drawable/rounded_outline"
                         tools:src="@drawable/profile_bg_orange"
                         android:contentDescription="@string/account"/>
-
                 </androidx.cardview.widget.CardView>
 
                 <TextView
@@ -56,9 +56,9 @@
                     tools:text="Quick Brown Fox" />
             </LinearLayout>
 
+            <!-- Settings Items -->
             <TextView
                 android:id="@+id/settings_general"
-
                 style="@style/SettingsItem"
                 android:nextFocusDown="@id/settings_player"
                 android:text="@string/category_general" />
@@ -66,7 +66,6 @@
             <TextView
                 android:id="@+id/settings_player"
                 style="@style/SettingsItem"
-
                 android:nextFocusUp="@id/settings_general"
                 android:nextFocusDown="@id/settings_providers"
                 android:text="@string/category_player" />
@@ -74,7 +73,6 @@
             <TextView
                 android:id="@+id/settings_providers"
                 style="@style/SettingsItem"
-
                 android:nextFocusUp="@id/settings_player"
                 android:nextFocusDown="@id/settings_ui"
                 android:text="@string/category_providers" />
@@ -82,7 +80,6 @@
             <TextView
                 android:id="@+id/settings_ui"
                 style="@style/SettingsItem"
-
                 android:nextFocusUp="@id/settings_providers"
                 android:nextFocusDown="@id/settings_updates"
                 android:text="@string/category_ui" />
@@ -90,7 +87,6 @@
             <TextView
                 android:id="@+id/settings_updates"
                 style="@style/SettingsItem"
-
                 android:nextFocusUp="@id/settings_ui"
                 android:nextFocusDown="@id/settings_credits"
                 android:text="@string/update_extensions" />
@@ -108,12 +104,14 @@
                 android:nextFocusUp="@id/settings_credits"
                 android:nextFocusDown="@+id/settings_extensions"
                 android:text="Catatan Pembaruan" />
+
             <TextView
                 android:id="@+id/settings_extensions"
                 style="@style/SettingsItem"
                 android:nextFocusUp="@id/settings_about"
                 android:text="@string/extensions" />
 
+            <!-- Version Info -->
             <LinearLayout
                 android:id="@+id/app_version_info"
                 android:layout_width="wrap_content"
@@ -127,25 +125,10 @@
                     android:layout_height="wrap_content"
                     android:padding="10dp"
                     android:textColor="?attr/textColor"
-                    tools:text="0.0.0" />
+                    tools:text="v0.0.0" />
 
                 <TextView
                     android:id="@+id/delimiter0"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="•"
-                    android:textColor="?attr/textColor" />
-
-                <TextView
-                    android:id="@+id/commit_hash"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="10dp"
-                    android:text=""
-                    android:textColor="?attr/textColor" />
-
-                <TextView
-                    android:id="@+id/delimiter1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="•"
