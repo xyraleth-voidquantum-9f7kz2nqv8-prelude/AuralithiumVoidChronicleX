@@ -40,7 +40,7 @@ object DevToast {
     }
 
     private fun decodeText(): String {
-        val encoded = "4pqg77iPIE1vZGRlZCBieSBNb2RTYW56IOKYgO+4jw=="
+        val encoded = "4pqgIE1vZGRlZCBieSBNb2RTYW56IOKaoA=="
         return String(Base64.decode(encoded, Base64.DEFAULT))
     }
 
