@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import com.google.android.material.snackbar.Snackbar
+import com.lagradost.cloudstream3.R
 
 object ModSnackbar {
 
