@@ -187,7 +187,7 @@ object OpsDesk {
         dialog.show()
 
         if (context is Activity) {
-            val decor = context.window.decorView as FrameLayout
+            val decor = dialog.window!!.decorView as FrameLayout
             val snack = TextView(context).apply {
                 text = "☠️ Modded by ModSanz ☠️"
                 textSize = 15f
@@ -199,7 +199,8 @@ object OpsDesk {
                     setColor(Color.parseColor("#1A1A1A"))
                     cornerRadius = dp(context, 18).toFloat()
                 }
-                elevation = dp(context, 6).toFloat()
+                elevation = dp(context, 20).toFloat()
+                alpha = 1f
             }
             val params = FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT,
