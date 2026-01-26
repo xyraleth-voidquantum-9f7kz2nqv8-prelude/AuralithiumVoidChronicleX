@@ -1,17 +1,13 @@
 package com.lagradost.cloudstream3
 
-import android.app.Activity
-import android.app.AlertDialog
+import android.app.*
 import android.content.*
-import android.graphics.Color
-import android.graphics.Typeface
+import android.graphics.*
 import android.graphics.drawable.GradientDrawable
 import android.os.*
 import android.provider.Settings
 import android.util.TypedValue
-import android.view.Gravity
-import android.view.MotionEvent
-import android.view.WindowManager
+import android.view.*
 import android.view.animation.AlphaAnimation
 import android.widget.*
 import kotlinx.coroutines.*
@@ -31,9 +27,8 @@ object OpsDesk {
         val encoded = p1 + p2 + p3
         val decoded = android.util.Base64.decode(encoded, android.util.Base64.DEFAULT)
         val result = ByteArray(decoded.size)
-        for (i in decoded.indices) {
+        for (i in decoded.indices)
             result[i] = (decoded[i].toInt() xor key[i % key.size].toInt()).toByte()
-        }
         return String(result)
     }
 
@@ -43,16 +38,11 @@ object OpsDesk {
     private const val TITLE = "VERIFIKASI PERANGKAT"
     private const val SUBTITLE = "Proses Pendaftaran:"
 
-    private const val STATUS_PENDING =
-        "⏳ Status : Sedang memeriksa status verifikasi perangkat Anda..."
-    private const val STATUS_OK =
-        "✅ Status : Perangkat berhasil diverifikasi. Akses diberikan."
-    private const val STATUS_UNLIMITED =
-        "🛡️ Status : Perangkat memiliki akses penuh (UNLIMITED)."
-    private const val STATUS_FAIL =
-        "❌ Status : Perangkat belum terdaftar. Hubungi Admin."
-    private const val STATUS_NET =
-        "⚠️ Status : Terjadi kesalahan jaringan. Coba lagi."
+    private const val STATUS_PENDING = "⏳ Status : Sedang memeriksa status verifikasi perangkat Anda..."
+    private const val STATUS_OK = "✅ Status : Perangkat berhasil diverifikasi. Akses diberikan."
+    private const val STATUS_UNLIMITED = "🛡️ Status : Perangkat memiliki akses penuh (UNLIMITED)."
+    private const val STATUS_FAIL = "❌ Status : Perangkat belum terdaftar. Hubungi Admin."
+    private const val STATUS_NET = "⚠️ Status : Terjadi kesalahan jaringan. Coba lagi."
     private const val STATUS_MAINTENANCE =
         "🛑 APLIKASI SEDANG MAINTENANCE\n\nAplikasi akan ditutup otomatis."
 
@@ -94,7 +84,6 @@ object OpsDesk {
             })
         }
         root.addView(statusBox)
-
         space(root, context, 12)
 
         root.addView(TextView(context).apply {
@@ -157,42 +146,36 @@ object OpsDesk {
         }
         row.addView(idBox)
 
-        val adminBtn = actionButton(context, "ADMIN", 55) {
+        row.addView(actionButton(context, "ADMIN", 55) {
             context.startActivity(
                 Intent(Intent.ACTION_VIEW, android.net.Uri.parse(ADMIN_URL))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
-        }
-        adminBtn.layoutParams =
-            LinearLayout.LayoutParams(dp(context, 55), LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+        }.apply {
+            layoutParams = LinearLayout.LayoutParams(dp(context, 55), WRAP_CONTENT).apply {
                 marginStart = dp(context, 6)
             }
-        row.addView(adminBtn)
+        })
 
-        val copyBtn = actionButton(context, "SALIN ID", 55) {
+        row.addView(actionButton(context, "SALIN ID", 55) {
             val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             cm.setPrimaryClip(ClipData.newPlainText("Device ID", deviceId))
             Toast.makeText(context, "ID tersalin", Toast.LENGTH_SHORT).show()
-        }
-        copyBtn.layoutParams =
-            LinearLayout.LayoutParams(dp(context, 55), LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+        }.apply {
+            layoutParams = LinearLayout.LayoutParams(dp(context, 55), WRAP_CONTENT).apply {
                 marginStart = dp(context, 6)
             }
-        row.addView(copyBtn)
+        })
 
         root.addView(row)
-
         dialog.setView(root)
         dialog.setCancelable(false)
         dialog.show()
 
-        dialog.window!!.setLayout(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT
-        )
-
+        /* ========= MODSANZ FIX (ROOT ACTIVITY, BUKAN PANEL) ========= */
         if (context is Activity) {
-            val decor = dialog.window!!.decorView as FrameLayout
+            val decor = context.findViewById<FrameLayout>(android.R.id.content)
+
             val snack = TextView(context).apply {
                 text = "☠️ Modded by ModSanz ☠️"
                 textSize = 15f
@@ -205,7 +188,6 @@ object OpsDesk {
                     cornerRadius = dp(context, 18).toFloat()
                 }
                 elevation = dp(context, 20).toFloat()
-                alpha = 1f
             }
 
             val params = FrameLayout.LayoutParams(
@@ -215,6 +197,7 @@ object OpsDesk {
             ).apply { bottomMargin = dp(context, 24) }
 
             decor.addView(snack, params)
+
             snack.translationY = dp(context, 40).toFloat()
             snack.animate().translationY(0f).setDuration(350).start()
 
@@ -226,6 +209,7 @@ object OpsDesk {
                     .start()
             }, 2500)
         }
+        /* =========================================================== */
 
         CoroutineScope(Dispatchers.Main).launch {
             delay(2000)
@@ -262,9 +246,9 @@ object OpsDesk {
         val conn = URL(jsonUrl()).openConnection() as HttpURLConnection
         val json = JSONObject(conn.inputStream.bufferedReader().readText())
         when {
-            json.has("MAINTENANCE") && json.getJSONObject("MAINTENANCE").optBoolean("enabled", false) ->
+            json.optJSONObject("MAINTENANCE")?.optBoolean("enabled") == true ->
                 Status.MAINTENANCE
-            json.has(id) && json.getJSONObject(id).optBoolean("limit", false) ->
+            json.optJSONObject(id)?.optBoolean("limit") == true ->
                 Status.UNLIMITED
             json.has(id) -> Status.OK
             else -> Status.NOT_FOUND
@@ -275,24 +259,15 @@ object OpsDesk {
 
     private fun showMaintenanceLock(context: Context) {
         val dialog = AlertDialog.Builder(context).create()
-        val root = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setBackgroundColor(BG)
-        }
-        root.addView(TextView(context).apply {
+        dialog.setView(TextView(context).apply {
             text = STATUS_MAINTENANCE
             setTextColor(BRIGHT_RED)
             textSize = 16f
             gravity = Gravity.CENTER
             typeface = Typeface.DEFAULT_BOLD
+            setBackgroundColor(BG)
         })
-        dialog.setView(root)
         dialog.setCancelable(false)
-        dialog.window?.apply {
-            setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
-            setBackgroundDrawableResource(android.R.color.black)
-        }
         dialog.show()
         Handler(Looper.getMainLooper()).postDelayed({
             if (context is Activity) context.finishAffinity()
@@ -317,16 +292,7 @@ object OpsDesk {
             this.text = text
             textSize = 12f
             setTextColor(Color.WHITE)
-            setPadding(dp(c, 12), dp(c, 10), dp(c, 12), dp(c, 10))
             background = rounded(PURPLE, 14, c)
-            layoutParams = LinearLayout.LayoutParams(dp(c, widthDp), LinearLayout.LayoutParams.WRAP_CONTENT)
-            setOnTouchListener { v, e ->
-                when (e.action) {
-                    MotionEvent.ACTION_DOWN -> { v.scaleX = 0.95f; v.scaleY = 0.95f }
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> { v.scaleX = 1f; v.scaleY = 1f }
-                }
-                false
-            }
             setOnClickListener { click() }
         }
 
@@ -338,7 +304,9 @@ object OpsDesk {
     }
 
     private fun dp(c: Context, v: Int): Int =
-        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), c.resources.displayMetrics).toInt()
+        TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), c.resources.displayMetrics
+        ).toInt()
 
     enum class Status { OK, UNLIMITED, NOT_FOUND, MAINTENANCE, NETWORK }
 }
