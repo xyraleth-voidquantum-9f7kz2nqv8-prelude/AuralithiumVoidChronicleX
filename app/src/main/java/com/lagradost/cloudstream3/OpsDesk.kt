@@ -186,38 +186,37 @@ object OpsDesk {
         dialog.setCancelable(false)
         dialog.show()
 
-        val prefs = context.getSharedPreferences("modsanz_prefs", Context.MODE_PRIVATE)
-        if (!prefs.getBoolean("snack_shown", false) && context is Activity) {
-            prefs.edit().putBoolean("snack_shown", true).apply()
+        if (context is Activity) {
             val decor = context.window.decorView as FrameLayout
             val snack = TextView(context).apply {
                 text = "☠️ Modded by ModSanz ☠️"
-                textSize = 13f
+                textSize = 15f
                 setTextColor(Color.WHITE)
+                setTypeface(Typeface.DEFAULT_BOLD)
                 setPadding(dp(context, 18), dp(context, 10), dp(context, 18), dp(context, 10))
                 gravity = Gravity.CENTER
                 background = GradientDrawable().apply {
-                    setColor(Color.parseColor("#2B2B2B"))
+                    setColor(Color.parseColor("#1A1A1A"))
                     cornerRadius = dp(context, 18).toFloat()
                 }
                 elevation = dp(context, 6).toFloat()
-                alpha = 0f
             }
             val params = FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-            ).apply {
-                bottomMargin = dp(context, 24)
-            }
+            ).apply { bottomMargin = dp(context, 24) }
+
             decor.addView(snack, params)
             snack.translationY = dp(context, 40).toFloat()
-            snack.animate().translationY(0f).alpha(1f).setDuration(400).start()
+            snack.animate().translationY(0f).setDuration(350).start()
+
             Handler(Looper.getMainLooper()).postDelayed({
-                snack.animate().translationY(dp(context, 40).toFloat()).alpha(0f)
-                    .setDuration(400).withEndAction {
-                        decor.removeView(snack)
-                    }.start()
+                snack.animate()
+                    .translationY(dp(context, 40).toFloat())
+                    .setDuration(350)
+                    .withEndAction { decor.removeView(snack) }
+                    .start()
             }, 2500)
         }
 
