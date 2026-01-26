@@ -128,13 +128,6 @@
                     tools:text="v0.0.0" />
 
                 <TextView
-                    android:id="@+id/delimiter0"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="•"
-                    android:textColor="?attr/textColor" />
-
-                <TextView
                     android:id="@+id/build_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
