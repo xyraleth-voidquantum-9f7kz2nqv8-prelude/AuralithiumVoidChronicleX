@@ -44,7 +44,6 @@
             android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
             android:value="com.lagradost.cloudstream3.utils.CastOptionsProvider" />
 
-        <profileable android:shell="true" tools:targetApi="q" />
 
         <!-- Activities -->
         <activity
