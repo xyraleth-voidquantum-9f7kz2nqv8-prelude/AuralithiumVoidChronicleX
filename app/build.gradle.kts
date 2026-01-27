@@ -53,9 +53,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // ================================
-    // 🔐 SIGNING CONFIG (SAFE VERSION)
-    // ================================
     val keystoreFile = file("keystore.jks")
     val hasKeystore = keystoreFile.exists()
 
@@ -73,16 +70,12 @@ android {
 
     buildTypes {
         release {
-            if (hasKeystore) {
-                signingConfig = signingConfigs.getByName("release")
-            } else {
-                println("⚠️ Release signing DISABLED (keystore.jks not found)")
-            }
+            if (hasKeystore) signingConfig = signingConfigs.getByName("release")
+            println("⚠️ Release signing DISABLED (keystore.jks not found)")
 
             isDebuggable = false
             isMinifyEnabled = false
             isShrinkResources = false
-
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -163,6 +156,9 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 
     implementation(project(":library"))
+
+    // ✅ Facebook Shimmer untuk animasi shimmer
+    implementation("com.facebook.shimmer:shimmer:0.5.0")
 }
 
 tasks.withType<KotlinJvmCompile>().configureEach {
