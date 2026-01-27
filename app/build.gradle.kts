@@ -16,16 +16,18 @@ val javaTarget = JvmTarget.fromTarget(libs.versions.jvmTarget.get())
 fun getGitCommitHash(): String {
     return try {
         val headFile = file("${project.rootDir}/.git/HEAD")
-        if (headFile.exists()) {
-            val headContent = headFile.readText().trim()
-            if (headContent.startsWith("ref:")) {
-                val refPath = headContent.substring(5).trim()
-                val commitFile = file("${project.rootDir}/.git/$refPath")
-                if (commitFile.exists()) commitFile.readText().trim() else ""
-            } else headContent
-        } else ""
-    } catch (_: Throwable) { "" }
-}.take(7)
+        if (!headFile.exists()) return ""
+        val headContent = headFile.readText().trim()
+        val hash = if (headContent.startsWith("ref:")) {
+            val refPath = headContent.substring(5).trim()
+            val commitFile = file("${project.rootDir}/.git/$refPath")
+            if (commitFile.exists()) commitFile.readText().trim() else ""
+        } else headContent
+        hash.take(7) // 7 karakter pertama hash
+    } catch (_: Throwable) {
+        ""
+    }
+}
 
 android {
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -46,8 +48,16 @@ android {
 
         buildConfigField("long", "BUILD_DATE", "${System.currentTimeMillis()}")
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
-        buildConfigField("String", "SIMKL_CLIENT_ID", "\"db13c9a72e036f717c3a85b13cdeb31fa884c8f4991e43695f7b6477374e35b8\"")
-        buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"d8cf8e1b79bae9b2f77f0347d6384a62f1a8d802abdd73d9aa52bf6a848532ba\"")
+        buildConfigField(
+            "String",
+            "SIMKL_CLIENT_ID",
+            "\"db13c9a72e036f717c3a85b13cdeb31fa884c8f4991e43695f7b6477374e35b8\""
+        )
+        buildConfigField(
+            "String",
+            "SIMKL_CLIENT_SECRET",
+            "\"d8cf8e1b79bae9b2f77f0347d6384a62f1a8d802abdd73d9aa52bf6a848532ba\""
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
