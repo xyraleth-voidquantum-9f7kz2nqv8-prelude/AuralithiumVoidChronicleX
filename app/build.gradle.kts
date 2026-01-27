@@ -1,9 +1,9 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import org.jetbrains.dokka.gradle.engine.parameters.KotlinPlatform
 import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import java.util.Base64
 import java.io.File
 
 plugins {
@@ -24,86 +24,84 @@ fun getGitCommitHash(): String {
                 val commitFile = file("${project.rootDir}/.git/$refPath")
                 if (commitFile.exists()) commitFile.readText().trim() else ""
             } else headContent
-        } else ""
+        } else {
+            ""
+        }.take(7)
     } catch (_: Throwable) {
         ""
-    }.take(7)
+    }
 }
 
 android {
+    @Suppress("UnstableApiUsage")
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
+    viewBinding { enable = true }
+
+    signingConfigs {
+        create("release") {
+            val envKeystorePath = System.getenv("KEYSTORE_PATH")
+            storeFile = if (envKeystorePath != null) file(envKeystorePath) else file("keystore.jks")
+            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "161105"
+            keyAlias = System.getenv("ALIAS") ?: "cloudplay"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "161105"
+        }
+    }
+
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "com.cloudplay.app"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 100
+        versionCode = 74
         versionName = "1.6.0"
 
-        manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
-        resValue("string", "app_name", "PlayCloud")
+        resValue("string", "commit_hash", getGitCommitHash())
+        resValue("bool", "is_prerelease", "false")
+        resValue("string", "app_name", "AdiXtream")
         resValue("color", "blackBoarder", "#FF000000")
+        manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
+
+        val localProperties = gradleLocalProperties(rootDir, project.providers)
 
         buildConfigField("long", "BUILD_DATE", "${System.currentTimeMillis()}")
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
-        buildConfigField("String", "SIMKL_CLIENT_ID", "\"${System.getenv("SIMKL_CLIENT_ID") ?: ""}\"")
-        buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"${System.getenv("SIMKL_CLIENT_SECRET") ?: ""}\"")
+        buildConfigField(
+            "String",
+            "SIMKL_CLIENT_ID",
+            "\"db13c9a72e036f717c3a85b13cdeb31fa884c8f4991e43695f7b6477374e35b8\""
+        )
+        buildConfigField(
+            "String",
+            "SIMKL_CLIENT_SECRET",
+            "\"d8cf8e1b79bae9b2f77f0347d6384a62f1a8d802abdd73d9aa52bf6a848532ba\""
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // ABI splits
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("arm64-v8a", "armeabi-v7a")
-            isUniversalApk = true
-        }
-    }
-
-    signingConfigs {
-        create("release") {
-            val signingKeyBase64 = System.getenv("SIGNING_KEY")
-            val keystoreFile = file("${buildDir}/release.keystore")
-            if (!keystoreFile.exists() && !signingKeyBase64.isNullOrBlank()) {
-                keystoreFile.parentFile.mkdirs()
-                keystoreFile.writeBytes(Base64.getDecoder().decode(signingKeyBase64))
-            }
-            storeFile = keystoreFile
-            keyAlias = System.getenv("ALIAS") ?: "playcloud25"
-            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "161105"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: "161105"
-        }
-    }
-
     buildTypes {
         release {
-            isDebuggable = false
-            isMinifyEnabled = false   // penting untuk naikkan ukuran APK
-            isShrinkResources = false // penting untuk naikkan ukuran APK
             signingConfig = signingConfigs.getByName("release")
+            isDebuggable = false
+            isMinifyEnabled = false       // penting: OFF biar APK tetap besar
+            isShrinkResources = false     // penting: OFF biar semua resources tetap masuk
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
             isDebuggable = true
-            applicationIdSuffix = ""
+            applicationIdSuffix = ".debug"
             isMinifyEnabled = false
             isShrinkResources = false
         }
     }
 
-    flavorDimensions += "state"
+    flavorDimensions.add("state")
     productFlavors {
-        create("stable") {
-            dimension = "state"
-        }
-        create("prerelease") {
-            dimension = "state"
-            signingConfig = signingConfigs.getByName("release")
-            versionNameSuffix = "-PRE"
-            versionCode = (System.currentTimeMillis() / 60000).toInt()
-        }
+        create("stable") { dimension = "state"; resValue("bool", "is_prerelease", "false") }
     }
 
     compileOptions {
@@ -113,9 +111,7 @@ android {
     }
 
     java {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(libs.versions.jdkToolchain.get()))
-        }
+        toolchain { languageVersion.set(JavaLanguageVersion.of(libs.versions.jdkToolchain.get())) }
     }
 
     lint {
@@ -125,15 +121,14 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
         buildConfig = true
         resValues = true
+        viewBinding = true
     }
 
     namespace = "com.lagradost.cloudstream3"
 }
 
-// Dependencies
 dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.json)
@@ -175,10 +170,10 @@ dependencies {
     implementation(libs.torrentserver)
     implementation(libs.work.runtime.ktx)
     implementation(libs.nicehttp)
-    implementation("io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:6.0.7")
+
     implementation(project(":library") {
         val isDebug = gradle.startParameter.taskRequests.any { task ->
-            task.args.any { arg -> arg.contains("debug", ignoreCase = true) }
+            task.args.any { arg -> arg.contains("debug", true) }
         }
         this.extra.set("isDebug", isDebug)
     })
@@ -198,29 +193,7 @@ dokka {
     dokkaSourceSets {
         main {
             analysisPlatform = KotlinPlatform.JVM
-            documentedVisibilities(
-                VisibilityModifier.Public,
-                VisibilityModifier.Protected
-            )
+            documentedVisibilities(VisibilityModifier.Public, VisibilityModifier.Protected)
         }
     }
-}
-
-// Task universal APK (TV)
-tasks.register<Zip>("universalApk") {
-    group = "build"
-    description = "Build universal APK for Android TV"
-
-    val releaseApkDir = layout.buildDirectory.dir("outputs/apk/release")
-    val stableRelease = releaseApkDir.map { it.asFile.resolve("stable/release") }
-
-    dependsOn("assembleStableRelease")
-
-    from(stableRelease) {
-        include("*.apk")
-    }
-
-    archiveBaseName.set("PlayCloud-TV")
-    archiveExtension.set("apk")
-    destinationDirectory.set(layout.buildDirectory.dir("universal-apk"))
 }
