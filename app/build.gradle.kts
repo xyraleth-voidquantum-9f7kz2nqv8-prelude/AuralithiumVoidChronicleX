@@ -16,18 +16,16 @@ val javaTarget = JvmTarget.fromTarget(libs.versions.jvmTarget.get())
 fun getGitCommitHash(): String {
     return try {
         val headFile = file("${project.rootDir}/.git/HEAD")
-        if (!headFile.exists()) return ""
-        val headContent = headFile.readText().trim()
-        val hash = if (headContent.startsWith("ref:")) {
-            val refPath = headContent.substring(5).trim()
-            val commitFile = file("${project.rootDir}/.git/$refPath")
-            if (commitFile.exists()) commitFile.readText().trim() else ""
-        } else headContent
-        hash.take(7) // 7 karakter pertama hash
-    } catch (_: Throwable) {
-        ""
-    }
-}
+        if (headFile.exists()) {
+            val headContent = headFile.readText().trim()
+            if (headContent.startsWith("ref:")) {
+                val refPath = headContent.substring(5).trim()
+                val commitFile = file("${project.rootDir}/.git/$refPath")
+                if (commitFile.exists()) commitFile.readText().trim() else ""
+            } else headContent
+        } else ""
+    } catch (_: Throwable) { "" }
+}.take(7)
 
 android {
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -44,6 +42,7 @@ android {
         resValue("string", "app_name", "CloudPlay")
         resValue("color", "blackBoarder", "#FF000000")
 
+        // Placeholder untuk AndroidManifest.xml
         manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
 
         buildConfigField("long", "BUILD_DATE", "${System.currentTimeMillis()}")
@@ -67,7 +66,7 @@ android {
             val envKeystorePath = System.getenv("KEYSTORE_PATH")
             storeFile = if (envKeystorePath != null) file(envKeystorePath) else file("keystore.jks")
             storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "161105"
-            keyAlias = System.getenv("ALIAS") ?: "cloudplay"
+            keyAlias = System.getenv("ALIAS") ?: "cloudplay_new" // alias baru
             keyPassword = System.getenv("KEY_PASSWORD") ?: "161105"
             storeType = "PKCS12"
         }
