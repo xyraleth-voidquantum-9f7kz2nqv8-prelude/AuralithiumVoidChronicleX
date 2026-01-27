@@ -4,7 +4,6 @@ import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import java.io.File
 
 plugins {
     alias(libs.plugins.android.application)
@@ -24,13 +23,9 @@ fun getGitCommitHash(): String {
                 val commitFile = file("${project.rootDir}/.git/$refPath")
                 if (commitFile.exists()) commitFile.readText().trim() else ""
             } else headContent
-        } else {
-            ""
-        }.take(7)
-    } catch (_: Throwable) {
-        ""
-    }
-}
+        } else ""
+    } catch (_: Throwable) { "" }
+}.take(7)
 
 android {
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -47,20 +42,24 @@ android {
         resValue("string", "app_name", "CloudPlay")
         resValue("color", "blackBoarder", "#FF000000")
 
+        manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
+
         buildConfigField("long", "BUILD_DATE", "${System.currentTimeMillis()}")
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
+        buildConfigField("String", "SIMKL_CLIENT_ID", "\"db13c9a72e036f717c3a85b13cdeb31fa884c8f4991e43695f7b6477374e35b8\"")
+        buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"d8cf8e1b79bae9b2f77f0347d6384a62f1a8d802abdd73d9aa52bf6a848532ba\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
         create("release") {
-            // Gunakan environment variable kalau di CI/CD, fallback ke lokal
             val envKeystorePath = System.getenv("KEYSTORE_PATH")
             storeFile = if (envKeystorePath != null) file(envKeystorePath) else file("keystore.jks")
             storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "161105"
             keyAlias = System.getenv("ALIAS") ?: "cloudplay"
             keyPassword = System.getenv("KEY_PASSWORD") ?: "161105"
-            storeType = "PKCS12" // WAJIB agar Gradle bisa baca keystore baru
+            storeType = "PKCS12"
         }
     }
 
@@ -85,6 +84,7 @@ android {
         create("stable") {
             dimension = "state"
             resValue("bool", "is_prerelease", "false")
+            manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
         }
     }
 
@@ -98,32 +98,37 @@ android {
         toolchain { languageVersion.set(JavaLanguageVersion.of(libs.versions.jdkToolchain.get())) }
     }
 
-    viewBinding { enable = true }
-    buildFeatures {
-        buildConfig = true
-        resValues = true
-        viewBinding = true
-    }
-
     lint {
         abortOnError = false
         checkReleaseBuilds = false
         disable.add("MissingTranslation")
     }
 
+    buildFeatures {
+        buildConfig = true
+        resValues = true
+        viewBinding = true
+    }
+
     namespace = "com.lagradost.cloudstream3"
 }
 
 dependencies {
+    testImplementation(libs.junit)
+    testImplementation(libs.json)
+    androidTestImplementation(libs.core)
+    implementation(libs.junit.ktx)
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
     implementation(libs.core.ktx)
-    implementation(libs.appcompat)
-    implementation(libs.material)
-    implementation(libs.constraintlayout)
     implementation(libs.activity.ktx)
+    implementation(libs.appcompat)
     implementation(libs.fragment.ktx)
-
     implementation(libs.bundles.lifecycle)
     implementation(libs.bundles.navigation)
+    implementation(libs.preference.ktx)
+    implementation(libs.material)
+    implementation(libs.constraintlayout)
     implementation(libs.bundles.coil)
     implementation(libs.bundles.media3)
     implementation(libs.video)
@@ -149,12 +154,6 @@ dependencies {
     implementation(libs.torrentserver)
     implementation(libs.work.runtime.ktx)
     implementation(libs.nicehttp)
-
-    testImplementation(libs.junit)
-    testImplementation(libs.json)
-    androidTestImplementation(libs.core)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
 
     implementation(project(":library") {
         val isDebug = gradle.startParameter.taskRequests.any { task ->
