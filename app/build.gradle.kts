@@ -52,7 +52,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // ABI splits (untuk TV)
+    // ABI splits
     splits {
         abi {
             isEnable = true
@@ -80,14 +80,14 @@ android {
     buildTypes {
         release {
             isDebuggable = false
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = false   // penting untuk naikkan ukuran APK
+            isShrinkResources = false // penting untuk naikkan ukuran APK
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
             isDebuggable = true
-            applicationIdSuffix = ".debug"
+            applicationIdSuffix = ""
             isMinifyEnabled = false
             isShrinkResources = false
         }
@@ -133,15 +133,14 @@ android {
     namespace = "com.lagradost.cloudstream3"
 }
 
+// Dependencies
 dependencies {
-    // Testing
     testImplementation(libs.junit)
     testImplementation(libs.json)
     androidTestImplementation(libs.core)
+    implementation(libs.junit.ktx)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-
-    // AndroidX & Jetpack
     implementation(libs.core.ktx)
     implementation(libs.activity.ktx)
     implementation(libs.appcompat)
@@ -151,8 +150,6 @@ dependencies {
     implementation(libs.preference.ktx)
     implementation(libs.material)
     implementation(libs.constraintlayout)
-
-    // Media & UI
     implementation(libs.bundles.coil)
     implementation(libs.bundles.media3)
     implementation(libs.video)
@@ -167,8 +164,6 @@ dependencies {
     implementation(libs.biometric)
     implementation(libs.previewseekbar.media3)
     implementation(libs.qrcode.kotlin)
-
-    // Other
     implementation(libs.jsoup)
     implementation(libs.rhino)
     implementation(libs.quickjs)
@@ -180,7 +175,7 @@ dependencies {
     implementation(libs.torrentserver)
     implementation(libs.work.runtime.ktx)
     implementation(libs.nicehttp)
-
+    implementation("io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:6.0.7")
     implementation(project(":library") {
         val isDebug = gradle.startParameter.taskRequests.any { task ->
             task.args.any { arg -> arg.contains("debug", ignoreCase = true) }
@@ -211,7 +206,7 @@ dokka {
     }
 }
 
-// Task universal APK untuk Android TV
+// Task universal APK (TV)
 tasks.register<Zip>("universalApk") {
     group = "build"
     description = "Build universal APK for Android TV"
