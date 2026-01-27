@@ -39,7 +39,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
-        tools:targetApi="${target_sdk_version}">
 
         <!-- Google Cast metadata -->
         <meta-data
