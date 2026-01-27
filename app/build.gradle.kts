@@ -15,17 +15,14 @@ val javaTarget = JvmTarget.fromTarget(libs.versions.jvmTarget.get())
 
 fun getGitCommitHash(): String {
     return try {
-        val headFile = file("${project.rootDir}/.git/HEAD")
-        if (!headFile.exists()) return "nogit"
+        val head = file("${project.rootDir}/.git/HEAD")
+        if (!head.exists()) return "nogit"
 
-        val headContent = headFile.readText().trim()
-        val hash = if (headContent.startsWith("ref:")) {
-            val refPath = headContent.substringAfter("ref:").trim()
-            val commitFile = file("${project.rootDir}/.git/$refPath")
-            if (commitFile.exists()) commitFile.readText().trim() else "nogit"
-        } else {
-            headContent
-        }
+        val ref = head.readText().trim()
+        val hash = if (ref.startsWith("ref:")) {
+            val refFile = file("${project.rootDir}/.git/${ref.substringAfter("ref:").trim()}")
+            if (refFile.exists()) refFile.readText().trim() else "nogit"
+        } else ref
 
         hash.take(7)
     } catch (_: Throwable) {
@@ -50,55 +47,48 @@ android {
         resValue("string", "app_name", "CloudPlay")
         resValue("color", "blackBoarder", "#FF000000")
 
-        manifestPlaceholders["target_sdk_version"] =
-            libs.versions.targetSdk.get().toInt()
-
-        buildConfigField(
-            "long",
-            "BUILD_DATE",
-            System.currentTimeMillis().toString()
-        )
-        buildConfigField(
-            "String",
-            "APP_VERSION",
-            "\"$versionName\""
-        )
-        buildConfigField(
-            "String",
-            "SIMKL_CLIENT_ID",
-            "\"db13c9a72e036f717c3a85b13cdeb31fa884c8f4991e43695f7b6477374e35b8\""
-        )
-        buildConfigField(
-            "String",
-            "SIMKL_CLIENT_SECRET",
-            "\"d8cf8e1b79bae9b2f77f0347d6384a62f1a8d802abdd73d9aa52bf6a848532ba\""
-        )
+        buildConfigField("long", "BUILD_DATE", System.currentTimeMillis().toString())
+        buildConfigField("String", "APP_VERSION", "\"$versionName\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // ================================
+    // 🔐 SIGNING CONFIG (SAFE VERSION)
+    // ================================
+    val keystoreFile = file("keystore.jks")
+    val hasKeystore = keystoreFile.exists()
+
     signingConfigs {
-        create("release") {
-            val keystorePath = System.getenv("KEYSTORE_PATH")
-            storeFile = if (keystorePath != null) file(keystorePath) else file("keystore.jks")
-            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "161105"
-            keyAlias = System.getenv("ALIAS") ?: "cloudplay_new"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: "161105"
-            storeType = "PKCS12"
+        if (hasKeystore) {
+            create("release") {
+                storeFile = keystoreFile
+                storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "161105"
+                keyAlias = System.getenv("ALIAS") ?: "cloudplay"
+                keyPassword = System.getenv("KEY_PASSWORD") ?: "161105"
+                storeType = "PKCS12"
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            if (hasKeystore) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                println("⚠️ Release signing DISABLED (keystore.jks not found)")
+            }
+
             isDebuggable = false
             isMinifyEnabled = false
             isShrinkResources = false
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+
         debug {
             isDebuggable = true
             applicationIdSuffix = ".debug"
@@ -112,8 +102,6 @@ android {
         create("stable") {
             dimension = "state"
             resValue("bool", "is_prerelease", "false")
-            manifestPlaceholders["target_sdk_version"] =
-                libs.versions.targetSdk.get().toInt()
         }
     }
 
@@ -152,7 +140,6 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    implementation(libs.junit.ktx)
     implementation(libs.core.ktx)
     implementation(libs.activity.ktx)
     implementation(libs.appcompat)
@@ -160,7 +147,6 @@ dependencies {
 
     implementation(libs.bundles.lifecycle)
     implementation(libs.bundles.navigation)
-
     implementation(libs.preference.ktx)
     implementation(libs.material)
     implementation(libs.constraintlayout)
@@ -169,44 +155,20 @@ dependencies {
     implementation(libs.bundles.media3)
     implementation(libs.video)
 
-    implementation(libs.bundles.nextlib)
-    implementation(libs.colorpicker)
-    implementation(libs.newpipeextractor)
-    implementation(libs.juniversalchardet)
-    implementation(libs.shimmer)
-    implementation(libs.palette.ktx)
-    implementation(libs.tvprovider)
-    implementation(libs.overlappingpanels)
-    implementation(libs.biometric)
-    implementation(libs.previewseekbar.media3)
-    implementation(libs.qrcode.kotlin)
     implementation(libs.jsoup)
     implementation(libs.rhino)
     implementation(libs.quickjs)
-    implementation(libs.fuzzywuzzy)
-    implementation(libs.safefile)
+    implementation(libs.palette.ktx)
 
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 
-    implementation(libs.conscrypt.android)
-    implementation(libs.jackson.module.kotlin)
-    implementation(libs.torrentserver)
-    implementation(libs.work.runtime.ktx)
-    implementation(libs.nicehttp)
-
-    implementation(project(":library") {
-        val isDebug = gradle.startParameter.taskRequests.any { req ->
-            req.args.any { it.contains("debug", ignoreCase = true) }
-        }
-        extra.set("isDebug", isDebug)
-    })
+    implementation(project(":library"))
 }
 
 tasks.withType<KotlinJvmCompile>().configureEach {
     compilerOptions {
         jvmTarget.set(javaTarget)
         jvmDefault.set(JvmDefaultMode.ENABLE)
-        optIn.add("com.lagradost.cloudstream3.Prerelease")
         freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
 }
