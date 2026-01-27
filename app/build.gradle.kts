@@ -38,11 +38,13 @@ android {
         versionCode = 74
         versionName = "1.6.0"
 
-        manifestPlaceholders["target_sdk_version"] = targetSdk
+        manifestPlaceholders["target_sdk_version"] =
+            libs.versions.targetSdk.get().toInt() as Any
+
         resValue("string", "app_name", "PlayCloud")
         resValue("color", "blackBoarder", "#FF000000")
 
-        buildConfigField("long", "BUILD_DATE", "${System.currentTimeMillis()}")
+        buildConfigField("long", "BUILD_DATE", System.currentTimeMillis().toString())
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
 
         buildConfigField(
@@ -59,7 +61,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // ABI Split
     splits {
         abi {
             isEnable = true
@@ -69,18 +70,16 @@ android {
         }
     }
 
-    // =========================
-    // SIGNING CONFIG (CI READY)
-    // =========================
     signingConfigs {
         create("release") {
             val signingKeyBase64 = System.getenv("SIGNING_KEY")
+                ?: error("SIGNING_KEY missing")
 
-            require(!signingKeyBase64.isNullOrBlank()) {
-                "SIGNING_KEY secret is missing!"
-            }
+            val keystoreFile = layout.buildDirectory
+                .file("release.keystore")
+                .get()
+                .asFile
 
-            val keystoreFile = file("${buildDir}/release.keystore")
             if (!keystoreFile.exists()) {
                 keystoreFile.parentFile.mkdirs()
                 keystoreFile.writeBytes(
@@ -160,8 +159,6 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.json)
     androidTestImplementation(libs.core)
-
-    implementation(libs.junit.ktx)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
@@ -207,12 +204,7 @@ dependencies {
 
     implementation("io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:6.0.7")
 
-    implementation(project(":library") {
-        val isDebug = gradle.startParameter.taskRequests.any {
-            it.args.any { arg -> arg.contains("debug", true) }
-        }
-        extra["isDebug"] = isDebug
-    })
+    implementation(project(":library"))
 }
 
 tasks.withType<KotlinJvmCompile> {
