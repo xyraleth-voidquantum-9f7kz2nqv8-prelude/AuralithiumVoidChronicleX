@@ -23,10 +23,9 @@ fun getGitCommitHash(): String {
                 val commitFile = file("${project.rootDir}/.git/$refPath")
                 if (commitFile.exists()) commitFile.readText().trim() else ""
             } else headContent
-        } else {
-            ""
-        }.take(7)
-    } catch (_: Throwable) {
+        } else ""
+    }.take(7)
+    catch (_: Throwable) {
         ""
     }
 }
@@ -41,44 +40,51 @@ android {
         enable = true
     }
 
+    // =========================
+    // SIGNING CONFIG (FINAL FIX)
+    // =========================
     signingConfigs {
         create("release") {
-            val envKeystorePath = System.getenv("KEYSTORE_PATH")
-            storeFile = if (envKeystorePath != null) file(envKeystorePath) else file("keystore.jks")
-            
-            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "4253731"
-            keyAlias = System.getenv("ALIAS") ?: "mykey"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: "4253731"
+            storeFile = file("app/release.keystore")
+            storePassword = System.getenv("STORE_PASSWORD")
+            keyAlias = System.getenv("KEY_ALIAS")
+            keyPassword = System.getenv("KEY_PASSWORD")
         }
     }
 
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        // Identitas aplikasi AdiXtream
         applicationId = "com.cloudplay.app"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        
+
         versionCode = 74
         versionName = "1.6.0"
 
         resValue("string", "commit_hash", getGitCommitHash())
         resValue("bool", "is_prerelease", "false")
-        resValue("string", "app_name", "AdiXtream")
+        resValue("string", "app_name", "CloudPlay")
         resValue("color", "blackBoarder", "#FF000000")
 
         manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
 
-        val localProperties = gradleLocalProperties(rootDir, project.providers)
+        gradleLocalProperties(rootDir, project.providers)
 
         buildConfigField("long", "BUILD_DATE", "${System.currentTimeMillis()}")
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
-        
-        // Kunci API Simkl resmi milik AdiXtream
-        buildConfigField("String", "SIMKL_CLIENT_ID", "\"09709fcc5a0b5ee599bd9833f2dafa803d65fd30d28f44fc2fc532fe221b2be1\"")
-        buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"e7b4f88776e677cfd60f0a6269ce55b528c5a74f5f136b86f4094c066d9dd1bf\"")
-        
+
+        buildConfigField(
+            "String",
+            "SIMKL_CLIENT_ID",
+            "\"09709fcc5a0b5ee599bd9833f2dafa803d65fd30d28f44fc2fc532fe221b2be1\""
+        )
+        buildConfigField(
+            "String",
+            "SIMKL_CLIENT_SECRET",
+            "\"e7b4f88776e677cfd60f0a6269ce55b528c5a74f5f136b86f4094c066d9dd1bf\""
+        )
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -88,15 +94,21 @@ android {
             isDebuggable = false
             isMinifyEnabled = false
             isShrinkResources = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
         debug {
             isDebuggable = true
             applicationIdSuffix = ".debug"
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
-    
+
     flavorDimensions.add("state")
     productFlavors {
         create("stable") {
@@ -113,7 +125,9 @@ android {
 
     java {
         toolchain {
-            languageVersion.set(JavaLanguageVersion.of(libs.versions.jdkToolchain.get()))
+            languageVersion.set(
+                JavaLanguageVersion.of(libs.versions.jdkToolchain.get())
+            )
         }
     }
 
@@ -151,10 +165,8 @@ dependencies {
     implementation(libs.constraintlayout)
 
     implementation(libs.bundles.coil)
-
     implementation(libs.bundles.media3)
     implementation(libs.video)
-
     implementation(libs.bundles.nextlib)
 
     implementation(libs.colorpicker)
@@ -178,7 +190,6 @@ dependencies {
     implementation(libs.jackson.module.kotlin)
 
     implementation(libs.torrentserver)
-
     implementation(libs.work.runtime.ktx)
     implementation(libs.nicehttp)
 
@@ -186,7 +197,7 @@ dependencies {
         val isDebug = gradle.startParameter.taskRequests.any { task ->
             task.args.any { arg -> arg.contains("debug", true) }
         }
-        this.extra.set("isDebug", isDebug)
+        extra.set("isDebug", isDebug)
     })
 }
 
@@ -208,7 +219,7 @@ tasks.register<Copy>("copyJar") {
 
 tasks.register<Jar>("makeJar") {
     duplicatesStrategy = DuplicatesStrategy.FAIL
-    dependsOn(tasks.getByName("copyJar"))
+    dependsOn("copyJar")
     from(
         zipTree("build/app-classes/classes.jar"),
         zipTree("build/app-classes/library-jvm.jar")
