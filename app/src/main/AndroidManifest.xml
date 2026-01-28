@@ -21,8 +21,8 @@
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission"/>
 
     <!-- Features -->
-    <uses-feature android:name="android.software.leanback" android:required="false"/>
     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+    <uses-feature android:name="android.software.leanback" android:required="false"/>
 
     <application
         android:name=".CloudStreamApp"
@@ -40,6 +40,47 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:targetApi="${target_sdk_version}">
+
+        <!-- Google Cast -->
+        <meta-data
+            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
+            android:value="com.lagradost.cloudstream3.utils.CastOptionsProvider"/>
+
+        <profileable android:shell="true" tools:targetApi="q"/>
+
+        <!-- Downloaded Player Activity -->
+        <activity
+            android:name=".ui.player.DownloadedPlayerActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation"
+            android:exported="true"
+            android:resizeableActivity="true"
+            android:screenOrientation="userLandscape"
+            android:supportsPictureInPicture="true"
+            android:taskAffinity="com.lagradost.cloudstream3.downloadedplayer"
+            android:launchMode="singleTask">
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="content"/>
+                <data android:mimeType="video/*"/>
+            </intent-filter>
+
+            <intent-filter android:label="@string/play_with_app_name">
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="*/*"/>
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <action android:name="android.intent.action.SEND"/>
+                <action android:name="android.intent.action.OPEN_DOCUMENT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="magnet"/>
+            </intent-filter>
+        </activity>
 
         <!-- Main Activity -->
         <activity
@@ -95,36 +136,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Downloaded Player Activity -->
-        <activity
-            android:name=".ui.player.DownloadedPlayerActivity"
-            android:exported="true"
-            android:resizeableActivity="true"
-            android:supportsPictureInPicture="true"
-            android:launchMode="singleTask"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation">
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:scheme="content"/>
-                <data android:mimeType="video/*"/>
-            </intent-filter>
-
-            <intent-filter android:label="@string/play_with_app_name">
-                <action android:name="android.intent.action.SEND"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="*/*"/>
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="magnet"/>
-            </intent-filter>
-        </activity>
-
         <!-- Launcher Activity (TV + Phone) -->
         <activity
             android:name=".ui.account.AccountSelectActivity"
@@ -175,13 +186,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths"/>
         </provider>
-
-        <!-- Google Cast -->
-        <meta-data
-            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-            android:value="com.lagradost.cloudstream3.utils.CastOptionsProvider"/>
-
-        <profileable android:shell="true" tools:targetApi="q"/>
 
     </application>
 </manifest>
