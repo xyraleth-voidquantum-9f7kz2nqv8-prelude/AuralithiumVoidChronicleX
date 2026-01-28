@@ -34,11 +34,13 @@ android {
     defaultConfig {
         applicationId = "com.cloudplay.app"
         minSdk = 21
-        targetSdk = libs.versions.targetSdk.get().toInt()
+
+        val targetSdkInt = libs.versions.targetSdk.get().toInt()
+        targetSdk = targetSdkInt
+        manifestPlaceholders["target_sdk_version"] = targetSdkInt as Any
+
         versionCode = 74
         versionName = "1.6.0"
-
-        manifestPlaceholders["target_sdk_version"] = targetSdk
 
         resValue("string", "app_name", "PlayCloud")
         resValue("color", "blackBoarder", "#FF000000")
@@ -83,7 +85,6 @@ android {
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
-
         debug {
             isDebuggable = true
             isMinifyEnabled = false
@@ -112,7 +113,11 @@ android {
         toolchain { languageVersion.set(JavaLanguageVersion.of(libs.versions.jdkToolchain.get())) }
     }
 
-    lint { abortOnError = false; checkReleaseBuilds = false; disable.add("MissingTranslation") }
+    lint { 
+        abortOnError = false
+        checkReleaseBuilds = false
+        disable.add("MissingTranslation") 
+    }
 
     buildFeatures {
         viewBinding = true
