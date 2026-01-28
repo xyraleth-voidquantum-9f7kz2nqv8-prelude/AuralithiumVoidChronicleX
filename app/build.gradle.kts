@@ -32,23 +32,6 @@ fun getGitCommitHash(): String {
 }
 
 android {
-    @Suppress("UnstableApiUsage")
-    testOptions {
-        unitTests.isReturnDefaultValues = true
-    }
-
-    viewBinding { enable = true }
-
-    signingConfigs {
-        create("release") {
-            // ⚡ Fix keystore path: langsung di module app/
-            storeFile = file("$projectDir/release.keystore")
-            keyAlias = System.getenv("ALIAS") ?: "mykey"
-            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "4253731"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: "4253731"
-        }
-    }
-
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
@@ -61,15 +44,22 @@ android {
         resValue("string", "commit_hash", getGitCommitHash())
         resValue("bool", "is_prerelease", "false")
         resValue("string", "app_name", "PlayCloud")
-        resValue("color", "blackBoarder", "#FF000000")
-
-        manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
 
         buildConfigField("long", "BUILD_DATE", System.currentTimeMillis().toString())
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
         buildConfigField("String", "SIMKL_CLIENT_ID", "\"${System.getenv("SIMKL_CLIENT_ID") ?: ""}\"")
         buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"${System.getenv("SIMKL_CLIENT_SECRET") ?: ""}\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("app/release.keystore")
+            keyAlias = System.getenv("ALIAS") ?: "mykey"
+            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "4253731"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "4253731"
+        }
     }
 
     buildTypes {
@@ -78,12 +68,14 @@ android {
             isDebuggable = false
             isMinifyEnabled = false
             isShrinkResources = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
         debug {
             isDebuggable = true
             applicationIdSuffix = ".debug"
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
@@ -107,15 +99,16 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig = true
+        viewBinding = true
+        resValues = true
+    }
+
     lint {
         abortOnError = false
         checkReleaseBuilds = false
         disable.add("MissingTranslation")
-    }
-
-    buildFeatures {
-        buildConfig = true
-        resValues = true
     }
 
     namespace = "com.lagradost.cloudstream3"
@@ -174,33 +167,6 @@ dependencies {
         }
         this.extra.set("isDebug", isDebug)
     })
-}
-
-tasks.register<Jar>("androidSourcesJar") {
-    archiveClassifier.set("sources")
-    from(android.sourceSets.getByName("main").java.srcDirs)
-}
-
-tasks.register<Copy>("copyJar") {
-    dependsOn("build", ":library:jvmJar")
-    from(
-        "build/intermediates/compile_app_classes_jar/stableDebug/bundleStableDebugClassesToCompileJar",
-        "../library/build/libs"
-    )
-    into("build/app-classes")
-    include("classes.jar", "library-jvm*.jar")
-    rename("library-jvm.*.jar", "library-jvm.jar")
-}
-
-tasks.register<Jar>("makeJar") {
-    duplicatesStrategy = DuplicatesStrategy.FAIL
-    dependsOn(tasks.getByName("copyJar"))
-    from(
-        zipTree("build/app-classes/classes.jar"),
-        zipTree("build/app-classes/library-jvm.jar")
-    )
-    destinationDirectory.set(layout.buildDirectory)
-    archiveBaseName = "classes"
 }
 
 tasks.withType<KotlinJvmCompile> {
