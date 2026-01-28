@@ -6,10 +6,6 @@ on:
     branches:
       - main
 
-env:
-  VERSION_NAME: "1.6.0"          # Ganti versi APK di sini
-  RELEASE_TAG: "v1.6.0"          # Sama dengan tag GitHub release
-
 jobs:
   update-apk:
     runs-on: ubuntu-latest
@@ -39,9 +35,21 @@ jobs:
           mkdir -p app/build
           echo "${{ secrets.SIGNING_KEY }}" | base64 --decode > app/build/release.keystore
 
+      # 4.5️⃣ Debug keystore & env
+      - name: Debug keystore & env
+        run: |
+          echo "ALIAS=$ALIAS"
+          echo "KEY_STORE_PASSWORD=$KEY_STORE_PASSWORD"
+          echo "KEY_PASSWORD=$KEY_PASSWORD"
+          ls -lh app/build/release.keystore
+        env:
+          ALIAS: ${{ secrets.ALIAS }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
       # 5️⃣ Build Stable Release APK
       - name: Build Stable Release APK
-        run: ./gradlew assembleStableRelease --stacktrace
+        run: ./gradlew assembleStableRelease --stacktrace --info --warning-mode all
         env:
           ALIAS: ${{ secrets.ALIAS }}
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
@@ -71,17 +79,15 @@ jobs:
         with:
           github-token: ${{ secrets.GH_PAT }}
           script: |
-            const releaseTag = process.env.RELEASE_TAG;
+            const releaseTag = "v1.6.0"; // Target release tag
             const apkPath = "app/build/outputs/apk/stable/release/app-stable-release.apk";
 
-            // Ambil release berdasarkan tag
             const release = await github.rest.repos.getReleaseByTag({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag: releaseTag
             });
 
-            // Hapus APK lama jika ada
             for (const asset of release.data.assets) {
               if (asset.name.endsWith(".apk")) {
                 await github.rest.repos.deleteReleaseAsset({
@@ -104,4 +110,4 @@ jobs:
               data: fileContent
             });
 
-            console.log(`✅ APK berhasil diupdate di release ${releaseTag}!`);
+            console.log("✅ APK berhasil diupdate di release!");
