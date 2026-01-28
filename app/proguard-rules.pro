@@ -1,45 +1,40 @@
-# ===============================
-# Project-specific ProGuard rules
-# ===============================
+# =========================
+# Jangan crash karena missing Java SE classes
+# =========================
+-dontwarn java.beans.**
+-dontwarn javax.script.**
+-dontwarn org.mozilla.javascript.**
+-dontwarn com.fasterxml.jackson.databind.ext.**
 
-# Keep AndroidX classes
--keep class androidx.** { *; }
--dontwarn androidx.**
-
-# Keep Kotlin metadata (penting untuk reflection dan coroutines)
--keep class kotlin.Metadata { *; }
--keepclassmembers class kotlin.** { *; }
-
-# Keep ViewBinding classes
--keep class **Binding { *; }
-
-# Keep all classes used in your layout XML (custom views)
--keep class * extends android.view.View { *; }
-
-# Keep any classes annotated with @Keep
--keep @androidx.annotation.Keep class * { *; }
-
-# Keep all your main Activities, Fragments, ViewModels
--keep class com.lagradost.cloudstream3.** { *; }
-
-# Keep enums (jangan di-obfuscate)
--keepclassmembers enum * { *; }
-
-# Keep classes used by libraries that use reflection
--keep class com.google.gson.** { *; }
+# =========================
+# Keep library classes yang dipakai reflection / serialisasi
+# =========================
+-keep class org.mozilla.javascript.** { *; }
 -keep class com.fasterxml.jackson.** { *; }
--keep class kotlinx.coroutines.** { *; }
--keep class com.lagradost.cloudstream3.ui.** { *; }
+-keep class com.lagradost.** { *; }
 
-# Keep public methods of classes implementing Android interfaces (listener callbacks)
--keepclassmembers class * implements android.view.View$OnClickListener {
-    public void onClick(android.view.View);
-}
--keepclassmembers class * implements android.app.DialogInterface$OnClickListener {
-    public void onClick(android.content.DialogInterface, int);
+# =========================
+# Jackson: keep JsonProperty / JsonCreator
+-keepclassmembers class * {
+    @com.fasterxml.jackson.annotation.JsonProperty <fields>;
+    @com.fasterxml.jackson.annotation.JsonCreator <methods>;
 }
 
-# If you use JavaScript interfaces in WebView, uncomment and update:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#    public *;
-#}
+# =========================
+# Jangan hapus enum values (penting untuk serialize / switch)
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+# =========================
+# Keep semua Activities & Fragments (biar navigation aman)
+-keep class * extends androidx.appcompat.app.AppCompatActivity
+-keep class * extends androidx.fragment.app.Fragment
+-keepclassmembers class * extends androidx.fragment.app.Fragment {
+    <init>();
+}
+
+# =========================
+# Keep annotations biar runtime reflection & serialization aman
+-keepattributes *Annotation*
