@@ -22,15 +22,14 @@
 -keep class app.cash.quickjs.** { *; }
 
 ####################################
-# ACAK KODE APP (TAPI JANGAN DIHAPUS)
+# KODE APP KAMU (INTI)
 ####################################
+# ✔ nama class tetap
 -keep class com.lagradost.cloudstream3.** { *; }
--keep class com.cloudplay.app.** { *; }
--allowobfuscation class com.lagradost.cloudstream3.**
--allowobfuscation class com.cloudplay.app.**
+-keepnames class com.lagradost.cloudstream3.**
 
 ####################################
-# Activity & Fragment (WAJIB LENGKAP)
+# Activity & Fragment
 ####################################
 -keep class * extends android.app.Activity { *; }
 -keep class * extends androidx.appcompat.app.AppCompatActivity { *; }
