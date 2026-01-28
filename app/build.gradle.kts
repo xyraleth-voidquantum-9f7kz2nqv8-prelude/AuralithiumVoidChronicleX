@@ -13,19 +13,24 @@ plugins {
 
 val javaTarget = JvmTarget.fromTarget(libs.versions.jvmTarget.get())
 
+// =========================
+// FIXED: Kotlin try/catch
+// =========================
 fun getGitCommitHash(): String {
     return try {
         val headFile = file("${project.rootDir}/.git/HEAD")
-        if (headFile.exists()) {
+        val hash = if (headFile.exists()) {
             val headContent = headFile.readText().trim()
             if (headContent.startsWith("ref:")) {
                 val refPath = headContent.substring(5).trim()
                 val commitFile = file("${project.rootDir}/.git/$refPath")
                 if (commitFile.exists()) commitFile.readText().trim() else ""
-            } else headContent
+            } else {
+                headContent
+            }
         } else ""
-    }.take(7)
-    catch (_: Throwable) {
+        hash.take(7)
+    } catch (_: Throwable) {
         ""
     }
 }
@@ -36,12 +41,10 @@ android {
         unitTests.isReturnDefaultValues = true
     }
 
-    viewBinding {
-        enable = true
-    }
+    viewBinding { enable = true }
 
     // =========================
-    // SIGNING CONFIG (FINAL FIX)
+    // SIGNING CONFIG (GITHUB ACTIONS)
     // =========================
     signingConfigs {
         create("release") {
@@ -228,7 +231,7 @@ tasks.register<Jar>("makeJar") {
     archiveBaseName = "classes"
 }
 
-tasks.withType<KotlinJvmCompile> {
+tasks.withType<KotlinJvmCompile>().configureEach {
     compilerOptions {
         jvmTarget.set(javaTarget)
         jvmDefault.set(JvmDefaultMode.ENABLE)
