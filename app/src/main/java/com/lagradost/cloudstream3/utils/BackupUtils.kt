@@ -20,6 +20,7 @@ import com.lagradost.cloudstream3.utils.DataStore.getSharedPrefs
 import com.lagradost.cloudstream3.utils.DataStore.mapper
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.Coroutines.main
+import com.lagradost.safefile.SafeFile
 
 object BackupUtils {
 
@@ -140,6 +141,10 @@ object BackupUtils {
         // Tidak melakukan apa-apa
         return@ioSafe
     }
+
+    /** Stub functions supaya SettingsUpdates.kt compile */
+    fun getDefaultBackupDir(context: Context?): SafeFile? = null
+    fun getCurrentBackupDir(context: Context?): Pair<SafeFile?, String?> = null to null
 
     /** Restore file selector tetap jalan */
     fun FragmentActivity.setUpBackup() {
