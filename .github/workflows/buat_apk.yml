@@ -35,21 +35,10 @@ jobs:
           mkdir -p app/build
           echo "${{ secrets.SIGNING_KEY }}" | base64 --decode > app/build/release.keystore
 
-      # 4.5️⃣ Debug keystore & env
-      - name: Debug keystore & env
-        run: |
-          echo "ALIAS=$ALIAS"
-          echo "KEY_STORE_PASSWORD=$KEY_STORE_PASSWORD"
-          echo "KEY_PASSWORD=$KEY_PASSWORD"
-          ls -lh app/build/release.keystore
-        env:
-          ALIAS: ${{ secrets.ALIAS }}
-          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-
-      # 5️⃣ Build Stable Release APK
+      # 5️⃣ Build Stable Release APK dengan logging penuh
       - name: Build Stable Release APK
-        run: ./gradlew assembleStableRelease --stacktrace --info --warning-mode all
+        run: |
+          ./gradlew assembleStableRelease --stacktrace --info --warning-mode all | tee build.log
         env:
           ALIAS: ${{ secrets.ALIAS }}
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
@@ -88,6 +77,7 @@ jobs:
               tag: releaseTag
             });
 
+            // Hapus APK lama jika ada
             for (const asset of release.data.assets) {
               if (asset.name.endsWith(".apk")) {
                 await github.rest.repos.deleteReleaseAsset({
@@ -111,3 +101,10 @@ jobs:
             });
 
             console.log("✅ APK berhasil diupdate di release!");
+
+      # 9️⃣ Upload build.log sebagai artifact (opsional, buat debugging)
+      - name: Upload build log
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-log
+          path: build.log
