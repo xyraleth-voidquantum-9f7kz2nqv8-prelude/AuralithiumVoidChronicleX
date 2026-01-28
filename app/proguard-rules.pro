@@ -1,21 +1,48 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.kts.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+####################################
+# NAMA CLASS TETAP
+####################################
+-keepnames class com.lagradost.cloudstream3.**
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+####################################
+# R8 MODE AGRESIF
+####################################
+-allowaccessmodification
+-overloadaggressively
+-repackageclasses ''
+-adaptclassstrings
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+####################################
+# BIAR LAMBDA JADI $r8$lambda$
+####################################
+-keepattributes InnerClasses,EnclosingMethod
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+####################################
+# ACTIVITY / FRAGMENT (CUMA CONSTRUCTOR)
+####################################
+-keepclassmembers class * extends android.app.Activity { <init>(...); }
+-keepclassmembers class * extends androidx.appcompat.app.AppCompatActivity { <init>(...); }
+-keepclassmembers class * extends androidx.fragment.app.Fragment { <init>(...); }
+
+####################################
+# KOTLIN & ANNOTATION
+####################################
+-keep class kotlin.Metadata { *; }
+-keepattributes *Annotation*
+
+####################################
+# JANGAN DIHAPUS, supaya dex tetap 6
+####################################
+-keep class android.** { *; }
+-keep class androidx.** { *; }
+-keep class com.** { *; }
+-keep class kotlin.** { *; }
+-keep class kotlinx.** { *; }
+-keep class org.** { *; }
+-keep class io.github.** { *; }
+-keep class okhttp3.** { *; }
+-keep class retrofit2.** { *; }
+
+####################################
+# BIAR R8 DIEM
+####################################
+-dontwarn **
