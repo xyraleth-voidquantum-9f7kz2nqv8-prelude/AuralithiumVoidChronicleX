@@ -37,10 +37,11 @@
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="blackText">#000000</color>
+    <color name="blackBoarder">#000000</color> <!-- TAMBAHKAN INI -->
 
     <!-- ================== PROGRESS (GARIS VIDEO FIX) ================== -->
     <color name="progressBackgroundColor">#1AFFFFFF</color>
-    <color name="videoProgress">#66B5B5B5</color> <!-- TIDAK UNGU -->
+    <color name="videoProgress">#66B5B5B5</color>
 
     <!-- ================== AMOLED ================== -->
     <color name="amoledModeLight">#121213</color>
