@@ -41,7 +41,8 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("app/build/release.keystore")
+            // ⚡ Fix keystore path: langsung di module app/
+            storeFile = file("$projectDir/release.keystore")
             keyAlias = System.getenv("ALIAS") ?: "mykey"
             storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "4253731"
             keyPassword = System.getenv("KEY_PASSWORD") ?: "4253731"
