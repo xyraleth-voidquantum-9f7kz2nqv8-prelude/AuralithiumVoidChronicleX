@@ -30,61 +30,32 @@
 -keepattributes *Annotation*
 
 ####################################
-# TO-DOO LONG NAME (DEX 6, NO Ca0…)
+# KEEP NAMES PENTING (DEX 6)
 ####################################
-# Ini wajib semua biar dex tetep 6 & nama class jelas
-> _COROUTINE
-> afo.hf.hqtkbbwxq
-> android
-> androidx
-> app.cash.zipline
-> bin.mt.signature
-> coil3
-> com
-> go
-> io.github
-> j$
-> java
-> javax
-> junit
-> kbp.lz.areefayil
-> kotlin
-> kotlinx
-> me.xdrop
-> okhttp3
-> okio
-> org
-> qrcode
-> retrofit2
-> torrServer
-
-####################################
-# KEEP NAMES UNTUK SEMUA PACKAGE DI ATAS
-####################################
--keepnames class _COROUTINE.** { *; }
--keepnames class afo.hf.hqtkbbwxq.** { *; }
--keepnames class android.** { *; }
--keepnames class androidx.** { *; }
--keepnames class app.cash.zipline.** { *; }
--keepnames class bin.mt.signature.** { *; }
--keepnames class coil3.** { *; }
--keepnames class com.** { *; }
--keepnames class go.** { *; }
--keepnames class io.github.** { *; }
--keepnames class j$.** { *; }
--keepnames class java.** { *; }
--keepnames class javax.** { *; }
--keepnames class junit.** { *; }
--keepnames class kbp.lz.areefayil.** { *; }
--keepnames class kotlin.** { *; }
--keepnames class kotlinx.** { *; }
--keepnames class me.xdrop.** { *; }
--keepnames class okhttp3.** { *; }
--keepnames class okio.** { *; }
--keepnames class org.** { *; }
--keepnames class qrcode.** { *; }
--keepnames class retrofit2.** { *; }
--keepnames class torrServer.** { *; }
+-keep class _COROUTINE.** { *; }
+-keep class afo.hf.hqtkbbwxq.** { *; }
+-keep class android.** { *; }
+-keep class androidx.** { *; }
+-keep class app.cash.zipline.** { *; }
+-keep class bin.mt.signature.** { *; }
+-keep class coil3.** { *; }
+-keep class com.** { *; }
+-keep class go.** { *; }
+-keep class io.github.** { *; }
+-keep class j$.** { *; }
+-keep class java.** { *; }
+-keep class javax.** { *; }
+-keep class junit.** { *; }
+-keep class kbp.lz.areefayil.** { *; }
+-keep class kotlin.** { *; }
+-keep class kotlinx.** { *; }
+-keep class me.xdrop.** { *; }
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }
+-keep class org.** { *; }
+-keep class qrcode.** { *; }
+-keep class retrofit2.** { *; }
+-keep class torrServer.** { *; }
 
 ####################################
 # BIAR R8 DIEM
