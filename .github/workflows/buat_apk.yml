@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+env:
+  VERSION_NAME: "1.6.0"          # Ganti versi APK di sini
+  RELEASE_TAG: "v1.6.0"          # Sama dengan tag GitHub release
+
 jobs:
   update-apk:
     runs-on: ubuntu-latest
@@ -67,7 +71,7 @@ jobs:
         with:
           github-token: ${{ secrets.GH_PAT }}
           script: |
-            const releaseTag = "v1.6.0"; // Target release tag
+            const releaseTag = process.env.RELEASE_TAG;
             const apkPath = "app/build/outputs/apk/stable/release/app-stable-release.apk";
 
             // Ambil release berdasarkan tag
@@ -100,4 +104,4 @@ jobs:
               data: fileContent
             });
 
-            console.log("✅ APK berhasil diupdate di release!");
+            console.log(`✅ APK berhasil diupdate di release ${releaseTag}!`);
