@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import org.jetbrains.dokka.gradle.engine.parameters.KotlinPlatform
 import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
@@ -32,16 +33,18 @@ android {
 
     defaultConfig {
         applicationId = "com.cloudplay.app"
-        minSdk = 24       // Android 7+ (Nougat)
-        val targetSdkInt = libs.versions.targetSdk.get().toInt()
-        targetSdk = targetSdkInt
-        manifestPlaceholders["target_sdk_version"] = targetSdkInt
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
 
         versionCode = 74
         versionName = "1.6.0"
 
+        resValue("string", "commit_hash", getGitCommitHash())
+        resValue("bool", "is_prerelease", "false")
         resValue("string", "app_name", "PlayCloud")
         resValue("color", "blackBoarder", "#FF000000")
+
+        manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
 
         buildConfigField("long", "BUILD_DATE", System.currentTimeMillis().toString())
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
