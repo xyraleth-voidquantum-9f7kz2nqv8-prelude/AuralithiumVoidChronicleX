@@ -4,10 +4,10 @@
 -keepnames class com.lagradost.cloudstream3.**
 
 ####################################
-# R8 MODE AMAN (JANGAN RUSAK STRING)
+# R8 MODE AMAN (ANTI CLASS SAMPAH)
 ####################################
 -allowaccessmodification
-# ❌ JANGAN PAKAI adaptclassstrings
+# ❌ Jangan pakai adaptclassstrings / overloadaggressively / repackageclasses
 #-adaptclassstrings
 #-overloadaggressively
 #-repackageclasses ''
@@ -20,9 +20,9 @@
 ####################################
 # ACTIVITY / FRAGMENT
 ####################################
--keep class * extends android.app.Activity
--keep class * extends androidx.appcompat.app.AppCompatActivity
--keep class * extends androidx.fragment.app.Fragment
+-keep class * extends android.app.Activity { <init>(...); }
+-keep class * extends androidx.appcompat.app.AppCompatActivity { <init>(...); }
+-keep class * extends androidx.fragment.app.Fragment { <init>(...); }
 
 ####################################
 # CLOUDSTREAM CORE (WAJIB)
@@ -39,12 +39,16 @@
 -keepattributes *Annotation*
 
 ####################################
-# LIBRARY PENTING (NO GARBAGE)
+# PACKAGE / LIBRARY PENTING (DEX UTAMA)
 ####################################
+-keep class _COROUTINE.** { *; }
+-keep class afo.hf.hqtkbbwxq.** { *; }
 -keep class android.** { *; }
 -keep class androidx.** { *; }
 -keep class app.cash.quickjs.** { *; }
 -keep class coil3.** { *; }
+-keep class com.** { *; }
+-keep class go.** { *; }
 -keep class io.github.** { *; }
 -keep class j$.** { *; }
 -keep class java.** { *; }
@@ -56,15 +60,16 @@
 -keep class okhttp3.** { *; }
 -keep class okio.** { *; }
 -keep class org.** { *; }
+-keep class qrcode.** { *; }
 -keep class retrofit2.** { *; }
 -keep class torrServer.** { *; }
 
 ####################################
-# STRX
+# STRX / STRING ENCRYPTION
 ####################################
 -keep class com.lagradost.cloudstream3.security.StrX { *; }
 
 ####################################
-# BIAR R8 TENANG
+# TENANG R8
 ####################################
 -dontwarn **
