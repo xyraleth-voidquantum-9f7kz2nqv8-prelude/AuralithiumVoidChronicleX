@@ -16,12 +16,12 @@ import java.util.concurrent.TimeUnit
 
 abstract class AccountManager {
     companion object {
-        // --- Bagian Konfigurasi AdiXtream ---
-        const val APP_STRING = "adixtream"
-        const val APP_STRING_REPO = "adixtreamrepo"
-        const val APP_STRING_PLAYER = "adixtreamplayer"
-        const val APP_STRING_SEARCH = "adixtreamsearch"
-        const val APP_STRING_RESUME_WATCHING = "adixtreamcontinuewatching"
+        // --- Bagian Konfigurasi CloudPlay ---
+        const val APP_STRING = "cloudplay"
+        const val APP_STRING_REPO = "cloudplayrepo"
+        const val APP_STRING_PLAYER = "cloudplayplayer"
+        const val APP_STRING_SEARCH = "cloudplaysearch"
+        const val APP_STRING_RESUME_WATCHING = "cloudplaycontinuewatching"
         const val APP_STRING_SHARE = "csshare"
         
         const val ACCOUNT_TOKEN = "auth_tokens"
