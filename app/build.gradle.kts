@@ -23,21 +23,30 @@ fun getGitCommitHash(): String {
                 val commitFile = file("${project.rootDir}/.git/$refPath")
                 if (commitFile.exists()) commitFile.readText().trim() else ""
             } else headContent
-        } else {
-            ""
-        }.take(7)
+        } else ""
     } catch (_: Throwable) {
         ""
-    }
+    }.take(7)
 }
 
 android {
+
+    @Suppress("UnstableApiUsage")
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
+    viewBinding {
+        enable = true
+    }
+
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "com.cloudplay.app"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
+
         versionCode = 74
         versionName = "1.6.0"
 
@@ -45,22 +54,19 @@ android {
         resValue("bool", "is_prerelease", "false")
         resValue("string", "app_name", "PlayCloud")
 
-        manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get() as Any
-
-        buildConfigField("long", "BUILD_DATE", System.currentTimeMillis().toString())
+        buildConfigField("long", "BUILD_DATE", "${System.currentTimeMillis()}")
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
-        buildConfigField("String", "SIMKL_CLIENT_ID", "\"${System.getenv("SIMKL_CLIENT_ID") ?: ""}\"")
-        buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"${System.getenv("SIMKL_CLIENT_SECRET") ?: ""}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
         create("release") {
-            storeFile = rootProject.file("app/release.keystore")
-            keyAlias = System.getenv("ALIAS") ?: "mykey"
-            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "4253731"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: "4253731"
+            // FIXED KEYSTORE (AMAN ANDROID 15+)
+            storeFile = file("app/release.keystore")
+            storePassword = "4253731"
+            keyAlias = "mykey"
+            keyPassword = "4253731"
         }
     }
 
@@ -101,16 +107,16 @@ android {
         }
     }
 
-    buildFeatures {
-        buildConfig = true
-        viewBinding = true
-        resValues = true
-    }
-
     lint {
         abortOnError = false
         checkReleaseBuilds = false
         disable.add("MissingTranslation")
+    }
+
+    buildFeatures {
+        buildConfig = true
+        resValues = true
+        viewBinding = true
     }
 
     namespace = "com.lagradost.cloudstream3"
@@ -120,7 +126,6 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.json)
     androidTestImplementation(libs.core)
-    implementation(libs.junit.ktx)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
@@ -185,7 +190,10 @@ dokka {
     dokkaSourceSets {
         main {
             analysisPlatform = KotlinPlatform.JVM
-            documentedVisibilities(VisibilityModifier.Public, VisibilityModifier.Protected)
+            documentedVisibilities(
+                VisibilityModifier.Public,
+                VisibilityModifier.Protected
+            )
             sourceLink {
                 localDirectory = file("..")
                 remoteUrl("https://github.com/michat88/AdiXtream/tree/master")
