@@ -36,12 +36,10 @@ jobs:
           keytool -list -v \
             -keystore app/release.keystore \
             -alias $ALIAS \
-            -storepass $KEY_STORE_PASSWORD \
-            -keypass $KEY_PASSWORD
+            -storepass $KEY_STORE_PASSWORD
         env:
           ALIAS: ${{ secrets.ALIAS }}
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         shell: bash
 
       - name: Build Stable Release APK
@@ -49,7 +47,6 @@ jobs:
         env:
           ALIAS: ${{ secrets.ALIAS }}
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           SIMKL_CLIENT_ID: ${{ secrets.SIMKL_CLIENT_ID }}
           SIMKL_CLIENT_SECRET: ${{ secrets.SIMKL_CLIENT_SECRET }}
         shell: bash
@@ -58,8 +55,7 @@ jobs:
         run: |
           mkdir -p app/build/outputs/apk/stable/release
           apk=$(find app/build/outputs/apk/stable -type f -name "*release*.apk" | head -n 1)
-          rm -f app/build/outputs/apk/stable/release/app-stable-release.apk
-          cp "$apk" app/build/outputs/apk/stable/release/app-stable-release.apk
+          cp -f "$apk" app/build/outputs/apk/stable/release/app-stable-release.apk
         shell: bash
 
       - name: Upload APK to release
