@@ -45,15 +45,14 @@ android {
         resValue("bool", "is_prerelease", "false")
         resValue("string", "app_name", "PlayCloud")
 
+        manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get() as Any
+
         buildConfigField("long", "BUILD_DATE", System.currentTimeMillis().toString())
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
         buildConfigField("String", "SIMKL_CLIENT_ID", "\"${System.getenv("SIMKL_CLIENT_ID") ?: ""}\"")
         buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"${System.getenv("SIMKL_CLIENT_SECRET") ?: ""}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        // ⚡ Fix manifest placeholder untuk targetSdk
-        manifestPlaceholders["target_sdk_version"] = targetSdk
     }
 
     signingConfigs {
