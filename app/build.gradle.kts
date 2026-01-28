@@ -18,11 +18,11 @@ fun getGitCommitHash(): String {
     return try {
         val headFile = file("${project.rootDir}/.git/HEAD")
         if (!headFile.exists()) return ""
-        val head = headFile.readText().trim()
-        if (head.startsWith("ref:")) {
-            val ref = head.substringAfter("ref:").trim()
-            file("${project.rootDir}/.git/$ref").readText().trim()
-        } else head
+        val headContent = headFile.readText().trim()
+        if (headContent.startsWith("ref:")) {
+            val refPath = headContent.substringAfter("ref:").trim()
+            file("${project.rootDir}/.git/$refPath").takeIf { it.exists() }?.readText()?.trim() ?: ""
+        } else headContent
     } catch (_: Throwable) {
         ""
     }.take(7)
@@ -33,31 +33,20 @@ android {
 
     defaultConfig {
         applicationId = "com.cloudplay.app"
-        minSdk = libs.versions.minSdk.get().toInt()
+        minSdk = 21
         targetSdk = libs.versions.targetSdk.get().toInt()
-
         versionCode = 74
         versionName = "1.6.0"
 
-        manifestPlaceholders["target_sdk_version"] = targetSdk as Any
+        manifestPlaceholders["target_sdk_version"] = targetSdk
 
         resValue("string", "app_name", "PlayCloud")
         resValue("color", "blackBoarder", "#FF000000")
-        resValue("string", "commit_hash", getGitCommitHash())
 
         buildConfigField("long", "BUILD_DATE", System.currentTimeMillis().toString())
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
-
-        buildConfigField(
-            "String",
-            "SIMKL_CLIENT_ID",
-            "\"${System.getenv("SIMKL_CLIENT_ID") ?: ""}\""
-        )
-        buildConfigField(
-            "String",
-            "SIMKL_CLIENT_SECRET",
-            "\"${System.getenv("SIMKL_CLIENT_SECRET") ?: ""}\""
-        )
+        buildConfigField("String", "SIMKL_CLIENT_ID", "\"${System.getenv("SIMKL_CLIENT_ID") ?: ""}\"")
+        buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"${System.getenv("SIMKL_CLIENT_SECRET") ?: ""}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -66,48 +55,51 @@ android {
         abi {
             isEnable = true
             reset()
-            include("armeabi-v7a", "arm64-v8a")
+            include("arm64-v8a", "armeabi-v7a")
             isUniversalApk = true
         }
     }
 
     signingConfigs {
         create("release") {
-            val base64Key = System.getenv("SIGNING_KEY") ?: return@create
-            val file = layout.buildDirectory.file("release.jks").get().asFile
-
-            if (!file.exists()) {
-                file.parentFile.mkdirs()
-                file.writeBytes(Base64.getDecoder().decode(base64Key))
+            val signingKeyBase64 = System.getenv("SIGNING_KEY") ?: error("SIGNING_KEY missing")
+            val keystoreFile = layout.buildDirectory.file("release.keystore").get().asFile
+            if (!keystoreFile.exists()) {
+                keystoreFile.parentFile.mkdirs()
+                keystoreFile.writeBytes(Base64.getDecoder().decode(signingKeyBase64))
             }
-
-            storeFile = file
-            storePassword = System.getenv("KEY_STORE_PASSWORD")
+            storeFile = keystoreFile
             keyAlias = System.getenv("ALIAS")
+            storePassword = System.getenv("KEY_STORE_PASSWORD")
             keyPassword = System.getenv("KEY_PASSWORD")
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            isDebuggable = false
             isMinifyEnabled = false
             isShrinkResources = false
-            isDebuggable = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            signingConfig = signingConfigs.getByName("release")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
 
         debug {
             isDebuggable = true
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 
     flavorDimensions += "state"
     productFlavors {
         create("stable") { dimension = "state" }
+        create("prerelease") {
+            dimension = "state"
+            signingConfig = signingConfigs.getByName("release")
+            versionNameSuffix = "-PRE"
+            versionCode = (System.currentTimeMillis() / 60000).toInt()
+        }
     }
 
     compileOptions {
@@ -117,10 +109,10 @@ android {
     }
 
     java {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(libs.versions.jdkToolchain.get()))
-        }
+        toolchain { languageVersion.set(JavaLanguageVersion.of(libs.versions.jdkToolchain.get())) }
     }
+
+    lint { abortOnError = false; checkReleaseBuilds = false; disable.add("MissingTranslation") }
 
     buildFeatures {
         viewBinding = true
@@ -128,46 +120,51 @@ android {
         resValues = true
     }
 
-    lint {
-        abortOnError = false
-        checkReleaseBuilds = false
-        disable.add("MissingTranslation")
-    }
-
     namespace = "com.lagradost.cloudstream3"
 }
 
 dependencies {
-    implementation(libs.core.ktx)
-    implementation(libs.appcompat)
-    implementation(libs.activity.ktx)
-    implementation(libs.fragment.ktx)
-    implementation(libs.material)
-    implementation(libs.constraintlayout)
+    testImplementation(libs.junit)
+    testImplementation(libs.json)
+    androidTestImplementation(libs.core)
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
 
+    implementation(libs.core.ktx)
+    implementation(libs.activity.ktx)
+    implementation(libs.appcompat)
+    implementation(libs.fragment.ktx)
     implementation(libs.bundles.lifecycle)
     implementation(libs.bundles.navigation)
+    implementation(libs.preference.ktx)
+    implementation(libs.material)
+    implementation(libs.constraintlayout)
     implementation(libs.bundles.coil)
     implementation(libs.bundles.media3)
-
-    implementation(libs.preference.ktx)
     implementation(libs.video)
     implementation(libs.bundles.nextlib)
-
+    implementation(libs.colorpicker)
+    implementation(libs.newpipeextractor)
+    implementation(libs.juniversalchardet)
+    implementation(libs.shimmer)
+    implementation(libs.palette.ktx)
+    implementation(libs.tvprovider)
+    implementation(libs.overlappingpanels)
+    implementation(libs.biometric)
+    implementation(libs.previewseekbar.media3)
+    implementation(libs.qrcode.kotlin)
     implementation(libs.jsoup)
     implementation(libs.rhino)
     implementation(libs.quickjs)
-    implementation(libs.work.runtime.ktx)
-    implementation(libs.biometric)
-    implementation(libs.previewseekbar.media3)
-
+    implementation(libs.fuzzywuzzy)
+    implementation(libs.safefile)
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
-
     implementation(libs.conscrypt.android)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.torrentserver)
+    implementation(libs.work.runtime.ktx)
     implementation(libs.nicehttp)
-
+    implementation("io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:6.0.7")
     implementation(project(":library"))
 }
 
@@ -176,5 +173,16 @@ tasks.withType<KotlinJvmCompile> {
         jvmTarget.set(javaTarget)
         jvmDefault.set(JvmDefaultMode.ENABLE)
         optIn.add("com.lagradost.cloudstream3.Prerelease")
+        freeCompilerArgs.add("-Xannotation-default-target=param-property")
+    }
+}
+
+dokka {
+    moduleName = "App"
+    dokkaSourceSets {
+        main {
+            analysisPlatform = KotlinPlatform.JVM
+            documentedVisibilities(VisibilityModifier.Public, VisibilityModifier.Protected)
+        }
     }
 }
