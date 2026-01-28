@@ -235,3 +235,4 @@ captures/
 *.log
 *.tmp
 *.jks.old
+app/build/release.keystore
