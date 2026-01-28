@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import org.jetbrains.dokka.gradle.engine.parameters.KotlinPlatform
 import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
@@ -17,11 +18,11 @@ fun getGitCommitHash(): String {
     return try {
         val headFile = file("${project.rootDir}/.git/HEAD")
         if (!headFile.exists()) return ""
-        val headContent = headFile.readText().trim()
-        if (headContent.startsWith("ref:")) {
-            val refPath = headContent.substringAfter("ref:").trim()
-            file("${project.rootDir}/.git/$refPath").takeIf { it.exists() }?.readText()?.trim() ?: ""
-        } else headContent
+        val head = headFile.readText().trim()
+        if (head.startsWith("ref:")) {
+            val ref = head.substringAfter("ref:").trim()
+            file("${project.rootDir}/.git/$ref").readText().trim()
+        } else head
     } catch (_: Throwable) {
         ""
     }.take(7)
@@ -38,11 +39,11 @@ android {
         versionCode = 74
         versionName = "1.6.0"
 
-        manifestPlaceholders["target_sdk_version"] =
-            libs.versions.targetSdk.get().toInt() as Any
+        manifestPlaceholders["target_sdk_version"] = targetSdk as Any
 
         resValue("string", "app_name", "PlayCloud")
         resValue("color", "blackBoarder", "#FF000000")
+        resValue("string", "commit_hash", getGitCommitHash())
 
         buildConfigField("long", "BUILD_DATE", System.currentTimeMillis().toString())
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
@@ -65,41 +66,34 @@ android {
         abi {
             isEnable = true
             reset()
-            include("arm64-v8a", "armeabi-v7a")
+            include("armeabi-v7a", "arm64-v8a")
             isUniversalApk = true
         }
     }
 
     signingConfigs {
         create("release") {
-            val signingKeyBase64 = System.getenv("SIGNING_KEY")
-                ?: error("SIGNING_KEY missing")
+            val base64Key = System.getenv("SIGNING_KEY") ?: return@create
+            val file = layout.buildDirectory.file("release.jks").get().asFile
 
-            val keystoreFile = layout.buildDirectory
-                .file("release.keystore")
-                .get()
-                .asFile
-
-            if (!keystoreFile.exists()) {
-                keystoreFile.parentFile.mkdirs()
-                keystoreFile.writeBytes(
-                    Base64.getDecoder().decode(signingKeyBase64)
-                )
+            if (!file.exists()) {
+                file.parentFile.mkdirs()
+                file.writeBytes(Base64.getDecoder().decode(base64Key))
             }
 
-            storeFile = keystoreFile
-            keyAlias = System.getenv("ALIAS")
+            storeFile = file
             storePassword = System.getenv("KEY_STORE_PASSWORD")
+            keyAlias = System.getenv("ALIAS")
             keyPassword = System.getenv("KEY_PASSWORD")
         }
     }
 
     buildTypes {
         release {
-            isDebuggable = false
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             isShrinkResources = false
-            signingConfig = signingConfigs.getByName("release")
+            isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -108,22 +102,12 @@ android {
 
         debug {
             isDebuggable = true
-            isMinifyEnabled = false
-            isShrinkResources = false
         }
     }
 
     flavorDimensions += "state"
     productFlavors {
-        create("stable") {
-            dimension = "state"
-        }
-        create("prerelease") {
-            dimension = "state"
-            signingConfig = signingConfigs.getByName("release")
-            versionNameSuffix = "-PRE"
-            versionCode = (System.currentTimeMillis() / 60000).toInt()
-        }
+        create("stable") { dimension = "state" }
     }
 
     compileOptions {
@@ -134,16 +118,8 @@ android {
 
     java {
         toolchain {
-            languageVersion.set(
-                JavaLanguageVersion.of(libs.versions.jdkToolchain.get())
-            )
+            languageVersion.set(JavaLanguageVersion.of(libs.versions.jdkToolchain.get()))
         }
-    }
-
-    lint {
-        abortOnError = false
-        checkReleaseBuilds = false
-        disable.add("MissingTranslation")
     }
 
     buildFeatures {
@@ -152,57 +128,45 @@ android {
         resValues = true
     }
 
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+        disable.add("MissingTranslation")
+    }
+
     namespace = "com.lagradost.cloudstream3"
 }
 
 dependencies {
-    testImplementation(libs.junit)
-    testImplementation(libs.json)
-    androidTestImplementation(libs.core)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
-
     implementation(libs.core.ktx)
-    implementation(libs.activity.ktx)
     implementation(libs.appcompat)
+    implementation(libs.activity.ktx)
     implementation(libs.fragment.ktx)
-
-    implementation(libs.bundles.lifecycle)
-    implementation(libs.bundles.navigation)
-    implementation(libs.preference.ktx)
     implementation(libs.material)
     implementation(libs.constraintlayout)
 
+    implementation(libs.bundles.lifecycle)
+    implementation(libs.bundles.navigation)
     implementation(libs.bundles.coil)
     implementation(libs.bundles.media3)
+
+    implementation(libs.preference.ktx)
     implementation(libs.video)
     implementation(libs.bundles.nextlib)
 
-    implementation(libs.colorpicker)
-    implementation(libs.newpipeextractor)
-    implementation(libs.juniversalchardet)
-    implementation(libs.shimmer)
-    implementation(libs.palette.ktx)
-    implementation(libs.tvprovider)
-    implementation(libs.overlappingpanels)
-    implementation(libs.biometric)
-    implementation(libs.previewseekbar.media3)
-    implementation(libs.qrcode.kotlin)
     implementation(libs.jsoup)
     implementation(libs.rhino)
     implementation(libs.quickjs)
-    implementation(libs.fuzzywuzzy)
-    implementation(libs.safefile)
+    implementation(libs.work.runtime.ktx)
+    implementation(libs.biometric)
+    implementation(libs.previewseekbar.media3)
 
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 
     implementation(libs.conscrypt.android)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.torrentserver)
-    implementation(libs.work.runtime.ktx)
     implementation(libs.nicehttp)
-
-    implementation("io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:6.0.7")
 
     implementation(project(":library"))
 }
@@ -212,19 +176,5 @@ tasks.withType<KotlinJvmCompile> {
         jvmTarget.set(javaTarget)
         jvmDefault.set(JvmDefaultMode.ENABLE)
         optIn.add("com.lagradost.cloudstream3.Prerelease")
-        freeCompilerArgs.add("-Xannotation-default-target=param-property")
-    }
-}
-
-dokka {
-    moduleName = "App"
-    dokkaSourceSets {
-        main {
-            analysisPlatform = KotlinPlatform.JVM
-            documentedVisibilities(
-                VisibilityModifier.Public,
-                VisibilityModifier.Protected
-            )
-        }
     }
 }
