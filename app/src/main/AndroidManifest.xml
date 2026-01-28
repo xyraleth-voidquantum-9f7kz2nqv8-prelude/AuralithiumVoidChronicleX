@@ -41,7 +41,7 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="${target_sdk_version}">
 
-        <!-- Main Activities -->
+        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -50,7 +50,7 @@
             android:supportsPictureInPicture="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode">
 
-            <!-- Schemes for deep links -->
+            <!-- Custom schemes -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -95,7 +95,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Downloaded Player -->
+        <!-- Downloaded Player Activity -->
         <activity
             android:name=".ui.player.DownloadedPlayerActivity"
             android:exported="true"
@@ -103,17 +103,20 @@
             android:supportsPictureInPicture="true"
             android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation">
+
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:scheme="content"/>
                 <data android:mimeType="video/*"/>
             </intent-filter>
+
             <intent-filter android:label="@string/play_with_app_name">
                 <action android:name="android.intent.action.SEND"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="*/*"/>
             </intent-filter>
+
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -122,7 +125,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Launcher Activity TV/HP -->
+        <!-- Launcher Activity (TV + Phone) -->
         <activity
             android:name=".ui.account.AccountSelectActivity"
             android:exported="true"
@@ -137,24 +140,48 @@
         <activity android:name=".ui.ControllerActivity" android:exported="false"/>
 
         <!-- Services -->
-        <service android:name=".services.VideoDownloadService" android:enabled="true" android:foregroundServiceType="dataSync" android:exported="false"/>
-        <service android:name=".services.PackageInstallerService" android:foregroundServiceType="dataSync" android:exported="false"/>
-        <service android:name="androidx.work.impl.foreground.SystemForegroundService" android:foregroundServiceType="dataSync" tools:node="merge"/>
+        <service
+            android:name=".services.VideoDownloadService"
+            android:enabled="true"
+            android:foregroundServiceType="dataSync"
+            android:exported="false"/>
+        <service
+            android:name=".services.PackageInstallerService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false"/>
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge"/>
 
         <!-- Receivers -->
-        <receiver android:name=".receivers.VideoDownloadRestartReceiver" android:enabled="false" android:exported="false">
+        <receiver
+            android:name=".receivers.VideoDownloadRestartReceiver"
+            android:enabled="false"
+            android:exported="false">
             <intent-filter>
                 <action android:name="restart_service"/>
             </intent-filter>
         </receiver>
 
         <!-- Provider -->
-        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.provider" android:enabled="true" android:exported="false" android:grantUriPermissions="true">
-            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/provider_paths"/>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:enabled="true"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
         </provider>
 
         <!-- Google Cast -->
-        <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME" android:value="com.lagradost.cloudstream3.utils.CastOptionsProvider"/>
+        <meta-data
+            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
+            android:value="com.lagradost.cloudstream3.utils.CastOptionsProvider"/>
+
         <profileable android:shell="true" tools:targetApi="q"/>
+
     </application>
 </manifest>
