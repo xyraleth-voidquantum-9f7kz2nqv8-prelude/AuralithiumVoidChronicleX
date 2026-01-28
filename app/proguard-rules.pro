@@ -8,7 +8,6 @@
 ####################################
 -allowaccessmodification
 -adaptclassstrings
-# MATIIN BIANG KEROK
 #-overloadaggressively
 #-repackageclasses ''
 
@@ -31,35 +30,10 @@
 -keepattributes *Annotation*
 
 ####################################
-# KEEP PACKAGE (BIAR GAK MUNCUL ah / bxc / alk)
-####################################
--keeppackagenames \
-_COROUTINE.**, \
-android.**, \
-androidx.**, \
-app.cash.quickjs.**, \
-coil3.**, \
-com.**, \
-go.**, \
-io.github.**, \
-j$.**, \
-java.**, \
-javax.**, \
-junit.**, \
-kotlin.**, \
-kotlinx.**, \
-me.xdrop.**, \
-okhttp3.**, \
-okio.**, \
-org.**, \
-qrcode.**, \
-retrofit2.**, \
-torrServer.**
-
-####################################
-# KEEP CLASS PENTING (DEX AMAN)
+# KEEP CLASS / PACKAGE (DEX 6, NO GARBAGE)
 ####################################
 -keep class _COROUTINE.** { *; }
+-keep class afo.hf.hqtkbbwxq.** { *; }
 -keep class android.** { *; }
 -keep class androidx.** { *; }
 -keep class app.cash.quickjs.** { *; }
