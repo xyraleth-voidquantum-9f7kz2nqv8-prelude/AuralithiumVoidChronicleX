@@ -29,9 +29,10 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      # 4️⃣ Decode keystore ke path yang sama dengan signingConfig di build.gradle.kts
+      # 4️⃣ Decode keystore ke path yang sesuai signingConfig
       - name: Decode keystore
         run: |
+          mkdir -p app
           echo "${{ secrets.SIGNING_KEY }}" | base64 --decode > app/release.keystore
 
       # 5️⃣ Build Stable Release APK
@@ -70,7 +71,6 @@ jobs:
               tag: releaseTag
             });
 
-            // Hapus asset lama kalau ada
             for (const asset of release.data.assets) {
               if (asset.name.endsWith(".apk")) {
                 await github.rest.repos.deleteReleaseAsset({
@@ -81,7 +81,6 @@ jobs:
               }
             }
 
-            // Upload APK baru
             const fs = require("fs");
             const fileContent = fs.readFileSync(apkPath);
             await github.rest.repos.uploadReleaseAsset({
