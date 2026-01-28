@@ -1,4 +1,3 @@
-import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import org.jetbrains.dokka.gradle.engine.parameters.KotlinPlatform
 import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
@@ -33,11 +32,10 @@ android {
 
     defaultConfig {
         applicationId = "com.cloudplay.app"
-        minSdk = 21
-
+        minSdk = 24       // Android 7+ (Nougat)
         val targetSdkInt = libs.versions.targetSdk.get().toInt()
         targetSdk = targetSdkInt
-        manifestPlaceholders["target_sdk_version"] = targetSdkInt as Any
+        manifestPlaceholders["target_sdk_version"] = targetSdkInt
 
         versionCode = 74
         versionName = "1.6.0"
@@ -113,10 +111,10 @@ android {
         toolchain { languageVersion.set(JavaLanguageVersion.of(libs.versions.jdkToolchain.get())) }
     }
 
-    lint { 
+    lint {
         abortOnError = false
         checkReleaseBuilds = false
-        disable.add("MissingTranslation") 
+        disable.add("MissingTranslation")
     }
 
     buildFeatures {
