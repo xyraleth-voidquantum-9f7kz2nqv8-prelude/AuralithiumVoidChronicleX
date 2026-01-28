@@ -76,8 +76,8 @@ android {
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
         
         // Kunci API Simkl resmi milik AdiXtream
-        buildConfigField("String", "SIMKL_CLIENT_ID", "\"db13c9a72e036f717c3a85b13cdeb31fa884c8f4991e43695f7b6477374e35b8\"")
-        buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"d8cf8e1b79bae9b2f77f0347d6384a62f1a8d802abdd73d9aa52bf6a848532ba\"")
+        buildConfigField("String", "SIMKL_CLIENT_ID", "\"09709fcc5a0b5ee599bd9833f2dafa803d65fd30d28f44fc2fc532fe221b2be1\"")
+        buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"e7b4f88776e677cfd60f0a6269ce55b528c5a74f5f136b86f4094c066d9dd1bf\"")
         
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
