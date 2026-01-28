@@ -23,14 +23,15 @@ fun getGitCommitHash(): String {
                 val commitFile = file("${project.rootDir}/.git/$refPath")
                 if (commitFile.exists()) commitFile.readText().trim() else ""
             } else headContent
-        } else ""
+        } else {
+            ""
+        }.take(7)
     } catch (_: Throwable) {
         ""
-    }.take(7)
+    }
 }
 
 android {
-
     @Suppress("UnstableApiUsage")
     testOptions {
         unitTests.isReturnDefaultValues = true
@@ -40,34 +41,45 @@ android {
         enable = true
     }
 
+    signingConfigs {
+        create("release") {
+            val envKeystorePath = System.getenv("KEYSTORE_PATH")
+            storeFile = if (envKeystorePath != null) file(envKeystorePath) else file("keystore.jks")
+            
+            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "4253731"
+            keyAlias = System.getenv("ALIAS") ?: "mykey"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "4253731"
+        }
+    }
+
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
+        // Identitas aplikasi AdiXtream
         applicationId = "com.cloudplay.app"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-
+        
         versionCode = 74
         versionName = "1.6.0"
 
         resValue("string", "commit_hash", getGitCommitHash())
         resValue("bool", "is_prerelease", "false")
-        resValue("string", "app_name", "PlayCloud")
+        resValue("string", "app_name", "AdiXtream")
+        resValue("color", "blackBoarder", "#FF000000")
+
+        manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
+
+        val localProperties = gradleLocalProperties(rootDir, project.providers)
 
         buildConfigField("long", "BUILD_DATE", "${System.currentTimeMillis()}")
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
-
+        
+        // Kunci API Simkl resmi milik AdiXtream
+        buildConfigField("String", "SIMKL_CLIENT_ID", "\"db13c9a72e036f717c3a85b13cdeb31fa884c8f4991e43695f7b6477374e35b8\"")
+        buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"d8cf8e1b79bae9b2f77f0347d6384a62f1a8d802abdd73d9aa52bf6a848532ba\"")
+        
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    signingConfigs {
-        create("release") {
-            // FIXED KEYSTORE (AMAN ANDROID 15+)
-            storeFile = file("app/release.keystore")
-            storePassword = "4253731"
-            keyAlias = "mykey"
-            keyPassword = "4253731"
-        }
     }
 
     buildTypes {
@@ -76,17 +88,15 @@ android {
             isDebuggable = false
             isMinifyEnabled = false
             isShrinkResources = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
             isDebuggable = true
             applicationIdSuffix = ".debug"
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-
+    
     flavorDimensions.add("state")
     productFlavors {
         create("stable") {
@@ -116,7 +126,6 @@ android {
     buildFeatures {
         buildConfig = true
         resValues = true
-        viewBinding = true
     }
 
     namespace = "com.lagradost.cloudstream3"
@@ -126,6 +135,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.json)
     androidTestImplementation(libs.core)
+    implementation(libs.junit.ktx)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
@@ -141,8 +151,10 @@ dependencies {
     implementation(libs.constraintlayout)
 
     implementation(libs.bundles.coil)
+
     implementation(libs.bundles.media3)
     implementation(libs.video)
+
     implementation(libs.bundles.nextlib)
 
     implementation(libs.colorpicker)
@@ -164,7 +176,9 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
     implementation(libs.conscrypt.android)
     implementation(libs.jackson.module.kotlin)
+
     implementation(libs.torrentserver)
+
     implementation(libs.work.runtime.ktx)
     implementation(libs.nicehttp)
 
@@ -174,6 +188,33 @@ dependencies {
         }
         this.extra.set("isDebug", isDebug)
     })
+}
+
+tasks.register<Jar>("androidSourcesJar") {
+    archiveClassifier.set("sources")
+    from(android.sourceSets.getByName("main").java.srcDirs)
+}
+
+tasks.register<Copy>("copyJar") {
+    dependsOn("build", ":library:jvmJar")
+    from(
+        "build/intermediates/compile_app_classes_jar/stableDebug/bundleStableDebugClassesToCompileJar",
+        "../library/build/libs"
+    )
+    into("build/app-classes")
+    include("classes.jar", "library-jvm*.jar")
+    rename("library-jvm.*.jar", "library-jvm.jar")
+}
+
+tasks.register<Jar>("makeJar") {
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    dependsOn(tasks.getByName("copyJar"))
+    from(
+        zipTree("build/app-classes/classes.jar"),
+        zipTree("build/app-classes/library-jvm.jar")
+    )
+    destinationDirectory.set(layout.buildDirectory)
+    archiveBaseName = "classes"
 }
 
 tasks.withType<KotlinJvmCompile> {
