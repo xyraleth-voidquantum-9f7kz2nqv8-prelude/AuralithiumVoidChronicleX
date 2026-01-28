@@ -1,13 +1,14 @@
 ####################################
-# BIAR TIDAK ERROR R8
+# BIAR R8 TIDAK ERROR
 ####################################
 -dontwarn java.beans.**
 -dontwarn javax.script.**
 -dontwarn org.mozilla.javascript.**
 -dontwarn com.fasterxml.jackson.databind.ext.**
+-dontwarn kotlin.Metadata
 
 ####################################
-# JANGAN ACAK LIBRARY
+# JANGAN ACAK LIBRARY (BIAR RAPI)
 ####################################
 -keep class androidx.** { *; }
 -keep class kotlin.** { *; }
@@ -21,20 +22,22 @@
 -keep class app.cash.quickjs.** { *; }
 
 ####################################
-# ACAK HANYA KODE PUNYAMU 
+# ACAK KODE APP (TAPI JANGAN DIHAPUS)
 ####################################
-# (INI YANG BIKIN AMAN)
--keepnames class com.lagradost.cloudstream3.**
--keepnames class com.cloudplay.app.**
+-keep class com.lagradost.cloudstream3.** { *; }
+-keep class com.cloudplay.app.** { *; }
+-allowobfuscation class com.lagradost.cloudstream3.**
+-allowobfuscation class com.cloudplay.app.**
 
 ####################################
-# Activity & Fragment jangan hilang
+# Activity & Fragment (WAJIB LENGKAP)
 ####################################
--keep class * extends androidx.appcompat.app.AppCompatActivity
--keep class * extends androidx.fragment.app.Fragment
+-keep class * extends android.app.Activity { *; }
+-keep class * extends androidx.appcompat.app.AppCompatActivity { *; }
+-keep class * extends androidx.fragment.app.Fragment { *; }
 
 ####################################
-# Jackson reflection
+# Jackson (reflection)
 ####################################
 -keepclassmembers class * {
     @com.fasterxml.jackson.annotation.JsonProperty <fields>;
