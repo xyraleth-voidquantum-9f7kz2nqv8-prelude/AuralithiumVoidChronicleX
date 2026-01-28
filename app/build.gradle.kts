@@ -41,7 +41,6 @@ android {
 
     signingConfigs {
         create("release") {
-            // Pakai keystore hasil generate
             storeFile = file("app/build/release.keystore")
             keyAlias = System.getenv("ALIAS") ?: "mykey"
             storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "4253731"
@@ -174,6 +173,33 @@ dependencies {
         }
         this.extra.set("isDebug", isDebug)
     })
+}
+
+tasks.register<Jar>("androidSourcesJar") {
+    archiveClassifier.set("sources")
+    from(android.sourceSets.getByName("main").java.srcDirs)
+}
+
+tasks.register<Copy>("copyJar") {
+    dependsOn("build", ":library:jvmJar")
+    from(
+        "build/intermediates/compile_app_classes_jar/stableDebug/bundleStableDebugClassesToCompileJar",
+        "../library/build/libs"
+    )
+    into("build/app-classes")
+    include("classes.jar", "library-jvm*.jar")
+    rename("library-jvm.*.jar", "library-jvm.jar")
+}
+
+tasks.register<Jar>("makeJar") {
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    dependsOn(tasks.getByName("copyJar"))
+    from(
+        zipTree("build/app-classes/classes.jar"),
+        zipTree("build/app-classes/library-jvm.jar")
+    )
+    destinationDirectory.set(layout.buildDirectory)
+    archiveBaseName = "classes"
 }
 
 tasks.withType<KotlinJvmCompile> {
