@@ -1,5 +1,8 @@
 name: Build Release (SIGNED APK)
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -37,16 +40,12 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      # 🔥 INI YANG BIKIN MASUK TAB RELEASES
       - name: Create GitHub Release & Upload APK
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.6.0
           name: CloudPlay v1.6.0
-          body: |
-            🚀 Stable Release
-            - Signed APK
-            - Built via GitHub Actions
-          files: app/build/outputs/apk/**/stableRelease/*.apk
+          prerelease: false
+          files: app/build/outputs/apk/**/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
