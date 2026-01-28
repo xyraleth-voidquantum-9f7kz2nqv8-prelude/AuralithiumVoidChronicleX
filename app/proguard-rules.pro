@@ -1,57 +1,42 @@
 ####################################
-# BIAR R8 TIDAK ERROR
+# NAMA CLASS TETAP
+# ISI DALAM ACAK TOTAL
 ####################################
--dontwarn java.beans.**
--dontwarn javax.script.**
--dontwarn org.mozilla.javascript.**
--dontwarn com.fasterxml.jackson.databind.ext.**
--dontwarn kotlin.Metadata
-
-####################################
-# JANGAN ACAK LIBRARY (BIAR RAPI)
-####################################
--keep class androidx.** { *; }
--keep class kotlin.** { *; }
--keep class kotlinx.** { *; }
--keep class okhttp3.** { *; }
--keep class okio.** { *; }
--keep class retrofit2.** { *; }
--keep class org.jsoup.** { *; }
--keep class com.fasterxml.jackson.** { *; }
--keep class org.mozilla.javascript.** { *; }
--keep class app.cash.quickjs.** { *; }
-
-####################################
-# KODE APP KAMU (INTI)
-####################################
-# ✔ nama class tetap
--keep class com.lagradost.cloudstream3.** { *; }
 -keepnames class com.lagradost.cloudstream3.**
 
 ####################################
-# Activity & Fragment
+# R8 MODE AGRESIF
 ####################################
--keep class * extends android.app.Activity { *; }
--keep class * extends androidx.appcompat.app.AppCompatActivity { *; }
--keep class * extends androidx.fragment.app.Fragment { *; }
+-allowaccessmodification
+-overloadaggressively
+-repackageclasses ''
+-adaptclassstrings
 
 ####################################
-# Jackson (reflection)
+# BIAR LAMBDA JADI $r8$lambda$
 ####################################
--keepclassmembers class * {
-    @com.fasterxml.jackson.annotation.JsonProperty <fields>;
-    @com.fasterxml.jackson.annotation.JsonCreator <methods>;
+-keepattributes InnerClasses,EnclosingMethod
+
+####################################
+# ACTIVITY / FRAGMENT (CUMA CONSTRUCTOR)
+####################################
+-keepclassmembers class * extends android.app.Activity {
+    <init>(...);
+}
+-keepclassmembers class * extends androidx.appcompat.app.AppCompatActivity {
+    <init>(...);
+}
+-keepclassmembers class * extends androidx.fragment.app.Fragment {
+    <init>(...);
 }
 
 ####################################
-# ENUM
+# KOTLIN & ANNOTATION
 ####################################
--keepclassmembers enum * {
-    public static **[] values();
-    public static ** valueOf(java.lang.String);
-}
-
-####################################
-# Annotation
-####################################
+-keep class kotlin.Metadata { *; }
 -keepattributes *Annotation*
+
+####################################
+# DONTWARN (BIAR R8 DIEM)
+####################################
+-dontwarn **
