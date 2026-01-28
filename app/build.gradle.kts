@@ -4,7 +4,6 @@ import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import java.util.Base64
 
 plugins {
     alias(libs.plugins.android.application)
@@ -38,33 +37,27 @@ android {
         unitTests.isReturnDefaultValues = true
     }
 
-    viewBinding {
-        enable = true
-    }
+    viewBinding { enable = true }
 
     signingConfigs {
         create("release") {
-            val envKeystorePath = System.getenv("KEYSTORE_PATH")
-            storeFile = if (envKeystorePath != null) file(envKeystorePath) else file("keystore.jks")
-            
-            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "161105"
-            keyAlias = System.getenv("ALIAS") ?: "adixtream"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: "161105"
+            // Pakai keystore hasil generate
+            storeFile = file("app/build/release.keystore")
+            keyAlias = System.getenv("ALIAS") ?: "mykey"
+            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "4253731"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "4253731"
         }
     }
 
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        // Identitas aplikasi punyamu
         applicationId = "com.cloudplay.app"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        
         versionCode = 74
         versionName = "1.6.0"
 
-        // Sama persis kaya punya orang
         resValue("string", "commit_hash", getGitCommitHash())
         resValue("bool", "is_prerelease", "false")
         resValue("string", "app_name", "PlayCloud")
@@ -72,13 +65,10 @@ android {
 
         manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
 
-        val localProperties = gradleLocalProperties(rootDir, project.providers)
-
         buildConfigField("long", "BUILD_DATE", System.currentTimeMillis().toString())
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
         buildConfigField("String", "SIMKL_CLIENT_ID", "\"${System.getenv("SIMKL_CLIENT_ID") ?: ""}\"")
         buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"${System.getenv("SIMKL_CLIENT_SECRET") ?: ""}\"")
-        
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -96,7 +86,7 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-    
+
     flavorDimensions.add("state")
     productFlavors {
         create("stable") {
@@ -151,10 +141,8 @@ dependencies {
     implementation(libs.constraintlayout)
 
     implementation(libs.bundles.coil)
-
     implementation(libs.bundles.media3)
     implementation(libs.video)
-
     implementation(libs.bundles.nextlib)
 
     implementation(libs.colorpicker)
@@ -176,9 +164,7 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
     implementation(libs.conscrypt.android)
     implementation(libs.jackson.module.kotlin)
-
     implementation(libs.torrentserver)
-
     implementation(libs.work.runtime.ktx)
     implementation(libs.nicehttp)
 
@@ -188,33 +174,6 @@ dependencies {
         }
         this.extra.set("isDebug", isDebug)
     })
-}
-
-tasks.register<Jar>("androidSourcesJar") {
-    archiveClassifier.set("sources")
-    from(android.sourceSets.getByName("main").java.srcDirs)
-}
-
-tasks.register<Copy>("copyJar") {
-    dependsOn("build", ":library:jvmJar")
-    from(
-        "build/intermediates/compile_app_classes_jar/stableDebug/bundleStableDebugClassesToCompileJar",
-        "../library/build/libs"
-    )
-    into("build/app-classes")
-    include("classes.jar", "library-jvm*.jar")
-    rename("library-jvm.*.jar", "library-jvm.jar")
-}
-
-tasks.register<Jar>("makeJar") {
-    duplicatesStrategy = DuplicatesStrategy.FAIL
-    dependsOn(tasks.getByName("copyJar"))
-    from(
-        zipTree("build/app-classes/classes.jar"),
-        zipTree("build/app-classes/library-jvm.jar")
-    )
-    destinationDirectory.set(layout.buildDirectory)
-    archiveBaseName = "classes"
 }
 
 tasks.withType<KotlinJvmCompile> {
@@ -231,10 +190,7 @@ dokka {
     dokkaSourceSets {
         main {
             analysisPlatform = KotlinPlatform.JVM
-            documentedVisibilities(
-                VisibilityModifier.Public,
-                VisibilityModifier.Protected
-            )
+            documentedVisibilities(VisibilityModifier.Public, VisibilityModifier.Protected)
             sourceLink {
                 localDirectory = file("..")
                 remoteUrl("https://github.com/michat88/AdiXtream/tree/master")
