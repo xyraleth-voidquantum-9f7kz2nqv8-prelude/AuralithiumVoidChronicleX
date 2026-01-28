@@ -1,39 +1,21 @@
-####################################
-# NAMA CLASS TETAP
-####################################
--keepnames class com.lagradost.cloudstream3.**
+# Add project specific ProGuard rules here.
+# You can control the set of applied configuration files using the
+# proguardFiles setting in build.gradle.kts.
+#
+# For more details, see
+#   http://developer.android.com/guide/developing/tools/proguard.html
 
-####################################
-# BIAR METHOD ACAK
-####################################
--allowaccessmodification
--overloadaggressively
--adaptclassstrings
+# If your project uses WebView with JS, uncomment the following
+# and specify the fully qualified class name to the JavaScript interface
+# class:
+#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
+#   public *;
+#}
 
-####################################
-# LAMBDA R8
-####################################
--keepattributes InnerClasses,EnclosingMethod
+# Uncomment this to preserve the line number information for
+# debugging stack traces.
+#-keepattributes SourceFile,LineNumberTable
 
-####################################
-# STRX JANGAN DIHAPUS
-####################################
--keep class com.lagradost.cloudstream3.security.StrX { *; }
-
-####################################
-# ACTIVITY / FRAGMENT (AMAN)
-####################################
--keepclassmembers class * extends android.app.Activity { <init>(...); }
--keepclassmembers class * extends androidx.appcompat.app.AppCompatActivity { <init>(...); }
--keepclassmembers class * extends androidx.fragment.app.Fragment { <init>(...); }
-
-####################################
-# KOTLIN
-####################################
--keep class kotlin.Metadata { *; }
--keepattributes *Annotation*
-
-####################################
-# DONTWARN
-####################################
--dontwarn **
+# If you keep the line number information, uncomment this to
+# hide the original source file name.
+#-renamesourcefileattribute SourceFile
