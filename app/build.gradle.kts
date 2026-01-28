@@ -17,28 +17,54 @@ val javaTarget = JvmTarget.fromTarget(libs.versions.jvmTarget.get())
 fun getGitCommitHash(): String {
     return try {
         val headFile = file("${project.rootDir}/.git/HEAD")
-        if (!headFile.exists()) return ""
-        val headContent = headFile.readText().trim()
-        if (headContent.startsWith("ref:")) {
-            val refPath = headContent.substringAfter("ref:").trim()
-            file("${project.rootDir}/.git/$refPath").takeIf { it.exists() }?.readText()?.trim() ?: ""
-        } else headContent
+        if (headFile.exists()) {
+            val headContent = headFile.readText().trim()
+            if (headContent.startsWith("ref:")) {
+                val refPath = headContent.substring(5).trim()
+                val commitFile = file("${project.rootDir}/.git/$refPath")
+                if (commitFile.exists()) commitFile.readText().trim() else ""
+            } else headContent
+        } else {
+            ""
+        }.take(7)
     } catch (_: Throwable) {
         ""
-    }.take(7)
+    }
 }
 
 android {
+    @Suppress("UnstableApiUsage")
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
+    viewBinding {
+        enable = true
+    }
+
+    signingConfigs {
+        create("release") {
+            val envKeystorePath = System.getenv("KEYSTORE_PATH")
+            storeFile = if (envKeystorePath != null) file(envKeystorePath) else file("keystore.jks")
+            
+            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: "161105"
+            keyAlias = System.getenv("ALIAS") ?: "adixtream"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "161105"
+        }
+    }
+
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
+        // Identitas aplikasi punyamu
         applicationId = "com.cloudplay.app"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-
+        
         versionCode = 74
         versionName = "1.6.0"
 
+        // Sama persis kaya punya orang
         resValue("string", "commit_hash", getGitCommitHash())
         resValue("bool", "is_prerelease", "false")
         resValue("string", "app_name", "PlayCloud")
@@ -46,61 +72,36 @@ android {
 
         manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
 
+        val localProperties = gradleLocalProperties(rootDir, project.providers)
+
         buildConfigField("long", "BUILD_DATE", System.currentTimeMillis().toString())
         buildConfigField("String", "APP_VERSION", "\"$versionName\"")
         buildConfigField("String", "SIMKL_CLIENT_ID", "\"${System.getenv("SIMKL_CLIENT_ID") ?: ""}\"")
         buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"${System.getenv("SIMKL_CLIENT_SECRET") ?: ""}\"")
-
+        
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("arm64-v8a", "armeabi-v7a")
-            isUniversalApk = true
-        }
-    }
-
-    signingConfigs {
-        create("release") {
-            val signingKeyBase64 = System.getenv("SIGNING_KEY") ?: error("SIGNING_KEY missing")
-            val keystoreFile = layout.buildDirectory.file("release.keystore").get().asFile
-            if (!keystoreFile.exists()) {
-                keystoreFile.parentFile.mkdirs()
-                keystoreFile.writeBytes(Base64.getDecoder().decode(signingKeyBase64))
-            }
-            storeFile = keystoreFile
-            keyAlias = System.getenv("ALIAS")
-            storePassword = System.getenv("KEY_STORE_PASSWORD")
-            keyPassword = System.getenv("KEY_PASSWORD")
-        }
     }
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isDebuggable = false
             isMinifyEnabled = false
             isShrinkResources = false
-            signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
             isDebuggable = true
-            isMinifyEnabled = false
-            isShrinkResources = false
+            applicationIdSuffix = ".debug"
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
-
-    flavorDimensions += "state"
+    
+    flavorDimensions.add("state")
     productFlavors {
-        create("stable") { dimension = "state" }
-        create("prerelease") {
+        create("stable") {
             dimension = "state"
-            signingConfig = signingConfigs.getByName("release")
-            versionNameSuffix = "-PRE"
-            versionCode = (System.currentTimeMillis() / 60000).toInt()
+            resValue("bool", "is_prerelease", "false")
         }
     }
 
@@ -111,7 +112,9 @@ android {
     }
 
     java {
-        toolchain { languageVersion.set(JavaLanguageVersion.of(libs.versions.jdkToolchain.get())) }
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(libs.versions.jdkToolchain.get()))
+        }
     }
 
     lint {
@@ -121,7 +124,6 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
         buildConfig = true
         resValues = true
     }
@@ -133,6 +135,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.json)
     androidTestImplementation(libs.core)
+    implementation(libs.junit.ktx)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
@@ -142,13 +145,18 @@ dependencies {
     implementation(libs.fragment.ktx)
     implementation(libs.bundles.lifecycle)
     implementation(libs.bundles.navigation)
+
     implementation(libs.preference.ktx)
     implementation(libs.material)
     implementation(libs.constraintlayout)
+
     implementation(libs.bundles.coil)
+
     implementation(libs.bundles.media3)
     implementation(libs.video)
+
     implementation(libs.bundles.nextlib)
+
     implementation(libs.colorpicker)
     implementation(libs.newpipeextractor)
     implementation(libs.juniversalchardet)
@@ -159,6 +167,7 @@ dependencies {
     implementation(libs.biometric)
     implementation(libs.previewseekbar.media3)
     implementation(libs.qrcode.kotlin)
+
     implementation(libs.jsoup)
     implementation(libs.rhino)
     implementation(libs.quickjs)
@@ -167,11 +176,45 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
     implementation(libs.conscrypt.android)
     implementation(libs.jackson.module.kotlin)
+
     implementation(libs.torrentserver)
+
     implementation(libs.work.runtime.ktx)
     implementation(libs.nicehttp)
-    implementation("io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:6.0.7")
-    implementation(project(":library"))
+
+    implementation(project(":library") {
+        val isDebug = gradle.startParameter.taskRequests.any { task ->
+            task.args.any { arg -> arg.contains("debug", true) }
+        }
+        this.extra.set("isDebug", isDebug)
+    })
+}
+
+tasks.register<Jar>("androidSourcesJar") {
+    archiveClassifier.set("sources")
+    from(android.sourceSets.getByName("main").java.srcDirs)
+}
+
+tasks.register<Copy>("copyJar") {
+    dependsOn("build", ":library:jvmJar")
+    from(
+        "build/intermediates/compile_app_classes_jar/stableDebug/bundleStableDebugClassesToCompileJar",
+        "../library/build/libs"
+    )
+    into("build/app-classes")
+    include("classes.jar", "library-jvm*.jar")
+    rename("library-jvm.*.jar", "library-jvm.jar")
+}
+
+tasks.register<Jar>("makeJar") {
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    dependsOn(tasks.getByName("copyJar"))
+    from(
+        zipTree("build/app-classes/classes.jar"),
+        zipTree("build/app-classes/library-jvm.jar")
+    )
+    destinationDirectory.set(layout.buildDirectory)
+    archiveBaseName = "classes"
 }
 
 tasks.withType<KotlinJvmCompile> {
@@ -188,7 +231,15 @@ dokka {
     dokkaSourceSets {
         main {
             analysisPlatform = KotlinPlatform.JVM
-            documentedVisibilities(VisibilityModifier.Public, VisibilityModifier.Protected)
+            documentedVisibilities(
+                VisibilityModifier.Public,
+                VisibilityModifier.Protected
+            )
+            sourceLink {
+                localDirectory = file("..")
+                remoteUrl("https://github.com/michat88/AdiXtream/tree/master")
+                remoteLineSuffix = "#L"
+            }
         }
     }
 }
