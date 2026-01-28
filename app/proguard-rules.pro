@@ -1,33 +1,31 @@
 ####################################
-# PACKAGE UTAMA TETAP
+# NAMA CLASS TETAP
 ####################################
 -keepnames class com.lagradost.cloudstream3.**
 
 ####################################
-# OBFUSCATE AGRESIF TAPI AMAN
+# BIAR METHOD ACAK
 ####################################
 -allowaccessmodification
 -overloadaggressively
 -adaptclassstrings
--flattenpackagehierarchy 'x'
 
 ####################################
-# LAMBDA
+# LAMBDA R8
 ####################################
 -keepattributes InnerClasses,EnclosingMethod
 
 ####################################
-# ACTIVITY / FRAGMENT
+# STRX JANGAN DIHAPUS
 ####################################
--keepclassmembers class * extends android.app.Activity {
-    <init>(...);
-}
--keepclassmembers class * extends androidx.appcompat.app.AppCompatActivity {
-    <init>(...);
-}
--keepclassmembers class * extends androidx.fragment.app.Fragment {
-    <init>(...);
-}
+-keep class com.lagradost.cloudstream3.security.StrX { *; }
+
+####################################
+# ACTIVITY / FRAGMENT (AMAN)
+####################################
+-keepclassmembers class * extends android.app.Activity { <init>(...); }
+-keepclassmembers class * extends androidx.appcompat.app.AppCompatActivity { <init>(...); }
+-keepclassmembers class * extends androidx.fragment.app.Fragment { <init>(...); }
 
 ####################################
 # KOTLIN
@@ -36,17 +34,6 @@
 -keepattributes *Annotation*
 
 ####################################
-# FORCE MULTI DEX SPLIT
-####################################
--keep class android.** { *; }
--keep class androidx.** { *; }
--keep class kotlin.** { *; }
--keep class kotlinx.** { *; }
--keep class okhttp3.** { *; }
--keep class retrofit2.** { *; }
--keep class org.** { *; }
-
-####################################
-# DIEMIN WARNING
+# DONTWARN
 ####################################
 -dontwarn **
