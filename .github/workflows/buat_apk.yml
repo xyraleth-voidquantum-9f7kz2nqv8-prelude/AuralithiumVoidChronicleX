@@ -28,14 +28,20 @@ jobs:
         run: |
           mkdir -p app
           echo "${{ secrets.SIGNING_KEY }}" | base64 --decode > app/release.keystore
+        shell: bash
 
       - name: Check keystore
         run: |
-          keytool -list -v -keystore app/release.keystore -alias $ALIAS -storepass $KEY_STORE_PASSWORD -keypass $KEY_PASSWORD
+          keytool -list -v \
+            -keystore app/release.keystore \
+            -alias $ALIAS \
+            -storepass $KEY_STORE_PASSWORD \
+            -keypass $KEY_PASSWORD
         env:
           ALIAS: ${{ secrets.ALIAS }}
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        shell: bash
 
       - name: Build Stable Release APK
         run: ./gradlew assembleStableRelease
@@ -45,12 +51,14 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           SIMKL_CLIENT_ID: ${{ secrets.SIMKL_CLIENT_ID }}
           SIMKL_CLIENT_SECRET: ${{ secrets.SIMKL_CLIENT_SECRET }}
+        shell: bash
 
       - name: Copy APK ke final path
         run: |
           mkdir -p app/build/outputs/apk/stable/release
           apk=$(find app/build/outputs/apk/stable -type f -name "*release*.apk" | head -n 1)
           cp "$apk" app/build/outputs/apk/stable/release/app-stable-release.apk
+        shell: bash
 
       - name: Upload APK to release
         uses: actions/github-script@v7
