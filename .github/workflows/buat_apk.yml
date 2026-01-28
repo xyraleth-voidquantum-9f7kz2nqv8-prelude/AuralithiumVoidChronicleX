@@ -29,7 +29,7 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      # 4️⃣ Decode keystore ke path yang sama dengan build.gradle.kts
+      # 4️⃣ Decode keystore ke path yang sesuai signingConfig
       - name: Decode keystore
         run: |
           mkdir -p app/build
