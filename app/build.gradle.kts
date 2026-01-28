@@ -51,6 +51,9 @@ android {
         buildConfigField("String", "SIMKL_CLIENT_SECRET", "\"${System.getenv("SIMKL_CLIENT_SECRET") ?: ""}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ⚡ Fix manifest placeholder untuk targetSdk
+        manifestPlaceholders["target_sdk_version"] = targetSdk
     }
 
     signingConfigs {
