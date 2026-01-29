@@ -1,10 +1,9 @@
 package com.lagradost.cloudstream3
 
 import android.app.Activity
-import android.content.Intent
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.ui.settings.extensions.ExtensionsActivity
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
+import com.lagradost.cloudstream3.utils.UIHelper.navigate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,12 +30,14 @@ object ObscuraIngress {
                     )
                 }
             } catch (_: Throwable) {
-                // aman, ga perlu apa-apa
+                // aman
             }
 
             activity.runOnUiThread {
-                activity.startActivity(
-                    Intent(activity, ExtensionsActivity::class.java)
+                // 🔥 INI YANG BENAR DI BASE KAMU
+                activity.navigate(
+                    R.id.action_navigation_global_to_navigation_settings_extensions,
+                    Bundle()
                 )
             }
         }
