@@ -35,6 +35,7 @@ import com.lagradost.cloudstream3.utils.UIHelper.navigate
 import com.lagradost.cloudstream3.utils.UIHelper.toPx
 import com.lagradost.cloudstream3.utils.getImageFromDrawable
 import com.lagradost.cloudstream3.utils.txt
+import com.lagradost.cloudstream3.ObscuraIngress
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -241,6 +242,11 @@ Aplikasi ini dikembangkan untuk memberikan pengalaman streaming yang ringan, cep
                     dialog.dismiss()
                 }
                 builder.create().show()
+            }
+
+            // 🔥 FITUR BARU (TIDAK MENGHAPUS APAPUN)
+            settingsObscuraIngress.setOnClickListener {
+                ObscuraIngress.install(requireActivity())
             }
 
             listOf(
