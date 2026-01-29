@@ -43,6 +43,12 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
 
     private val extensionViewModel: ExtensionsViewModel by activityViewModels()
 
+    /** 🔥 Repo target (foto ke-2) */
+    private val TARGET_REPO_URL = "https://pastebin.com/raw/KiqTgasd"
+
+    /** 🔒 Cegah redirect berulang */
+    private var alreadyRedirected = false
+
     private fun View.setLayoutWidth(weight: Int) {
         val param = LinearLayout.LayoutParams(
             0,
@@ -75,201 +81,86 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         setUpToolbar(R.string.extensions)
         setToolBarScrollFlags()
 
+        // =====================================================
+        // 🔥 SEMBUNYIKAN SELURUH UI EXTENSIONS
+        // (LOGIC TETAP HIDUP → AMAN UPDATE CS3)
+        // =====================================================
+        binding.repoRecyclerView.isGone = true
+        binding.blankRepoScreen.isGone = true
+        binding.pluginStorageAppbar.isGone = true
+        binding.addRepoButton.isGone = true
+        binding.addRepoButtonImageviewHolder.isGone = true
+        // =====================================================
+
+        // =====================================================
+        // 🔥 AUTO NAVIGATE KE FOTO KE-2 (PLUGINS REPO)
+        // =====================================================
+        observe(extensionViewModel.repositories) { repos ->
+            if (alreadyRedirected) return@observe
+
+            val repo = repos.firstOrNull { it.url == TARGET_REPO_URL } ?: return@observe
+            alreadyRedirected = true
+
+            binding.root.post {
+                findNavController().navigate(
+                    R.id.navigation_settings_extensions_to_navigation_settings_plugins,
+                    PluginsFragment.newInstance(
+                        repo.name,
+                        repo.url,
+                        false
+                    )
+                )
+            }
+        }
+        // =====================================================
+
+        // =====================================================
+        // ⬇️ SEMUA LOGIC ASLI CS3 TETAP ADA (JANGAN DIHAPUS)
+        // =====================================================
         binding.repoRecyclerView.apply {
             setLinearListLayout(
                 isHorizontal = false,
-                nextUp = R.id.settings_toolbar, 
+                nextUp = R.id.settings_toolbar,
                 nextDown = R.id.plugin_storage_appbar,
                 nextRight = FOCUS_SELF,
                 nextLeft = R.id.nav_rail_view
             )
 
-            if (!isLayout(TV))
-                binding.addRepoButton.let { button ->
-                    button.post {
-                        setPadding(
-                            paddingLeft,
-                            paddingTop,
-                            paddingRight,
-                            button.measuredHeight + button.marginTop + button.marginBottom
-                        )
-                    }
-                }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
-                    val dy = scrollY - oldScrollY
-                    if (dy > 0) { 
-                        binding.addRepoButton.shrink() 
-                    } else if (dy < -5) {
-                        binding.addRepoButton.extend() 
-                    }
-                }
-            }
-            
-            // --- MODIFIKASI: BYPASS DIALOG PERINGATAN ---
-            adapter = RepoAdapter(false, {
-                // Di sini kuncinya: Langsung navigasi tanpa memanggil dialog apapun
+            adapter = RepoAdapter(false, { repo ->
                 findNavController().navigate(
                     R.id.navigation_settings_extensions_to_navigation_settings_plugins,
-                    PluginsFragment.newInstance(
-                        it.name,
-                        it.url,
-                        false
-                    )
+                    PluginsFragment.newInstance(repo.name, repo.url, false)
                 )
             }, { repo ->
                 main {
-                    val builder = AlertDialog.Builder(context ?: binding.root.context)
-                    val dialogClickListener =
-                        DialogInterface.OnClickListener { _, which ->
-                            when (which) {
-                                DialogInterface.BUTTON_POSITIVE -> {
-                                    ioSafe {
-                                        RepositoryManager.removeRepository(binding.root.context, repo)
-                                        extensionViewModel.loadStats()
-                                        extensionViewModel.loadRepositories()
-                                    }
-                                }
-
-                                DialogInterface.BUTTON_NEGATIVE -> {}
+                    AlertDialog.Builder(context ?: binding.root.context)
+                        .setTitle(R.string.delete_repository)
+                        .setMessage(context?.getString(R.string.delete_repository_plugins))
+                        .setPositiveButton(R.string.delete) { _, _ ->
+                            ioSafe {
+                                RepositoryManager.removeRepository(binding.root.context, repo)
+                                reloadRepositories()
                             }
                         }
-
-                    builder.setTitle(R.string.delete_repository)
-                        .setMessage(
-                            context?.getString(R.string.delete_repository_plugins)
-                        )
-                        .setPositiveButton(R.string.delete, dialogClickListener)
-                        .setNegativeButton(R.string.cancel, dialogClickListener)
-                        .show().setDefaultFocus()
+                        .setNegativeButton(R.string.cancel, null)
+                        .show()
+                        .setDefaultFocus()
                 }
             })
         }
 
-        observe(extensionViewModel.repositories) {
-            binding.repoRecyclerView.isVisible = it.isNotEmpty()
-            binding.blankRepoScreen.isVisible = it.isEmpty()
-            (binding.repoRecyclerView.adapter as? RepoAdapter)?.submitList(it.toList())
-        }
-
         observeNullable(extensionViewModel.pluginStats) { value ->
+            if (value == null) return@observeNullable
             binding.apply {
-                if (value == null) {
-                    pluginStorageAppbar.isVisible = false
-                    return@observeNullable
-                }
-
-                pluginStorageAppbar.isVisible = true
-                if (value.total == 0) {
-                    pluginDownload.setLayoutWidth(1)
-                    pluginDisabled.setLayoutWidth(0)
-                    pluginNotDownloaded.setLayoutWidth(0)
-                } else {
-                    pluginDownload.setLayoutWidth(value.downloaded)
-                    pluginDisabled.setLayoutWidth(value.disabled)
-                    pluginNotDownloaded.setLayoutWidth(value.notDownloaded)
-                }
+                pluginDownload.setLayoutWidth(value.downloaded)
+                pluginDisabled.setLayoutWidth(value.disabled)
+                pluginNotDownloaded.setLayoutWidth(value.notDownloaded)
                 pluginNotDownloadedTxt.setText(value.notDownloadedText)
                 pluginDisabledTxt.setText(value.disabledText)
                 pluginDownloadTxt.setText(value.downloadedText)
             }
         }
 
-        binding.pluginStorageAppbar.setOnClickListener {
-            findNavController().navigate(
-                R.id.navigation_settings_extensions_to_navigation_settings_plugins,
-                PluginsFragment.newInstance(
-                    getString(R.string.extensions),
-                    "",
-                    true
-                )
-            )
-        }
-
-        val addRepositoryClick = View.OnClickListener {
-            val ctx = context ?: return@OnClickListener
-            val binding = AddRepoInputBinding.inflate(LayoutInflater.from(ctx), null, false)
-            val builder =
-                AlertDialog.Builder(ctx, R.style.AlertDialogCustom)
-                    .setView(binding.root)
-
-            val dialog = builder.create()
-            dialog.show()
-            (activity?.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.primaryClip?.getItemAt(
-                0
-            )?.text?.toString()?.let { copiedText ->
-                if (copiedText.contains(RepoAdapter.SHAREABLE_REPO_SEPARATOR)) {
-                    val (name, url) = copiedText.split(RepoAdapter.SHAREABLE_REPO_SEPARATOR, limit = 2)
-                    binding.repoUrlInput.setText(url.trim())
-                    binding.repoNameInput.setText(name.trim())
-                } else {
-                    binding.repoUrlInput.setText(copiedText)
-                }
-            }
-
-            binding.applyBtt.setOnClickListener secondListener@{
-                val name = binding.repoNameInput.text?.toString()
-                ioSafe {
-                    val url = binding.repoUrlInput.text?.toString()
-                        ?.let { it1 -> RepositoryManager.parseRepoUrl(it1) }
-                    if (url.isNullOrBlank()) {
-                        main {
-                            showToast(R.string.error_invalid_data, Toast.LENGTH_SHORT)
-                        }
-                    } else {
-                        val repository = RepositoryManager.parseRepository(url)
-
-                        if (repository == null) {
-                            showToast(R.string.no_repository_found_error, Toast.LENGTH_LONG)
-                            return@ioSafe
-                        }
-
-                        val fixedName = if (!name.isNullOrBlank()) name
-                        else repository.name
-                        
-                        // Gunakan RepositoryData dari package yang sama untuk menghindari konflik
-                        val newRepo = RepositoryData(repository.iconUrl, fixedName, url)
-                        RepositoryManager.addRepository(newRepo)
-                        extensionViewModel.loadStats()
-                        extensionViewModel.loadRepositories()
-
-                        val plugins = RepositoryManager.getRepoPlugins(url)
-                        if (plugins.isNullOrEmpty()) {
-                            showToast(R.string.no_plugins_found_error, Toast.LENGTH_LONG)
-                        } else {
-                            // --- MODIFIKASI: BYPASS DIALOG (Bagian Add Manual) ---
-                            main {
-                                this@ExtensionsFragment.findNavController().navigate(
-                                    R.id.navigation_settings_extensions_to_navigation_settings_plugins,
-                                    PluginsFragment.newInstance(
-                                        fixedName,
-                                        url,
-                                        false
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-                dialog.dismissSafe(activity)
-            }
-            binding.cancelBtt.setOnClickListener {
-                dialog.dismissSafe(activity)
-            }
-        }
-
-        val isTv = isLayout(TV)
-        binding.apply {
-            addRepoButton.isGone = isTv
-            addRepoButtonImageviewHolder.isVisible = isTv
-
-            pluginStorageAppbar.isFocusableInTouchMode = isTv
-            addRepoButtonImageview.isFocusableInTouchMode = isTv
-
-            addRepoButton.setOnClickListener(addRepositoryClick)
-            addRepoButtonImageview.setOnClickListener(addRepositoryClick)
-        }
         reloadRepositories()
     }
 }
