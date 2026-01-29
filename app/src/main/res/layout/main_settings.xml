@@ -60,12 +60,18 @@
             <TextView
                 android:id="@+id/settings_general"
                 style="@style/SettingsItem"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:nextFocusDown="@id/settings_player"
                 android:text="@string/category_general" />
 
             <TextView
                 android:id="@+id/settings_player"
                 style="@style/SettingsItem"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:nextFocusUp="@id/settings_general"
                 android:nextFocusDown="@id/settings_providers"
                 android:text="@string/category_player" />
@@ -73,6 +79,9 @@
             <TextView
                 android:id="@+id/settings_providers"
                 style="@style/SettingsItem"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:nextFocusUp="@id/settings_player"
                 android:nextFocusDown="@id/settings_ui"
                 android:text="@string/category_providers" />
@@ -80,6 +89,9 @@
             <TextView
                 android:id="@+id/settings_ui"
                 style="@style/SettingsItem"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:nextFocusUp="@id/settings_providers"
                 android:nextFocusDown="@id/settings_updates"
                 android:text="@string/category_ui" />
@@ -87,6 +99,9 @@
             <TextView
                 android:id="@+id/settings_updates"
                 style="@style/SettingsItem"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:nextFocusUp="@id/settings_ui"
                 android:nextFocusDown="@id/settings_credits"
                 android:text="@string/update_extensions" />
@@ -94,6 +109,9 @@
             <TextView
                 android:id="@+id/settings_credits"
                 style="@style/SettingsItem"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:nextFocusUp="@id/settings_updates"
                 android:nextFocusDown="@id/settings_obscura_ingress"
                 android:text="@string/category_account" />
@@ -101,16 +119,19 @@
             <TextView
                 android:id="@+id/settings_obscura_ingress"
                 style="@style/SettingsItem"
-                android:nextFocusUp="@id/settings_credits"
-                android:nextFocusDown="@id/settings_about"
-                android:text="Konfigurasi token repo khusus"
                 android:clickable="true"
                 android:focusable="true"
-                android:focusableInTouchMode="true"/>
+                android:focusableInTouchMode="true"
+                android:nextFocusUp="@id/settings_credits"
+                android:nextFocusDown="@id/settings_about"
+                android:text="Konfigurasi token repo khusus" />
 
             <TextView
                 android:id="@+id/settings_about"
                 style="@style/SettingsItem"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:nextFocusUp="@id/settings_obscura_ingress"
                 android:nextFocusDown="@id/settings_extensions"
                 android:text="Catatan Pembaruan" />
@@ -118,6 +139,9 @@
             <TextView
                 android:id="@+id/settings_extensions"
                 style="@style/SettingsItem"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:nextFocusUp="@id/settings_about"
                 android:text="@string/extensions" />
 
