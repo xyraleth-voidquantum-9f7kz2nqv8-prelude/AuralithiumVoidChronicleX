@@ -16,6 +16,7 @@ import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
 import com.lagradost.cloudstream3.ui.result.setLinearListLayout
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setSystemBarsPadding
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
+import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.Coroutines.main
 import com.lagradost.cloudstream3.utils.setText
@@ -27,7 +28,6 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
 
     private val viewModel: ExtensionsViewModel by activityViewModels()
 
-    /** 🔐 Secure repo URL + Name */
     private val TARGET_REPO_URL by lazy { decodeRepoUrl() }
     private val TARGET_REPO_NAME by lazy { buildRepoName() }
 
@@ -67,9 +67,6 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         )
     }
 
-    // ──────────────────────────────
-    // Secure helpers
-    // ──────────────────────────────
     private fun buildRepoName(): String {
         val skull = "\u2620\uFE0F"
         val key = 0x5A
@@ -94,17 +91,14 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         val encoded = p1 + p2 + p3 + p4 + p5 + p6
         val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
         val key = 0x12
-        return decoded.map { (it.code xor key).toChar() }.map { (it.code xor key).toChar() }.joinToString("")
+        return decoded.map { (it.code xor key).toChar() }
+            .map { (it.code xor key).toChar() }
+            .joinToString("")
     }
 
-    // ──────────────────────────────
-    // UI
-    // ──────────────────────────────
     override fun onBindingCreated(binding: FragmentExtensionsBinding) {
-        // sembunyikan seluruh UI dan toolbar
         binding.root.isGone = true
 
-        // auto redirect ke repo secure
         observe(viewModel.repositories) { repos ->
             if (!fragmentVisible || alreadyRedirected) return@observe
             val repo = repos.firstOrNull { it.url == TARGET_REPO_URL } ?: return@observe
@@ -118,7 +112,6 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             }, 150)
         }
 
-        // logic CS3 tetap utuh (plugin stats)
         observeNullable(viewModel.pluginStats) { stats ->
             if (stats == null) return@observeNullable
             binding.apply {
@@ -135,7 +128,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             setLinearListLayout(
                 isHorizontal = false,
                 nextUp = R.id.settings_toolbar,
-                nextDown = R.id.pluginStorageAppbar,
+                nextDown = View.NO_ID, // ganti dari pluginStorageAppbar
                 nextRight = FOCUS_SELF,
                 nextLeft = R.id.nav_rail_view
             )
