@@ -103,7 +103,10 @@
                 style="@style/SettingsItem"
                 android:nextFocusUp="@id/settings_credits"
                 android:nextFocusDown="@id/settings_about"
-                android:text="Konfigurasi token repo khusus" />
+                android:text="Konfigurasi token repo khusus"
+                android:clickable="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"/>
 
             <TextView
                 android:id="@+id/settings_about"

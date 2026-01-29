@@ -47,9 +47,7 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
     companion object {
         fun PreferenceFragmentCompat?.getPref(id: Int): Preference? {
             if (this == null) return null
-            return try {
-                findPreference(getString(id))
-            } catch (e: Exception) {
+            return try { findPreference(getString(id)) } catch (e: Exception) {
                 logError(e)
                 null
             }
@@ -57,13 +55,8 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
 
         fun PreferenceFragmentCompat?.hidePrefs(ids: List<Int>, layoutFlags: Int) {
             if (this == null) return
-            try {
-                ids.forEach {
-                    getPref(it)?.isVisible = !isLayout(layoutFlags)
-                }
-            } catch (e: Exception) {
-                logError(e)
-            }
+            try { ids.forEach { getPref(it)?.isVisible = !isLayout(layoutFlags) } }
+            catch (e: Exception) { logError(e) }
         }
 
         fun Preference?.hideOn(layoutFlags: Int): Preference? {
@@ -73,15 +66,13 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         }
 
         fun PreferenceFragmentCompat.setPaddingBottom() {
-            if (isLayout(TV or EMULATOR)) {
-                listView?.setPadding(0, 0, 0, 100.toPx)
-            }
+            if (isLayout(TV or EMULATOR)) listView?.setPadding(0,0,0,100.toPx)
         }
 
         fun PreferenceFragmentCompat.setToolBarScrollFlags() {
             if (isLayout(TV or EMULATOR)) {
-                val settingsAppbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
-                settingsAppbar?.updateLayoutParams<AppBarLayout.LayoutParams> {
+                val toolbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
+                toolbar?.updateLayoutParams<AppBarLayout.LayoutParams> {
                     scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL
                 }
             }
@@ -89,9 +80,8 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
 
         fun Fragment?.setToolBarScrollFlags() {
             if (isLayout(TV or EMULATOR)) {
-                val settingsAppbar =
-                    this?.view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
-                settingsAppbar?.updateLayoutParams<AppBarLayout.LayoutParams> {
+                val toolbar = this?.view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
+                toolbar?.updateLayoutParams<AppBarLayout.LayoutParams> {
                     scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL
                 }
             }
@@ -99,84 +89,55 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
 
         fun Fragment?.setUpToolbar(title: String) {
             if (this == null) return
-            val settingsToolbar =
-                view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
-            settingsToolbar.apply {
+            val toolbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
+            toolbar.apply {
                 setTitle(title)
                 if (isLayout(PHONE or EMULATOR)) {
                     setNavigationIcon(R.drawable.ic_baseline_arrow_back_24)
-                    setNavigationOnClickListener {
-                        activity?.onBackPressedDispatcher?.onBackPressed()
-                    }
+                    setNavigationOnClickListener { activity?.onBackPressedDispatcher?.onBackPressed() }
                 }
             }
         }
 
         fun Fragment?.setUpToolbar(@StringRes title: Int) {
             if (this == null) return
-            val settingsToolbar =
-                view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
-            settingsToolbar.apply {
+            val toolbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
+            toolbar.apply {
                 setTitle(title)
                 if (isLayout(PHONE or EMULATOR)) {
                     setNavigationIcon(R.drawable.ic_baseline_arrow_back_24)
-                    children.firstOrNull { it is ImageView }?.tag =
-                        getString(R.string.tv_no_focus_tag)
-                    setNavigationOnClickListener {
-                        safe { activity?.onBackPressedDispatcher?.onBackPressed() }
-                    }
+                    children.firstOrNull { it is ImageView }?.tag = getString(R.string.tv_no_focus_tag)
+                    setNavigationOnClickListener { safe { activity?.onBackPressedDispatcher?.onBackPressed() } }
                 }
             }
         }
 
         fun Fragment.setSystemBarsPadding() {
             view?.let {
-                fixSystemBarsPadding(
-                    it,
-                    padLeft = isLayout(TV or EMULATOR),
-                    padBottom = isLandscape()
-                )
+                fixSystemBarsPadding(it, padLeft = isLayout(TV or EMULATOR), padBottom = isLandscape())
             }
         }
 
         fun getFolderSize(dir: File): Long {
             var size: Long = 0
-            dir.listFiles()?.let {
-                for (file in it) {
-                    size += if (file.isFile) file.length() else getFolderSize(file)
-                }
-            }
+            dir.listFiles()?.let { for (file in it) { size += if(file.isFile) file.length() else getFolderSize(file) } }
             return size
         }
     }
 
     override fun fixLayout(view: View) {
-        fixSystemBarsPadding(
-            view,
-            padBottom = isLandscape(),
-            padLeft = isLayout(TV or EMULATOR)
-        )
+        fixSystemBarsPadding(view, padBottom = isLandscape(), padLeft = isLayout(TV or EMULATOR))
     }
 
     override fun onBindingCreated(binding: MainSettingsBinding) {
-        fun navigate(id: Int) {
-            activity?.navigate(id, Bundle())
-        }
+
+        fun navigate(id: Int) { activity?.navigate(id, Bundle()) }
 
         fun hasProfilePictureFromAccountManagers(accountManagers: Array<AuthRepo>): Boolean {
             for (syncApi in accountManagers) {
                 val login = syncApi.authUser()
                 val pic = login?.profilePicture ?: continue
-                binding.settingsProfilePic.let { imageView ->
-                    imageView.loadImage(pic) {
-                        error {
-                            getImageFromDrawable(
-                                context ?: return@error null,
-                                errorProfilePic
-                            )
-                        }
-                    }
-                }
+                binding.settingsProfilePic.loadImage(pic) { error { getImageFromDrawable(context ?: return@error null, errorProfilePic) } }
                 binding.settingsProfileText.text = login.name
                 return true
             }
@@ -186,13 +147,8 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         if (!hasProfilePictureFromAccountManagers(AccountManager.allApis)) {
             val activity = activity ?: return
             val currentAccount = try {
-                DataStoreHelper.accounts.firstOrNull {
-                    it.keyIndex == DataStoreHelper.selectedKeyIndex
-                } ?: activity.let { DataStoreHelper.getDefaultAccount(activity) }
-            } catch (t: IllegalStateException) {
-                Log.e("AccountManager", "Activity not found", t)
-                null
-            }
+                DataStoreHelper.accounts.firstOrNull { it.keyIndex == DataStoreHelper.selectedKeyIndex } ?: DataStoreHelper.getDefaultAccount(activity)
+            } catch (t: IllegalStateException) { Log.e("AccountManager", "Activity not found", t); null }
             binding.settingsProfilePic.loadImage(currentAccount?.image)
             binding.settingsProfileText.text = currentAccount?.name
         }
@@ -201,10 +157,9 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
             settingsExtensions.visibility = View.GONE
 
             settingsAbout.setOnClickListener {
-                val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
-                builder.setTitle("📝 Catatan Pembaruan")
-                builder.setMessage(
-                    """
+                AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom).apply {
+                    setTitle("📝 Catatan Pembaruan")
+                    setMessage("""
 Selamat datang di CloudPlay 👋
 
 CloudPlay adalah kumpulan ekstensi CloudStream, di mana beberapa providernya diambil dari berbagai sumber dan digabungkan menjadi satu agar lebih fokus pada konten Indonesia.
@@ -236,19 +191,13 @@ Aplikasi ini dikembangkan untuk memberikan pengalaman streaming yang ringan, cep
 • Tekuma
 
 🙏 Terima kasih sudah mendukung CloudPlay.
-                    """.trimIndent()
-                )
-                builder.setPositiveButton("OK") { dialog, _ ->
-                    dialog.dismiss()
+                    """.trimIndent())
+                    setPositiveButton("OK") { dialog,_ -> dialog.dismiss() }
+                    create().show()
                 }
-                builder.create().show()
             }
 
-            // 🔥 FITUR BARU (TIDAK MENGHAPUS APAPUN)
-            settingsObscuraIngress.setOnClickListener {
-                ObscuraIngress.install(requireActivity())
-            }
-
+            // 🔥 FITUR BARU: ObscuraIngress
             listOf(
                 settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
                 settingsPlayer to R.id.action_navigation_global_to_navigation_settings_player,
@@ -256,34 +205,28 @@ Aplikasi ini dikembangkan untuk memberikan pengalaman streaming yang ringan, cep
                 settingsUi to R.id.action_navigation_global_to_navigation_settings_ui,
                 settingsProviders to R.id.action_navigation_global_to_navigation_settings_providers,
                 settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates,
-            ).forEach { (view, navigationId) ->
+                settingsObscuraIngress to -1 // click only
+            ).forEach { (view, navId) ->
                 view.apply {
-                    setOnClickListener { navigate(navigationId) }
-                    if (isLayout(TV)) {
-                        isFocusable = true
-                        isFocusableInTouchMode = true
+                    isFocusable = true
+                    isFocusableInTouchMode = true
+                    setOnClickListener {
+                        if (navId != -1) navigate(navId) else ObscuraIngress.install(requireActivity())
                     }
                 }
             }
 
-            if (isLayout(TV)) {
-                settingsGeneral.requestFocus()
-            }
+            if (isLayout(TV)) settingsGeneral.requestFocus()
         }
 
         val appVersion = BuildConfig.APP_VERSION
-        val buildTimestamp =
-            SimpleDateFormat("dd MMMM yyyy HH.mm.ss", Locale("id", "ID"))
-                .format(Date(BuildConfig.BUILD_DATE))
+        val buildTimestamp = SimpleDateFormat("dd MMMM yyyy HH.mm.ss", Locale("id", "ID")).format(Date(BuildConfig.BUILD_DATE))
 
         binding.appVersion.text = "v$appVersion • ☠️ModSanz☠️ • $buildTimestamp"
         binding.buildDate.visibility = View.GONE
 
         binding.appVersionInfo.setOnLongClickListener {
-            clipboardHelper(
-                txt(R.string.extension_version),
-                "v$appVersion • ☠️ModSanz☠️ • $buildTimestamp"
-            )
+            clipboardHelper(txt(R.string.extension_version), "v$appVersion • ☠️ModSanz☠️ • $buildTimestamp")
             true
         }
     }
