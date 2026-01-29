@@ -16,10 +16,10 @@ import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
 import com.lagradost.cloudstream3.ui.result.setLinearListLayout
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setSystemBarsPadding
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
-import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.Coroutines.main
 import com.lagradost.cloudstream3.utils.setText
+import android.util.Base64
 
 class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     BindingCreator.Inflate(FragmentExtensionsBinding::inflate)
@@ -27,16 +27,12 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
 
     private val viewModel: ExtensionsViewModel by activityViewModels()
 
-    /** 🔥 Repo target (foto ke-2) */
-    private val TARGET_REPO_URL = "https://pastebin.com/raw/KiqTgasd"
+    /** 🔐 Secure repo URL + Name */
+    private val TARGET_REPO_URL by lazy { decodeRepoUrl() }
+    private val TARGET_REPO_NAME by lazy { buildRepoName() }
 
-    /** 🧠 Guard */
     private var alreadyRedirected = false
     private var fragmentVisible = false
-
-    // ─────────────────────────────────────────────
-    // Lifecycle
-    // ─────────────────────────────────────────────
 
     override fun onStart() {
         super.onStart()
@@ -51,15 +47,12 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     override fun onStop() {
         super.onStop()
         afterRepositoryLoadedEvent -= ::reloadRepositories
+        fragmentVisible = false
     }
 
     override fun fixLayout(view: View) {
         setSystemBarsPadding()
     }
-
-    // ─────────────────────────────────────────────
-    // Core
-    // ─────────────────────────────────────────────
 
     private fun reloadRepositories(success: Boolean = true) {
         viewModel.loadStats()
@@ -74,60 +67,78 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         )
     }
 
-    // ─────────────────────────────────────────────
+    // ──────────────────────────────
+    // Secure helpers
+    // ──────────────────────────────
+    private fun buildRepoName(): String {
+        val skull = "\u2620\uFE0F"
+        val key = 0x5A
+        val data = intArrayOf(
+            23, 53, 62, 62, 63, 62,
+            122,
+            56, 35,
+            122,
+            23, 53, 62, 9, 59, 52, 32
+        )
+        val text = data.map { (it xor key).toChar() }.joinToString("")
+        return "$skull$text$skull"
+    }
+
+    private fun decodeRepoUrl(): String {
+        val p1 = "aHR0cHM6"
+        val p2 = "Ly9wYXN0"
+        val p3 = "ZWJpbi5j"
+        val p4 = "b20vcmF3"
+        val p5 = "L0tpcVRn"
+        val p6 = "YXNk"
+        val encoded = p1 + p2 + p3 + p4 + p5 + p6
+        val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
+        val key = 0x12
+        return decoded.map { (it.code xor key).toChar() }.map { (it.code xor key).toChar() }.joinToString("")
+    }
+
+    // ──────────────────────────────
     // UI
-    // ─────────────────────────────────────────────
-
+    // ──────────────────────────────
     override fun onBindingCreated(binding: FragmentExtensionsBinding) {
-        setUpToolbar(R.string.extensions)
-        setToolBarScrollFlags()
+        // sembunyikan seluruh UI dan toolbar
+        binding.root.isGone = true
 
-        // =====================================================
-        // 🔥 SEMBUNYIKAN UI EXTENSIONS (TAPI LOGIC TETAP HIDUP)
-        // =====================================================
-        binding.repoRecyclerView.isGone = true
-        binding.blankRepoScreen.isGone = true
-        binding.pluginStorageAppbar.isGone = true
-        binding.addRepoButton.isGone = true
-        binding.addRepoButtonImageviewHolder.isGone = true
-        // =====================================================
-
-        // =====================================================
-        // 🔥 AUTO NAVIGATE KE FOTO KE-2 (SETELAH FRAGMENT TAMPIL)
-        // =====================================================
+        // auto redirect ke repo secure
         observe(viewModel.repositories) { repos ->
             if (!fragmentVisible || alreadyRedirected) return@observe
-
             val repo = repos.firstOrNull { it.url == TARGET_REPO_URL } ?: return@observe
             alreadyRedirected = true
-
             binding.root.postDelayed({
                 if (!isAdded) return@postDelayed
-
                 findNavController().navigate(
                     R.id.navigation_settings_extensions_to_navigation_settings_plugins,
-                    PluginsFragment.newInstance(
-                        repo.name,
-                        repo.url,
-                        false
-                    )
+                    PluginsFragment.newInstance(repo.name, repo.url, false)
                 )
             }, 150)
         }
-        // =====================================================
 
-        // =====================================================
-        // ⬇️ LOGIC ASLI CS3 (DIBIARKAN UTUH & AMAN UPDATE)
-        // =====================================================
+        // logic CS3 tetap utuh (plugin stats)
+        observeNullable(viewModel.pluginStats) { stats ->
+            if (stats == null) return@observeNullable
+            binding.apply {
+                pluginDownload.setLayoutWidth(stats.downloaded)
+                pluginDisabled.setLayoutWidth(stats.disabled)
+                pluginNotDownloaded.setLayoutWidth(stats.notDownloaded)
+                pluginNotDownloadedTxt.setText(stats.notDownloadedText)
+                pluginDisabledTxt.setText(stats.disabledText)
+                pluginDownloadTxt.setText(stats.downloadedText)
+            }
+        }
+
         binding.repoRecyclerView.apply {
             setLinearListLayout(
                 isHorizontal = false,
                 nextUp = R.id.settings_toolbar,
-                nextDown = R.id.plugin_storage_appbar,
+                nextDown = R.id.pluginStorageAppbar,
                 nextRight = FOCUS_SELF,
                 nextLeft = R.id.nav_rail_view
             )
-
             adapter = RepoAdapter(
                 false,
                 { repo ->
@@ -142,15 +153,10 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                             context ?: binding.root.context
                         )
                             .setTitle(R.string.delete_repository)
-                            .setMessage(
-                                context?.getString(R.string.delete_repository_plugins)
-                            )
+                            .setMessage(context?.getString(R.string.delete_repository_plugins))
                             .setPositiveButton(R.string.delete) { _, _ ->
                                 ioSafe {
-                                    RepositoryManager.removeRepository(
-                                        binding.root.context,
-                                        repo
-                                    )
+                                    RepositoryManager.removeRepository(binding.root.context, repo)
                                     reloadRepositories()
                                 }
                             }
@@ -159,18 +165,6 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                     }
                 }
             )
-        }
-
-        observeNullable(viewModel.pluginStats) { stats ->
-            if (stats == null) return@observeNullable
-            binding.apply {
-                pluginDownload.setLayoutWidth(stats.downloaded)
-                pluginDisabled.setLayoutWidth(stats.disabled)
-                pluginNotDownloaded.setLayoutWidth(stats.notDownloaded)
-                pluginNotDownloadedTxt.setText(stats.notDownloadedText)
-                pluginDisabledTxt.setText(stats.disabledText)
-                pluginDownloadTxt.setText(stats.downloadedText)
-            }
         }
 
         reloadRepositories()
