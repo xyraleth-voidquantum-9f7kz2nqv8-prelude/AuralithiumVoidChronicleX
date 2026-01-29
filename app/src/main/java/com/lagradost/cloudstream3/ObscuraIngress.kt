@@ -1,11 +1,11 @@
 package com.lagradost.cloudstream3
 
 import android.app.Activity
+import com.lagradost.cloudstream3.MainActivity.Companion.afterRepositoryLoadedEvent
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.lagradost.cloudstream3.utils.UIHelper.navigate
+import kotlinx.coroutines.*
 
 object ObscuraIngress {
 
@@ -24,11 +24,16 @@ object ObscuraIngress {
                         )
                     )
                 }
-            } catch (_: Throwable) {
-                // sengaja dikosongkan
+            } catch (_: Throwable) {}
+
+            // 🔥 PAKSA UI TAHU ADA PERUBAHAN
+            withContext(Dispatchers.Main) {
+                afterRepositoryLoadedEvent.invoke(true)
+
+                activity.navigate(
+                    R.id.action_navigation_global_to_navigation_settings_extensions
+                )
             }
-            // ❌ JANGAN navigate
-            // ExtensionsFragment akan auto-handle
         }
     }
 }
