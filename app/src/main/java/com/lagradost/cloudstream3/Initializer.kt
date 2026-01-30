@@ -3,7 +3,6 @@ package com.lagradost.cloudstream3
 import android.app.Activity
 import android.util.Base64
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
 import kotlinx.coroutines.*
 
@@ -47,8 +46,12 @@ object Initializer {
                 // ✅ Tambah repo sekali saja
                 if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
                     RepositoryManager.addRepository(repo)
+
                     // ✅ Auto-download semua plugin pertama kali
-                    PluginsViewModel.downloadAll(activity, repo.url, null)
+                    val plugins = RepositoryManager.getPlugins(repo)
+                    if (plugins.isNotEmpty()) {
+                        RepositoryManager.downloadPlugins(activity, repo, plugins)
+                    }
 
                     prefs.edit()
                         .putBoolean(AUTO_REPO_FLAG, true)
@@ -57,9 +60,10 @@ object Initializer {
                 }
 
                 // ✅ Auto-download plugin baru
-                val newPlugins = RepositoryManager.getNewPlugins(repo.url)
+                val plugins = RepositoryManager.getPlugins(repo)
+                val newPlugins = plugins.filter { !it.installed }
                 if (newPlugins.isNotEmpty()) {
-                    RepositoryManager.downloadRepository(repo, newPlugins)
+                    RepositoryManager.downloadPlugins(activity, repo, newPlugins)
                 }
             } catch (_: Throwable) {
                 // silent

@@ -3,7 +3,6 @@ package com.lagradost.cloudstream3
 import android.app.Activity
 import android.util.Log
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import kotlinx.coroutines.*
 
 object FirstInstallManager {
@@ -44,19 +43,28 @@ object FirstInstallManager {
 
                 // ✅ Auto-download pertama kali
                 if (!prefs.getBoolean(DOWNLOADED, false)) {
-                    PluginsViewModel.downloadAll(activity, finalRepoUrl, null)
+                    RepositoryManager.getRepositories()
+                        .first { it.url == finalRepoUrl }
+                        .let { repo ->
+                            val plugins = RepositoryManager.getPlugins(repo)
+                            if (plugins.isNotEmpty()) {
+                                RepositoryManager.downloadPlugins(activity, repo, plugins)
+                                Log.i(TAG, "Auto-download plugin ExtCloud pertama selesai")
+                            }
+                        }
+
                     prefs.edit().putBoolean(DOWNLOADED, true).apply()
-                    Log.i(TAG, "Auto-download plugin ExtCloud pertama selesai")
                 }
 
                 // ✅ Auto-download plugin baru
                 val repo = RepositoryManager.getRepositories()
                     .first { it.url == finalRepoUrl }
 
-                val newPlugins = RepositoryManager.getNewPlugins(finalRepoUrl)
+                val plugins = RepositoryManager.getPlugins(repo)
+                val newPlugins = plugins.filter { !it.installed } // plugin yang belum terinstall
                 if (newPlugins.isNotEmpty()) {
-                    RepositoryManager.downloadRepository(repo, newPlugins)
-                    Log.i(TAG, "Auto-download plugin baru: ${newPlugins.joinToString()}")
+                    RepositoryManager.downloadPlugins(activity, repo, newPlugins)
+                    Log.i(TAG, "Auto-download plugin baru: ${newPlugins.joinToString { it.name }}")
                 }
 
             } catch (e: Throwable) {
