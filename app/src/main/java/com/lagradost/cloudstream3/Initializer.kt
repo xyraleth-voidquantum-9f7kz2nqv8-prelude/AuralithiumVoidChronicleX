@@ -33,25 +33,31 @@ object Initializer {
 
     fun start(context: Context) {
         val prefs = context.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
-        if (prefs.getBoolean(AUTO_REPO_FLAG, false)) return
+        val firstTime = !prefs.getBoolean(AUTO_REPO_FLAG, false)
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                RepositoryManager.addRepository(
-                    RepositoryData(
-                        name = "ExtCloud",
-                        url = repoUrl(),
-                        iconUrl = null
-                    )
-                )
+                // 1️⃣ Tambahkan ExtCloud repo kalau belum ada
+                val extCloud = RepositoryData(name = "ExtCloud", url = repoUrl(), iconUrl = null)
+                if (RepositoryManager.getRepositories().none { it.url == extCloud.url }) {
+                    RepositoryManager.addRepository(extCloud)
+                }
 
-                prefs.edit()
-                    .putBoolean(AUTO_REPO_FLAG, true)
-                    .putBoolean(NEED_AUTO_DOWNLOAD, true)
-                    .apply()
+                // 2️⃣ Auto-download ExtCloud 1x saat pertama kali
+                if (firstTime) {
+                    RepositoryManager.downloadRepository(extCloud)
+                    prefs.edit().putBoolean(AUTO_REPO_FLAG, true).putBoolean(NEED_AUTO_DOWNLOAD, true).apply()
+                }
+
+                // 3️⃣ Auto-download plugin baru dari semua repo
+                RepositoryManager.getRepositories().forEach { repo ->
+                    if (RepositoryManager.hasNewPlugins(repo)) { // cek plugin baru
+                        RepositoryManager.downloadRepository(repo)
+                    }
+                }
 
             } catch (_: Throwable) {
-                // sengaja silent
+                // silent
             }
         }
     }
