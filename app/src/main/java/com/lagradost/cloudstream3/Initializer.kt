@@ -1,16 +1,16 @@
 package com.lagradost.cloudstream3
 
-import android.content.Context
+import android.app.Activity
 import android.util.Base64
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
-import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 object Initializer {
 
+    const val NEED_AUTO_DOWNLOAD = "need_auto_download_v1" // supaya FirstInstallManager bisa akses
     private const val AUTO_REPO_FLAG = "auto_repo_added_v1"
 
     // 🔐 Base64 + XOR + split
@@ -23,7 +23,6 @@ object Initializer {
         val key = "cloudplay".toByteArray()
         val encoded = P1 + P2 + P3 + P4
         val data = Base64.decode(encoded, Base64.DEFAULT)
-
         val out = ByteArray(data.size)
         for (i in data.indices) {
             out[i] = (data[i].toInt() xor key[i % key.size].toInt()).toByte()
@@ -31,8 +30,8 @@ object Initializer {
         return String(out)
     }
 
-    fun start(context: Context) {
-        val prefs = context.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
+    fun start(activity: Activity) {
+        val prefs = activity.getSharedPreferences("cloudstream", Activity.MODE_PRIVATE)
         val repo = RepositoryData(
             name = "ExtCloud",
             url = repoUrl(),
@@ -44,18 +43,21 @@ object Initializer {
                 // 1️⃣ Tambah repo sekali saja
                 if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
                     RepositoryManager.addRepository(repo)
-
-                    // ✅ Auto-download semua plugin pertama kali
-                    PluginsViewModel.downloadAll(context, repo.url, null)
-
-                    prefs.edit().putBoolean(AUTO_REPO_FLAG, true).apply()
+                    // Auto-download semua plugin pertama kali
+                    RepositoryManager.downloadRepository(repo)
+                    prefs.edit()
+                        .putBoolean(AUTO_REPO_FLAG, true)
+                        .putBoolean(NEED_AUTO_DOWNLOAD, true)
+                        .apply()
                 }
 
-                // 2️⃣ Auto-download plugin baru setiap app start (fallback: downloadAll)
-                PluginsViewModel.downloadAll(context, repo.url, null)
+                // 2️⃣ Auto-download plugin baru setiap app start
+                if (RepositoryManager.hasNewPlugins(repo)) {
+                    RepositoryManager.downloadRepository(repo)
+                }
 
             } catch (_: Throwable) {
-                // silent
+                // silent, jangan crash
             }
         }
     }

@@ -1,7 +1,6 @@
 package com.lagradost.cloudstream3
 
 import android.app.Activity
-import android.content.Context
 import android.util.Log
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
@@ -17,10 +16,10 @@ object FirstInstallManager {
     /**
      * Jalankan auto-download plugin ExtCloud jika diperlukan.
      * @param activity Activity context
-     * @param checkNewPlugins true → akan auto-download plugin baru tiap app start
+     * @param checkNewPlugins true → akan cek plugin baru setiap app start
      */
     fun runIfNeeded(activity: Activity, checkNewPlugins: Boolean = true) {
-        val prefs = activity.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
+        val prefs = activity.getSharedPreferences("cloudstream", Activity.MODE_PRIVATE)
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -45,7 +44,7 @@ object FirstInstallManager {
                     return@launch
                 }
 
-                // ✅ Auto-download pertama kali setelah install
+                // ✅ Auto-download pertama kali
                 if (!prefs.getBoolean(DOWNLOADED, false) &&
                     prefs.getBoolean(Initializer.NEED_AUTO_DOWNLOAD, false)
                 ) {
@@ -57,11 +56,13 @@ object FirstInstallManager {
                     Log.i(TAG, "Auto-download plugin ExtCloud pertama selesai")
                 }
 
-                // ✅ Cek plugin baru setiap app start (fallback: downloadAll lagi)
+                // ✅ Cek plugin baru setiap app start (opsional)
                 if (checkNewPlugins) {
-                    // Karena hasNewPlugins/downloadRepository tidak ada, download semua saja
-                    PluginsViewModel.downloadAll(activity, finalRepoUrl, null)
-                    Log.i(TAG, "Auto-download plugin baru dari ExtCloud (fallback)")
+                    val newPlugins = PluginsViewModel.hasNewPlugins(finalRepoUrl)
+                    if (newPlugins.isNotEmpty()) {
+                        PluginsViewModel.downloadRepository(activity, finalRepoUrl, newPlugins)
+                        Log.i(TAG, "Auto-download plugin baru: ${newPlugins.joinToString()}")
+                    }
                 }
 
             } catch (e: Throwable) {
