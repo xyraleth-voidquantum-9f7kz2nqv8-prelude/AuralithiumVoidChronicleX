@@ -7,7 +7,6 @@ import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import kotlinx.coroutines.*
 
 object FirstInstallManager {
-
     private const val TAG = "FirstInstallManager"
     private const val DOWNLOADED = "auto_provider_downloaded_v2"
     private const val MAX_RETRY = 10
@@ -51,9 +50,12 @@ object FirstInstallManager {
                 }
 
                 // ✅ Auto-download plugin baru
-                val newPlugins = PluginsViewModel.hasNewPlugins(finalRepoUrl)
+                val repo = RepositoryManager.getRepositories()
+                    .first { it.url == finalRepoUrl }
+
+                val newPlugins = RepositoryManager.getNewPlugins(finalRepoUrl)
                 if (newPlugins.isNotEmpty()) {
-                    PluginsViewModel.downloadRepository(activity, finalRepoUrl, newPlugins)
+                    RepositoryManager.downloadRepository(repo, newPlugins)
                     Log.i(TAG, "Auto-download plugin baru: ${newPlugins.joinToString()}")
                 }
 

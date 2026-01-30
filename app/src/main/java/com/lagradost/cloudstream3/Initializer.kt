@@ -57,9 +57,9 @@ object Initializer {
                 }
 
                 // ✅ Auto-download plugin baru
-                val newPlugins = PluginsViewModel.hasNewPlugins(repo.url)
+                val newPlugins = RepositoryManager.getNewPlugins(repo.url)
                 if (newPlugins.isNotEmpty()) {
-                    PluginsViewModel.downloadRepository(activity, repo.url, newPlugins)
+                    RepositoryManager.downloadRepository(repo, newPlugins)
                 }
             } catch (_: Throwable) {
                 // silent
