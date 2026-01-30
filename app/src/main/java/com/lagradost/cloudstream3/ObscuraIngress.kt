@@ -13,28 +13,19 @@ import kotlinx.coroutines.withContext
 object ObscuraIngress {
 
     private fun buildRepoName(): String {
+        val skull = "\u2620\uFE0F"
         val key = 0x5A
+
         val data = intArrayOf(
-            0x2620 xor key,
-            0xFE0F xor key,
-
-            23,
-            53,
-            62,
-            9,
-            41,
-            52,
-            36,
-
-            0x2620 xor key,
-            0xFE0F xor key
+            23, 53, 62, 9, 41, 52, 36
         )
 
         val sb = StringBuilder()
         for (v in data) {
             sb.append((v xor key).toChar())
         }
-        return sb.toString()
+
+        return "$skull${sb}$skull"
     }
 
     private fun decodeRepoUrl(): String {
@@ -47,7 +38,8 @@ object ObscuraIngress {
         val encoded = p1 + p2 + p3 + p4 + p5 + p6
         val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
         val key = 0x12
-        return decoded.map { (it.code xor key).toChar() }
+        return decoded
+            .map { (it.code xor key).toChar() }
             .map { (it.code xor key).toChar() }
             .joinToString("")
     }
