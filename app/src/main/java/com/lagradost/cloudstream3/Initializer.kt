@@ -61,7 +61,6 @@ object Initializer {
                         .putBoolean(NEED_AUTO_DOWNLOAD, false)
                         .apply()
                 }
-
                 PluginsViewModel.downloadAll(activity, repo.url, null)
             } catch (_: Throwable) {
                 Log.e(TAG, d(LOG_FAILED))
