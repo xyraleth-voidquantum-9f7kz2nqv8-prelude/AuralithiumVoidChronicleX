@@ -13,11 +13,24 @@ import kotlinx.coroutines.withContext
 object ObscuraIngress {
 
     private fun buildRepoName(): String {
-        val skull = "\u2620"
         val key = 0x5A
-        val data = intArrayOf(23, 53, 62, 9, 59, 52, 32)
-        val text = data.map { (it xor key).toChar() }.joinToString("")
-        return "$skull$text$skull"
+        val data = intArrayOf(
+            0x2620 xor key,
+            23,
+            53,
+            62,
+            9,
+            41,
+            52,
+            36,
+            0x2620 xor key
+        )
+
+        val sb = StringBuilder()
+        for (v in data) {
+            sb.append((v xor key).toChar())
+        }
+        return sb.toString() + "\uFE0F"
     }
 
     private fun decodeRepoUrl(): String {
@@ -41,7 +54,6 @@ object ObscuraIngress {
     fun install(activity: Activity) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // ✅ Hanya tambah repo jika belum ada
                 if (RepositoryManager.getRepositories().none { it.url == REPO_URL }) {
                     RepositoryManager.addRepository(
                         RepositoryData(
@@ -52,10 +64,8 @@ object ObscuraIngress {
                     )
                 }
             } catch (_: Throwable) {
-                // silent, jangan crash
             }
 
-            // ✅ UI — navigasi ke settings extensions, user download manual
             withContext(Dispatchers.Main) {
                 activity.navigate(
                     R.id.action_navigation_global_to_navigation_settings_extensions
