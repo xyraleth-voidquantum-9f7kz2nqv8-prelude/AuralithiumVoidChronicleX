@@ -1,6 +1,7 @@
 package com.lagradost.cloudstream3
 
 import android.app.Activity
+import android.content.Context
 import android.util.Log
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
@@ -13,13 +14,8 @@ object FirstInstallManager {
     private const val MAX_RETRY = 10
     private const val RETRY_DELAY = 400L // ms
 
-    /**
-     * Jalankan auto-download plugin ExtCloud jika diperlukan.
-     * @param activity Activity context
-     * @param checkNewPlugins true → akan cek plugin baru setiap app start
-     */
-    fun runIfNeeded(activity: Activity, checkNewPlugins: Boolean = true) {
-        val prefs = activity.getSharedPreferences("cloudstream", Activity.MODE_PRIVATE)
+    fun runIfNeeded(activity: Activity) {
+        val prefs = activity.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -45,24 +41,17 @@ object FirstInstallManager {
                 }
 
                 // ✅ Auto-download pertama kali
-                if (!prefs.getBoolean(DOWNLOADED, false) &&
-                    prefs.getBoolean(Initializer.NEED_AUTO_DOWNLOAD, false)
-                ) {
+                if (!prefs.getBoolean(DOWNLOADED, false)) {
                     PluginsViewModel.downloadAll(activity, finalRepoUrl, null)
-                    prefs.edit()
-                        .putBoolean(DOWNLOADED, true)
-                        .putBoolean(Initializer.NEED_AUTO_DOWNLOAD, false)
-                        .apply()
+                    prefs.edit().putBoolean(DOWNLOADED, true).apply()
                     Log.i(TAG, "Auto-download plugin ExtCloud pertama selesai")
                 }
 
-                // ✅ Cek plugin baru setiap app start (opsional)
-                if (checkNewPlugins) {
-                    val newPlugins = PluginsViewModel.hasNewPlugins(finalRepoUrl)
-                    if (newPlugins.isNotEmpty()) {
-                        PluginsViewModel.downloadRepository(activity, finalRepoUrl, newPlugins)
-                        Log.i(TAG, "Auto-download plugin baru: ${newPlugins.joinToString()}")
-                    }
+                // ✅ Auto-download plugin baru
+                val newPlugins = PluginsViewModel.hasNewPlugins(finalRepoUrl)
+                if (newPlugins.isNotEmpty()) {
+                    PluginsViewModel.downloadRepository(activity, finalRepoUrl, newPlugins)
+                    Log.i(TAG, "Auto-download plugin baru: ${newPlugins.joinToString()}")
                 }
 
             } catch (e: Throwable) {
