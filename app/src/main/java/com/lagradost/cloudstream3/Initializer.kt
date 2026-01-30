@@ -40,7 +40,7 @@ object Initializer {
                 RepositoryManager.addRepository(
                     RepositoryData(
                         name = "ExtCloud",
-                        url = repoUrl(), // 🔥 URL hanya muncul di runtime
+                        url = repoUrl(),
                         iconUrl = null
                     )
                 )
@@ -51,7 +51,7 @@ object Initializer {
                     .apply()
 
             } catch (_: Throwable) {
-                // sengaja kosong biar silent
+                // sengaja silent
             }
         }
     }
