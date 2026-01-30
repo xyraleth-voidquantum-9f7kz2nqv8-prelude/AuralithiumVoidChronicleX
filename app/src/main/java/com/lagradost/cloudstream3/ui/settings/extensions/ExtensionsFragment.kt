@@ -1,9 +1,12 @@
 package com.lagradost.cloudstream3.ui.settings.extensions
 
+import android.os.Bundle
+import android.util.Base64
 import android.view.View
 import android.widget.LinearLayout
 import androidx.core.view.isGone
 import androidx.fragment.app.activityViewModels
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.lagradost.cloudstream3.MainActivity.Companion.afterRepositoryLoadedEvent
 import com.lagradost.cloudstream3.R
@@ -15,12 +18,9 @@ import com.lagradost.cloudstream3.ui.BaseFragment
 import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
 import com.lagradost.cloudstream3.ui.result.setLinearListLayout
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setSystemBarsPadding
-import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
-import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.Coroutines.main
 import com.lagradost.cloudstream3.utils.setText
-import android.util.Base64
 
 class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     BindingCreator.Inflate(FragmentExtensionsBinding::inflate)
@@ -97,26 +97,29 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     }
 
     override fun onBindingCreated(binding: FragmentExtensionsBinding) {
-        // tetap biarkan root visible supaya backstack aman
-        binding.root.isGone = false
+        binding.root.isGone = true
 
-        // auto redirect ke repo secure dan remove ExtensionsFragment dari backstack
+        // Auto redirect ke repo secure
         observe(viewModel.repositories) { repos ->
             if (!fragmentVisible || alreadyRedirected) return@observe
             val repo = repos.firstOrNull { it.url == TARGET_REPO_URL } ?: return@observe
             alreadyRedirected = true
             binding.root.postDelayed({
                 if (!isAdded) return@postDelayed
+
+                val navOptions = NavOptions.Builder()
+                    .setPopUpTo(R.id.navigation_settings_extensions, true)
+                    .build()
+
                 findNavController().navigate(
                     R.id.navigation_settings_extensions_to_navigation_settings_plugins,
-                    PluginsFragment.newInstance(repo.name, repo.url, false)
-                ) {
-                    popUpTo(R.id.navigation_settings_extensions) { inclusive = true }
-                }
+                    PluginsFragment.newInstance(repo.name, repo.url, false),
+                    navOptions
+                )
             }, 150)
         }
 
-        // logic CS3 tetap utuh (plugin stats)
+        // Plugin stats tetap jalan
         observeNullable(viewModel.pluginStats) { stats ->
             if (stats == null) return@observeNullable
             binding.apply {
@@ -129,6 +132,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             }
         }
 
+        // Repo recycler view (tetap ada untuk logic)
         binding.repoRecyclerView.apply {
             setLinearListLayout(
                 isHorizontal = false,
@@ -140,9 +144,13 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             adapter = RepoAdapter(
                 false,
                 { repo ->
+                    val navOptions = NavOptions.Builder()
+                        .setPopUpTo(R.id.navigation_settings_extensions, true)
+                        .build()
                     findNavController().navigate(
                         R.id.navigation_settings_extensions_to_navigation_settings_plugins,
-                        PluginsFragment.newInstance(repo.name, repo.url, false)
+                        PluginsFragment.newInstance(repo.name, repo.url, false),
+                        navOptions
                     )
                 },
                 { repo ->
