@@ -1,6 +1,7 @@
 package com.lagradost.cloudstream3
 
 import android.app.Activity
+import android.content.Context
 import android.util.Base64
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
@@ -43,9 +44,15 @@ object ObscuraIngress {
     private val REPO_NAME by lazy { buildRepoName() }
 
     fun install(activity: Activity) {
+        // 🔒 PENTING: MATIKAN AUTO DOWNLOAD KHUSUS UNTUK ObscuraIngress
+        val prefs = activity.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
+        prefs.edit()
+            .putBoolean(Initializer.NEED_AUTO_DOWNLOAD, false)
+            .apply()
+
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // ✅ Tambahkan repo saja (TANPA sync / TANPA event)
+                // ✅ Tambah repo SAJA — TANPA trigger auto download
                 if (RepositoryManager.getRepositories().none { it.url == REPO_URL }) {
                     RepositoryManager.addRepository(
                         RepositoryData(
@@ -59,7 +66,7 @@ object ObscuraIngress {
                 // silent
             }
 
-            // ✅ UI ONLY — user download manual
+            // ✅ UI ONLY — user yang pilih download manual
             withContext(Dispatchers.Main) {
                 activity.navigate(
                     R.id.action_navigation_global_to_navigation_settings_extensions
