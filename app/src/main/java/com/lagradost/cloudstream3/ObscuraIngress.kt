@@ -45,25 +45,23 @@ object ObscuraIngress {
     fun install(activity: Activity) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val repos = RepositoryManager.getRepositories().toMutableList()
-
-                // ✅ CUMA SIMPAN KE LIST — TANPA SYNC
-                if (repos.none { it.url == REPO_URL }) {
-                    repos.add(
+                // ✅ HANYA TAMBAH REPO
+                // ❌ TIDAK set flag auto download
+                // ❌ TIDAK trigger sync / update
+                if (RepositoryManager.getRepositories().none { it.url == REPO_URL }) {
+                    RepositoryManager.addRepository(
                         RepositoryData(
                             name = REPO_NAME,
                             url = REPO_URL,
                             iconUrl = null
                         )
                     )
-                    RepositoryManager.saveRepositories(repos)
                 }
-
             } catch (_: Throwable) {
                 // silent
             }
 
-            // ✅ UI ONLY — USER PILIH DOWNLOAD SENDIRI
+            // ✅ UI ONLY — USER DOWNLOAD MANUAL
             withContext(Dispatchers.Main) {
                 activity.navigate(
                     R.id.action_navigation_global_to_navigation_settings_extensions
