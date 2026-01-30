@@ -14,20 +14,18 @@ object FirstInstallManager {
     private const val MAX_RETRY = 10
     private const val RETRY_DELAY = 400L // ms
 
-    fun runIfNeeded(activity: Activity) {
+    /**
+     * Jalankan auto-download plugin ExtCloud jika diperlukan.
+     * @param activity Activity context
+     * @param checkNewPlugins true → akan cek plugin baru setiap app start
+     */
+    fun runIfNeeded(activity: Activity, checkNewPlugins: Boolean = true) {
         val prefs = activity.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
-
-        // 1️⃣ Tidak perlu jalan kalau tidak disinyalkan
-        if (!prefs.getBoolean(Initializer.NEED_AUTO_DOWNLOAD, false)) return
-
-        // 2️⃣ Jangan ulang download
-        if (prefs.getBoolean(DOWNLOADED, false)) return
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
+                // Tunggu sampai repository ExtCloud ready
                 var repoUrl: String? = null
-
-                // 3️⃣ Tunggu sampai repository benar-benar ready
                 repeat(MAX_RETRY) { attempt ->
                     val repo = RepositoryManager.getRepositories()
                         .firstOrNull { it.name == "ExtCloud" }
@@ -42,29 +40,34 @@ object FirstInstallManager {
                     delay(RETRY_DELAY)
                 }
 
-                // 4️⃣ Kalau masih null → stop aman
                 val finalRepoUrl = repoUrl ?: run {
                     Log.e(TAG, "Repo ExtCloud tidak ditemukan, auto-download dibatalkan")
                     return@launch
                 }
 
-                // 5️⃣ Download semua plugin
-                PluginsViewModel.downloadAll(
-                    activity,
-                    finalRepoUrl,
-                    null
-                )
+                // ✅ Auto-download pertama kali
+                if (!prefs.getBoolean(DOWNLOADED, false) &&
+                    prefs.getBoolean(Initializer.NEED_AUTO_DOWNLOAD, false)
+                ) {
+                    PluginsViewModel.downloadAll(activity, finalRepoUrl, null)
+                    prefs.edit()
+                        .putBoolean(DOWNLOADED, true)
+                        .putBoolean(Initializer.NEED_AUTO_DOWNLOAD, false)
+                        .apply()
+                    Log.i(TAG, "Auto-download plugin ExtCloud pertama selesai")
+                }
 
-                // 6️⃣ Tandai selesai (ANTI LOOP)
-                prefs.edit()
-                    .putBoolean(DOWNLOADED, true)
-                    .putBoolean(Initializer.NEED_AUTO_DOWNLOAD, false)
-                    .apply()
-
-                Log.i(TAG, "Auto download plugin ExtCloud selesai")
+                // ✅ Cek plugin baru setiap app start (opsional)
+                if (checkNewPlugins) {
+                    val newPlugins = PluginsViewModel.hasNewPlugins(finalRepoUrl)
+                    if (newPlugins.isNotEmpty()) {
+                        PluginsViewModel.downloadRepository(activity, finalRepoUrl, newPlugins)
+                        Log.i(TAG, "Auto-download plugin baru: ${newPlugins.joinToString()}")
+                    }
+                }
 
             } catch (e: Throwable) {
-                Log.e(TAG, "Auto download plugin gagal", e)
+                Log.e(TAG, "Auto-download plugin gagal", e)
             }
         }
     }
