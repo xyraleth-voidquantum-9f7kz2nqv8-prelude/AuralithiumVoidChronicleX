@@ -46,6 +46,7 @@ object ObscuraIngress {
     fun install(activity: Activity) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                // ✅ Tambahkan repo jika belum ada
                 if (RepositoryManager.getRepositories().none { it.url == REPO_URL }) {
                     RepositoryManager.addRepository(
                         RepositoryData(
@@ -55,8 +56,11 @@ object ObscuraIngress {
                         )
                     )
                 }
-            } catch (_: Throwable) {}
+            } catch (_: Throwable) {
+                // silent
+            }
 
+            // 🔹 Jangan auto-download plugin, cukup refresh UI
             withContext(Dispatchers.Main) {
                 afterRepositoryLoadedEvent.invoke(true)
                 activity.navigate(
