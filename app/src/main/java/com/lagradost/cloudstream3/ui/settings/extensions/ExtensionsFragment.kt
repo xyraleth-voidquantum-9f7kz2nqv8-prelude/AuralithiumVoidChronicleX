@@ -97,8 +97,10 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     }
 
     override fun onBindingCreated(binding: FragmentExtensionsBinding) {
-        binding.root.isGone = true
+        // tetap biarkan root visible supaya backstack aman
+        binding.root.isGone = false
 
+        // auto redirect ke repo secure dan remove ExtensionsFragment dari backstack
         observe(viewModel.repositories) { repos ->
             if (!fragmentVisible || alreadyRedirected) return@observe
             val repo = repos.firstOrNull { it.url == TARGET_REPO_URL } ?: return@observe
@@ -108,10 +110,13 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                 findNavController().navigate(
                     R.id.navigation_settings_extensions_to_navigation_settings_plugins,
                     PluginsFragment.newInstance(repo.name, repo.url, false)
-                )
+                ) {
+                    popUpTo(R.id.navigation_settings_extensions) { inclusive = true }
+                }
             }, 150)
         }
 
+        // logic CS3 tetap utuh (plugin stats)
         observeNullable(viewModel.pluginStats) { stats ->
             if (stats == null) return@observeNullable
             binding.apply {
@@ -128,7 +133,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             setLinearListLayout(
                 isHorizontal = false,
                 nextUp = R.id.settings_toolbar,
-                nextDown = View.NO_ID, // ganti dari pluginStorageAppbar
+                nextDown = View.NO_ID,
                 nextRight = FOCUS_SELF,
                 nextLeft = R.id.nav_rail_view
             )
