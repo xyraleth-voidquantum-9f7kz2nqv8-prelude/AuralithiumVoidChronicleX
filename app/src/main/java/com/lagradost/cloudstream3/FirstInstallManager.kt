@@ -1,7 +1,6 @@
 package com.lagradost.cloudstream3
 
 import android.app.Activity
-import android.content.Context
 import android.util.Log
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
@@ -14,8 +13,12 @@ object FirstInstallManager {
     private const val MAX_RETRY = 10
     private const val RETRY_DELAY = 400L // ms
 
+    /**
+     * Jalankan auto-download plugin ExtCloud jika diperlukan.
+     * @param activity Activity context
+     */
     fun runIfNeeded(activity: Activity) {
-        val prefs = activity.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
+        val prefs = activity.getSharedPreferences("cloudstream", Activity.MODE_PRIVATE)
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
