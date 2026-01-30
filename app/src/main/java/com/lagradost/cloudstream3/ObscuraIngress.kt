@@ -2,7 +2,6 @@ package com.lagradost.cloudstream3
 
 import android.app.Activity
 import android.util.Base64
-import com.lagradost.cloudstream3.MainActivity.Companion.afterRepositoryLoadedEvent
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
 import com.lagradost.cloudstream3.utils.UIHelper.navigate
@@ -46,7 +45,7 @@ object ObscuraIngress {
     fun install(activity: Activity) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // ✅ Tambahkan repo jika belum ada
+                // ✅ Tambahkan repo saja (TANPA sync / TANPA event)
                 if (RepositoryManager.getRepositories().none { it.url == REPO_URL }) {
                     RepositoryManager.addRepository(
                         RepositoryData(
@@ -60,9 +59,8 @@ object ObscuraIngress {
                 // silent
             }
 
-            // 🔹 Jangan auto-download plugin, cukup refresh UI
+            // ✅ UI ONLY — user download manual
             withContext(Dispatchers.Main) {
-                afterRepositoryLoadedEvent.invoke(true)
                 activity.navigate(
                     R.id.action_navigation_global_to_navigation_settings_extensions
                 )
