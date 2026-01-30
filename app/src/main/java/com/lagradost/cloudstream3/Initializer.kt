@@ -2,20 +2,17 @@ package com.lagradost.cloudstream3
 
 import android.app.Activity
 import android.util.Base64
-import androidx.lifecycle.lifecycleScope
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 object Initializer {
 
     const val NEED_AUTO_DOWNLOAD = "need_auto_download_v1"
     private const val AUTO_REPO_FLAG = "auto_repo_added_v1"
 
+    // 🔐 Base64 + XOR split untuk URL repo
     private const val P1 = "CxgbBRdKQ04LAhtBEg0EBBQb"
     private const val P2 = "Fh8KBwcfAhUcDRhBFgsdQwUM"
     private const val P3 = "EQNWR0s1FBU6DwMaEUsdDQgX"
@@ -23,20 +20,35 @@ object Initializer {
 
     private fun repoUrl(): String {
         val key = "cloudplay".toByteArray()
-        val data = Base64.decode(P1 + P2 + P3 + P4, Base64.DEFAULT)
-        return data.mapIndexed { i, b -> (b.toInt() xor key[i % key.size].toInt()).toByte() }
-            .toByteArray().toString(Charsets.UTF_8)
+        val encoded = P1 + P2 + P3 + P4
+        val data = Base64.decode(encoded, Base64.DEFAULT)
+
+        val out = ByteArray(data.size)
+        for (i in data.indices) {
+            out[i] = (data[i].toInt() xor key[i % key.size].toInt()).toByte()
+        }
+        return String(out)
     }
 
+    /**
+     * Start initializer: tambah repo sekali, auto-download plugin pertama kali,
+     * dan auto-download plugin baru setiap app start.
+     */
     fun start(activity: Activity) {
         val prefs = activity.getSharedPreferences("cloudstream", Activity.MODE_PRIVATE)
-        val repo = RepositoryData(name = "ExtCloud", url = repoUrl(), iconUrl = null)
+        val repo = RepositoryData(
+            name = "ExtCloud",
+            url = repoUrl(),
+            iconUrl = null
+        )
 
-        activity.lifecycleScope.launch(Dispatchers.Main) {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Tambah repo sekali
+                // ✅ Tambah repo sekali
                 if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
                     RepositoryManager.addRepository(repo)
+
+                    // ✅ Auto-download semua plugin pertama kali
                     PluginsViewModel.downloadAll(activity, repo.url, null)
 
                     prefs.edit()
@@ -45,21 +57,13 @@ object Initializer {
                         .apply()
                 }
 
-                // Auto-download plugin baru
-                val newPlugins = getNewPlugins(activity, repo.url)
-                if (newPlugins.isNotEmpty()) {
-                    PluginsViewModel.downloadAll(activity, repo.url, newPlugins)
-                }
+                // ✅ Auto-download plugin baru
+                // Gunakan semua plugin yang belum ada (viewModel = null)
+                PluginsViewModel.downloadAll(activity, repo.url, null)
 
             } catch (_: Throwable) {
                 // silent
             }
         }
     }
-
-    private suspend fun getNewPlugins(activity: Activity, repoUrl: String): List<String> =
-        withContext(Dispatchers.IO) {
-            val all = RepositoryManager.getRepoPlugins(repoUrl)?.map { it.second.internalName } ?: emptyList()
-            all.filter { name -> !PluginManager.getPluginPath(activity, name, repoUrl).exists() }
-        }
 }
