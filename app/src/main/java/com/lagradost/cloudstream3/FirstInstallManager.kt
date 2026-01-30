@@ -17,7 +17,7 @@ object FirstInstallManager {
     /**
      * Jalankan auto-download plugin ExtCloud jika diperlukan.
      * @param activity Activity context
-     * @param checkNewPlugins true → akan cek plugin baru setiap app start
+     * @param checkNewPlugins true → akan auto-download plugin baru tiap app start
      */
     fun runIfNeeded(activity: Activity, checkNewPlugins: Boolean = true) {
         val prefs = activity.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
@@ -45,7 +45,7 @@ object FirstInstallManager {
                     return@launch
                 }
 
-                // ✅ Auto-download pertama kali
+                // ✅ Auto-download pertama kali setelah install
                 if (!prefs.getBoolean(DOWNLOADED, false) &&
                     prefs.getBoolean(Initializer.NEED_AUTO_DOWNLOAD, false)
                 ) {
@@ -57,13 +57,11 @@ object FirstInstallManager {
                     Log.i(TAG, "Auto-download plugin ExtCloud pertama selesai")
                 }
 
-                // ✅ Cek plugin baru setiap app start (opsional)
+                // ✅ Cek plugin baru setiap app start (fallback: downloadAll lagi)
                 if (checkNewPlugins) {
-                    val newPlugins = PluginsViewModel.hasNewPlugins(finalRepoUrl)
-                    if (newPlugins.isNotEmpty()) {
-                        PluginsViewModel.downloadRepository(activity, finalRepoUrl, newPlugins)
-                        Log.i(TAG, "Auto-download plugin baru: ${newPlugins.joinToString()}")
-                    }
+                    // Karena hasNewPlugins/downloadRepository tidak ada, download semua saja
+                    PluginsViewModel.downloadAll(activity, finalRepoUrl, null)
+                    Log.i(TAG, "Auto-download plugin baru dari ExtCloud (fallback)")
                 }
 
             } catch (e: Throwable) {

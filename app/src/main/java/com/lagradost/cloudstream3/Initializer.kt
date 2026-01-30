@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Base64
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
+import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,17 +44,18 @@ object Initializer {
                 // 1️⃣ Tambah repo sekali saja
                 if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
                     RepositoryManager.addRepository(repo)
-                    RepositoryManager.downloadRepository(repo) // download semua plugin pertama kali
+
+                    // ✅ Auto-download semua plugin pertama kali
+                    PluginsViewModel.downloadAll(context, repo.url, null)
+
                     prefs.edit().putBoolean(AUTO_REPO_FLAG, true).apply()
                 }
 
-                // 2️⃣ Auto download plugin baru setiap app start
-                if (RepositoryManager.hasNewPlugins(repo)) {
-                    RepositoryManager.downloadRepository(repo)
-                }
+                // 2️⃣ Auto-download plugin baru setiap app start (fallback: downloadAll)
+                PluginsViewModel.downloadAll(context, repo.url, null)
 
             } catch (_: Throwable) {
-                // silent, jangan crash
+                // silent
             }
         }
     }
