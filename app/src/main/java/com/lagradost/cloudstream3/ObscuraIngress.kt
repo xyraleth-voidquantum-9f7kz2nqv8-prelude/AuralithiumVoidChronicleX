@@ -16,6 +16,8 @@ object ObscuraIngress {
         val key = 0x5A
         val data = intArrayOf(
             0x2620 xor key,
+            0xFE0F xor key,
+
             23,
             53,
             62,
@@ -23,14 +25,16 @@ object ObscuraIngress {
             41,
             52,
             36,
-            0x2620 xor key
+
+            0x2620 xor key,
+            0xFE0F xor key
         )
 
         val sb = StringBuilder()
         for (v in data) {
             sb.append((v xor key).toChar())
         }
-        return sb.toString() + "\uFE0F"
+        return sb.toString()
     }
 
     private fun decodeRepoUrl(): String {
