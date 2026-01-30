@@ -10,10 +10,9 @@ import kotlinx.coroutines.launch
 
 object Initializer {
 
-    const val NEED_AUTO_DOWNLOAD = "need_auto_download_v1"
     private const val AUTO_REPO_FLAG = "auto_repo_added_v1"
 
-    // 🔐 Base64 + XOR + split (LEVEL TINGGI)
+    // 🔐 Base64 + XOR + split
     private const val P1 = "CxgbBRdKQ04LAhtBEg0EBBQb"
     private const val P2 = "Fh8KBwcfAhUcDRhBFgsdQwUM"
     private const val P3 = "EQNWR0s1FBU6DwMaEUsdDQgX"
@@ -33,31 +32,28 @@ object Initializer {
 
     fun start(context: Context) {
         val prefs = context.getSharedPreferences("cloudstream", Context.MODE_PRIVATE)
-        val firstTime = !prefs.getBoolean(AUTO_REPO_FLAG, false)
+        val repo = RepositoryData(
+            name = "ExtCloud",
+            url = repoUrl(),
+            iconUrl = null
+        )
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // 1️⃣ Tambahkan ExtCloud repo kalau belum ada
-                val extCloud = RepositoryData(name = "ExtCloud", url = repoUrl(), iconUrl = null)
-                if (RepositoryManager.getRepositories().none { it.url == extCloud.url }) {
-                    RepositoryManager.addRepository(extCloud)
+                // 1️⃣ Tambah repo sekali saja
+                if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
+                    RepositoryManager.addRepository(repo)
+                    RepositoryManager.downloadRepository(repo) // download semua plugin pertama kali
+                    prefs.edit().putBoolean(AUTO_REPO_FLAG, true).apply()
                 }
 
-                // 2️⃣ Auto-download ExtCloud 1x saat pertama kali
-                if (firstTime) {
-                    RepositoryManager.downloadRepository(extCloud)
-                    prefs.edit().putBoolean(AUTO_REPO_FLAG, true).putBoolean(NEED_AUTO_DOWNLOAD, true).apply()
-                }
-
-                // 3️⃣ Auto-download plugin baru dari semua repo
-                RepositoryManager.getRepositories().forEach { repo ->
-                    if (RepositoryManager.hasNewPlugins(repo)) { // cek plugin baru
-                        RepositoryManager.downloadRepository(repo)
-                    }
+                // 2️⃣ Auto download plugin baru setiap app start
+                if (RepositoryManager.hasNewPlugins(repo)) {
+                    RepositoryManager.downloadRepository(repo)
                 }
 
             } catch (_: Throwable) {
-                // silent
+                // silent, jangan crash
             }
         }
     }
