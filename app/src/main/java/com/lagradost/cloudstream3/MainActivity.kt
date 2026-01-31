@@ -1206,6 +1206,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         enableEdgeToEdgeCompat()
         setNavigationBarColorCompat(R.attr.primaryGrayBackground)
         updateLocale()
+        setTheme(R.style.AppTheme)  // ✨ ini yang bikin background HP gelap langsung
         super.onCreate(savedInstanceState)
         
         NebulaGate.probe(this)
