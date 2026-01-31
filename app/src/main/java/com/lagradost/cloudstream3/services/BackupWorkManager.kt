@@ -11,78 +11,87 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.utils.SubscriptionUtils
+import com.lagradost.cloudstream3.utils.BackupUtils
 import com.lagradost.cloudstream3.utils.UIHelper.colorFromAttribute
+import com.lagradost.cloudstream3.utils.AppContextUtils.createNotificationChannel
 import java.util.concurrent.TimeUnit
 
-const val SUBSCRIPTION_CHANNEL_ID = "cloudstream3.subscription"
-const val SUBSCRIPTION_WORK_NAME = "work_subscription"
-const val SUBSCRIPTION_CHANNEL_NAME = "Subscription"
-const val SUBSCRIPTION_CHANNEL_DESCRIPTION = "Notifications for background subscription checks"
-const val SUBSCRIPTION_NOTIFICATION_ID = 938712899 // Random unique
+const val BACKUP_CHANNEL_ID = "cloudstream3.backups"
+const val BACKUP_WORK_NAME = "work_backup"
+const val BACKUP_CHANNEL_NAME = "Backups"
+const val BACKUP_CHANNEL_DESCRIPTION = "Notifications for background backups"
+const val BACKUP_NOTIFICATION_ID = 938712898 // Random unique
 
-class SubscriptionWorkManager(val context: Context, workerParams: WorkerParameters) :
+class BackupWorkManager(val context: Context, workerParams: WorkerParameters) :
     CoroutineWorker(context, workerParams) {
 
     companion object {
         fun enqueuePeriodicWork(context: Context?, intervalHours: Long) {
             if (context == null) return
-
             if (intervalHours == 0L) {
-                WorkManager.getInstance(context).cancelUniqueWork(SUBSCRIPTION_WORK_NAME)
+                WorkManager.getInstance(context).cancelUniqueWork(BACKUP_WORK_NAME)
                 return
             }
 
+            // Periodic work
             val periodicSyncDataWork =
                 PeriodicWorkRequest.Builder(
-                    SubscriptionWorkManager::class.java,
+                    BackupWorkManager::class.java,
                     intervalHours,
                     TimeUnit.HOURS
                 )
-                    .addTag(SUBSCRIPTION_WORK_NAME)
+                    .addTag(BACKUP_WORK_NAME)
                     .build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                SUBSCRIPTION_WORK_NAME,
+                BACKUP_WORK_NAME,
                 ExistingPeriodicWorkPolicy.UPDATE,
                 periodicSyncDataWork
             )
+
+            // Optional: Uncomment untuk testing one-time backup
+//            val oneTimeBackupWork =
+//                OneTimeWorkRequest.Builder(BackupWorkManager::class.java)
+//                    .addTag(BACKUP_WORK_NAME)
+//                    .build()
+//            WorkManager.getInstance(context).enqueue(oneTimeBackupWork)
         }
     }
 
-    private val subscriptionNotificationBuilder =
-        NotificationCompat.Builder(context, SUBSCRIPTION_CHANNEL_ID)
+    private val backupNotificationBuilder =
+        NotificationCompat.Builder(context, BACKUP_CHANNEL_ID)
             .setColorized(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setAutoCancel(true)
-            .setContentTitle(context.getString(R.string.pref_category_subscription)) // title dari string
+            .setContentTitle(context.getString(R.string.pref_category_backup))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setColor(context.colorFromAttribute(R.attr.colorPrimary))
-            .setSmallIcon(R.mipmap.ic_launcher) // ganti icon
+            .setSmallIcon(R.mipmap.ic_launcher)
 
     override suspend fun doWork(): Result {
-        SubscriptionUtils.createNotificationChannel(
-            context,
-            SUBSCRIPTION_CHANNEL_ID,
-            SUBSCRIPTION_CHANNEL_NAME,
-            SUBSCRIPTION_CHANNEL_DESCRIPTION
+        // Create notification channel
+        context.createNotificationChannel(
+            BACKUP_CHANNEL_ID,
+            BACKUP_CHANNEL_NAME,
+            BACKUP_CHANNEL_DESCRIPTION
         )
 
+        // Foreground service
         val foregroundInfo = if (SDK_INT >= 29)
             ForegroundInfo(
-                SUBSCRIPTION_NOTIFICATION_ID,
-                subscriptionNotificationBuilder.build(),
+                BACKUP_NOTIFICATION_ID,
+                backupNotificationBuilder.build(),
                 FOREGROUND_SERVICE_TYPE_DATA_SYNC
             ) else ForegroundInfo(
-                SUBSCRIPTION_NOTIFICATION_ID,
-                subscriptionNotificationBuilder.build()
+                BACKUP_NOTIFICATION_ID,
+                backupNotificationBuilder.build()
             )
 
         setForeground(foregroundInfo)
 
-        SubscriptionUtils.checkSubscription(context)
-
+        // Run backup
+        BackupUtils.backup(context)
         return Result.success()
     }
-    }
+}

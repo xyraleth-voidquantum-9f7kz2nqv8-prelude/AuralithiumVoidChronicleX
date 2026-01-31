@@ -30,10 +30,13 @@ const val SUBSCRIPTION_CHANNEL_ID = "cloudstream3.subscriptions"
 const val SUBSCRIPTION_WORK_NAME = "work_subscription"
 const val SUBSCRIPTION_CHANNEL_NAME = "Subscriptions"
 const val SUBSCRIPTION_CHANNEL_DESCRIPTION = "Notifications for new episodes on subscribed shows"
-const val SUBSCRIPTION_NOTIFICATION_ID = 938712897 // Random unique
+const val SUBSCRIPTION_NOTIFICATION_ID = 938712897 // Unique random ID
 
-class SubscriptionWorkManager(val context: Context, workerParams: WorkerParameters) :
-    CoroutineWorker(context, workerParams) {
+class SubscriptionWorkManager(
+    val context: Context,
+    workerParams: WorkerParameters
+) : CoroutineWorker(context, workerParams) {
+
     companion object {
         fun enqueuePeriodicWork(context: Context?) {
             if (context == null) return
@@ -53,16 +56,6 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                 ExistingPeriodicWorkPolicy.KEEP,
                 periodicSyncDataWork
             )
-
-            // Uncomment below for testing
-
-//            val oneTimeSyncDataWork =
-//                OneTimeWorkRequest.Builder(SubscriptionWorkManager::class.java)
-//                    .addTag(SUBSCRIPTION_WORK_NAME)
-//                    .setConstraints(constraints)
-//                    .build()
-//
-//            WorkManager.getInstance(context).enqueue(oneTimeSyncDataWork)
         }
     }
 
@@ -92,15 +85,14 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
 
     private fun updateProgress(max: Int, progress: Int, indeterminate: Boolean) {
         notificationManager.notify(
-            SUBSCRIPTION_NOTIFICATION_ID, progressNotificationBuilder
-                .setProgress(max, progress, indeterminate)
-                .build()
+            SUBSCRIPTION_NOTIFICATION_ID,
+            progressNotificationBuilder.setProgress(max, progress, indeterminate).build()
         )
     }
+
     @Suppress("DEPRECATION_ERROR")
     override suspend fun doWork(): Result {
         try {
-//        println("Update subscriptions!")
             context.createNotificationChannel(
                 SUBSCRIPTION_CHANNEL_ID,
                 SUBSCRIPTION_CHANNEL_NAME,
@@ -112,11 +104,13 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                     SUBSCRIPTION_NOTIFICATION_ID,
                     progressNotificationBuilder.build(),
                     FOREGROUND_SERVICE_TYPE_DATA_SYNC
-                ) else ForegroundInfo(SUBSCRIPTION_NOTIFICATION_ID, progressNotificationBuilder.build(),)
+                )
+            else
+                ForegroundInfo(SUBSCRIPTION_NOTIFICATION_ID, progressNotificationBuilder.build())
+
             setForeground(foregroundInfo)
 
             val subscriptions = getAllSubscriptions()
-
             if (subscriptions.isEmpty()) {
                 WorkManager.getInstance(context).cancelWorkById(this.id)
                 return Result.success()
@@ -124,10 +118,9 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
 
             val max = subscriptions.size
             var progress = 0
-
             updateProgress(max, progress, true)
 
-            // We need all plugins loaded.
+            // Load all plugins
             PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllOnlinePlugins(context)
             PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_loadAllLocalPlugins(context, false)
 
@@ -136,41 +129,28 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
                     val id = savedData.id ?: return@amap null
                     val api = getApiFromNameNull(savedData.apiName) ?: return@amap null
 
-                    // Reasonable timeout to prevent having this worker run forever.
                     val response = withTimeoutOrNull(60_000) {
                         api.load(savedData.url) as? EpisodeResponse
                     } ?: return@amap null
 
                     val dubPreference =
-                        getDub(id) ?: if (
-                            context.getApiDubstatusSettings().contains(DubStatus.Dubbed)
-                        ) {
+                        getDub(id) ?: if (context.getApiDubstatusSettings().contains(DubStatus.Dubbed))
                             DubStatus.Dubbed
-                        } else {
-                            DubStatus.Subbed
-                        }
+                        else DubStatus.Subbed
 
                     val latestEpisodes = response.getLatestEpisodes()
                     val latestPreferredEpisode = latestEpisodes[dubPreference]
 
                     val (shouldUpdate, latestEpisode) = if (latestPreferredEpisode != null) {
-                        val latestSeenEpisode =
-                            savedData.lastSeenEpisodeCount[dubPreference] ?: Int.MIN_VALUE
-                        val shouldUpdate = latestPreferredEpisode > latestSeenEpisode
-                        shouldUpdate to latestPreferredEpisode
+                        val latestSeenEpisode = savedData.lastSeenEpisodeCount[dubPreference] ?: Int.MIN_VALUE
+                        (latestPreferredEpisode > latestSeenEpisode) to latestPreferredEpisode
                     } else {
                         val latestEpisode = latestEpisodes[DubStatus.None] ?: Int.MIN_VALUE
-                        val latestSeenEpisode =
-                            savedData.lastSeenEpisodeCount[DubStatus.None] ?: Int.MIN_VALUE
-                        val shouldUpdate = latestEpisode > latestSeenEpisode
-                        shouldUpdate to latestEpisode
+                        val latestSeenEpisode = savedData.lastSeenEpisodeCount[DubStatus.None] ?: Int.MIN_VALUE
+                        (latestEpisode > latestSeenEpisode) to latestEpisode
                     }
 
-                    DataStoreHelper.updateSubscribedData(
-                        id,
-                        savedData,
-                        response
-                    )
+                    DataStoreHelper.updateSubscribedData(id, savedData, response)
 
                     if (shouldUpdate) {
                         val updateHeader = savedData.name
@@ -190,24 +170,20 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
 
                         val poster = ioWork {
                             savedData.posterUrl?.let { url ->
-                                context.getImageBitmapFromUrl(
-                                    url,
-                                    savedData.posterHeaders
-                                )
+                                context.getImageBitmapFromUrl(url, savedData.posterHeaders)
                             }
                         }
 
-                        val updateNotification =
-                            updateNotificationBuilder.setContentTitle(updateHeader)
-                                .setContentText(updateDescription)
-                                .setContentIntent(pendingIntent)
-                                .setLargeIcon(poster)
-                                .build()
+                        val updateNotification = updateNotificationBuilder
+                            .setContentTitle(updateHeader)
+                            .setContentText(updateDescription)
+                            .setContentIntent(pendingIntent)
+                            .setLargeIcon(poster)
+                            .build()
 
                         notificationManager.notify(id, updateNotification)
                     }
 
-                    // You can probably get some issues here since this is async but it does not matter much.
                     updateProgress(max, ++progress, false)
                 } catch (t: Throwable) {
                     logError(t)
@@ -217,9 +193,6 @@ class SubscriptionWorkManager(val context: Context, workerParams: WorkerParamete
             return Result.success()
         } catch (t: Throwable) {
             logError(t)
-            // ye, while this is not correct, but because gods know why android just crashes
-            // and this causes major battery usage as it retries it inf times. This is better, just
-            // in case android decides to be android and fuck us
             return Result.success()
         }
     }
