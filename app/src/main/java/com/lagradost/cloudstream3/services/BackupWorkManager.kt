@@ -25,6 +25,7 @@ const val BACKUP_NOTIFICATION_ID = 938712898 // Random unique
 
 class BackupWorkManager(val context: Context, workerParams: WorkerParameters) :
     CoroutineWorker(context, workerParams) {
+
     companion object {
         fun enqueuePeriodicWork(context: Context?, intervalHours: Long) {
             if (context == null) return
@@ -53,16 +54,6 @@ class BackupWorkManager(val context: Context, workerParams: WorkerParameters) :
                 ExistingPeriodicWorkPolicy.UPDATE,
                 periodicSyncDataWork
             )
-
-            // Uncomment below for testing
-
-//            val oneTimeBackupWork =
-//                OneTimeWorkRequest.Builder(BackupWorkManager::class.java)
-//                    .addTag(BACKUP_WORK_NAME)
-//                    .setConstraints(constraints)
-//                    .build()
-//
-//            WorkManager.getInstance(context).enqueue(oneTimeBackupWork)
         }
     }
 
@@ -75,7 +66,7 @@ class BackupWorkManager(val context: Context, workerParams: WorkerParameters) :
             .setContentTitle(context.getString(R.string.pref_category_backup))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setColor(context.colorFromAttribute(R.attr.colorPrimary))
-            .setSmallIcon(R.drawable.ic_cloudstream_monochrome_big)
+            .setSmallIcon(R.mipmap.ic_launcher) // ✅ pakai icon yang ada
 
     override suspend fun doWork(): Result {
         context.createNotificationChannel(
@@ -86,12 +77,17 @@ class BackupWorkManager(val context: Context, workerParams: WorkerParameters) :
 
         val foregroundInfo = if (SDK_INT >= 29)
             ForegroundInfo(
-                BACKUP_NOTIFICATION_ID, backupNotificationBuilder.build(), FOREGROUND_SERVICE_TYPE_DATA_SYNC
-            ) else  ForegroundInfo(BACKUP_NOTIFICATION_ID, backupNotificationBuilder.build())
+                BACKUP_NOTIFICATION_ID,
+                backupNotificationBuilder.build(),
+                FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            )
+        else
+            ForegroundInfo(BACKUP_NOTIFICATION_ID, backupNotificationBuilder.build())
+
         setForeground(foregroundInfo)
 
         BackupUtils.backup(context)
 
         return Result.success()
     }
-}
+    }
