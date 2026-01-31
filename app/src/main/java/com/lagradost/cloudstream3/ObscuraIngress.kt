@@ -17,7 +17,7 @@ object ObscuraIngress {
         val key = 0x5A
 
         val data = intArrayOf(
-            23, 53, 62, 9, 41, 52, 36
+            23, 53, 62, 9, 59, 52, 32
         )
 
         val sb = StringBuilder()
