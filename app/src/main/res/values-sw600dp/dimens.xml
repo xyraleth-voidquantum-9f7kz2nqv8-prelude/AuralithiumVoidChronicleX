@@ -1,6 +1,0 @@
-<resources>
-    <!-- Logo App lebih besar untuk tablet / TV -->
-    <dimen name="logo_width">432dp</dimen>
-    <dimen name="logo_height">432dp</dimen>
-    <dimen name="logo_margin_top">24dp</dimen>
-</resources>
