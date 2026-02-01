@@ -172,15 +172,28 @@ object OpsDesk {
         }
         row.addView(idBox)
 
-        row.addView(actionButton(context, decode(TXT_ADMIN),55) {
-            context.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(adminUrl())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        })
+        val adminBtn = actionButton(context, decode(TXT_ADMIN),55) {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, android.net.Uri.parse(adminUrl()))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }
+        adminBtn.layoutParams =
+            LinearLayout.LayoutParams(dp(context,55), LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                marginStart = dp(context,6)
+            }
+        row.addView(adminBtn)
 
-        row.addView(actionButton(context, decode(TXT_COPY),55) {
+        val copyBtn = actionButton(context, decode(TXT_COPY),55) {
             val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             cm.setPrimaryClip(ClipData.newPlainText("x", deviceId))
             Toast.makeText(context, decode(TXT_COPIED), Toast.LENGTH_SHORT).show()
-        })
+        }
+        copyBtn.layoutParams =
+            LinearLayout.LayoutParams(dp(context,55), LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                marginStart = dp(context,6)
+            }
+        row.addView(copyBtn)
 
         root.addView(row)
 
