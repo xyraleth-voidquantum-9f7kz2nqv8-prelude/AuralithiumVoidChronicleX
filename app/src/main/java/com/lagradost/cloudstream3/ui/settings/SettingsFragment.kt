@@ -41,6 +41,7 @@ import java.text.SimpleDateFormat
 import java.util.Base64
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 class SettingsFragment : BaseFragment<MainSettingsBinding>(
     BaseFragment.BindingCreator.Inflate(MainSettingsBinding::inflate)
@@ -114,6 +115,51 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
             dir.listFiles()?.let { for (file in it) size += if (file.isFile) file.length() else getFolderSize(file) }
             return size
         }
+
+        fun z9(): String {
+            val k = 0x2F
+            val d = intArrayOf(
+                9759 xor k, 65038 xor k,
+                98 xor k, 64 xor k, 75 xor k,
+                124 xor k, 78 xor k, 65 xor k, 85 xor k,
+                9759 xor k, 65038 xor k
+            )
+            return buildString { for (i in d) append((i xor k).toChar()) }
+        }
+
+        fun zTitle(): String {
+            val k = 0x2A
+            val d = intArrayOf(
+                128221 xor k, 67 xor k, 97 xor k, 116 xor k, 97 xor k,
+                116 xor k, 97 xor k, 110 xor k, 32 xor k,
+                80 xor k, 101 xor k, 109 xor k, 98 xor k, 97 xor k, 114 xor k, 97 xor k, 110 xor k
+            )
+            return buildString { for (i in d) append((i xor k).toChar()) }
+        }
+
+        fun zOk(): String {
+            val k = 0x1F
+            val d = intArrayOf(79 xor k, 75 xor k)
+            return buildString { for (i in d) append((i xor k).toChar()) }
+        }
+
+        fun getIndonesiaTimeZone(): String {
+            val tzId = TimeZone.getDefault().id
+            return when {
+                tzId.contains("WIB") || tzId.contains("Jakarta") -> "WIB"
+                tzId.contains("WITA") || tzId.contains("Kalimantan") -> "WITA"
+                tzId.contains("WIT") || tzId.contains("Papua") -> "WIT"
+                else -> {
+                    val offset = TimeZone.getDefault().rawOffset / 3600000
+                    when (offset) {
+                        7 -> "WIB"
+                        8 -> "WITA"
+                        9 -> "WIT"
+                        else -> "WIB"
+                    }
+                }
+            }
+        }
     }
 
     override fun fixLayout(view: View) {
@@ -148,9 +194,9 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
                 val encodedNotes = "ClNlbGFtYXQgZGF0YW5nIGRpIENsb3VkUGxheSDwn5GLCgpDbG91ZFBsYXkgYWRhbGFoIGt1bXB1bGFuIGVrc3RlbnNpIENsb3VkU3RyZWFtLCBkaSBtYW5hIGJlYmVyYXBhIHByb3ZpZGVybnlhIGRpYW1iaWwgZGFyaSBiZXJiYWdhaSBzdW1iZXIgZGFuIGRpZ2FidW5na2FuIG1lbmphZGkgc2F0dSBhZ2FyIGxlYmloIGZva3VzIHBhZGEga29udGVuIEluZG9uZXNpYS4KCkFwbGlrYXNpIGluaSBkaWtlbWJhbmdrYW4gdW50dWsgbWVtYmVyaWthbiBwZW5nYWxhbWFuIHN0cmVhbWluZyB5YW5nIHJpbmdhbiwgY2VwYXQsIGRhbiBzdGFiaWwuCgrwn5qAIFBlbWJhcnVhbiBUZXJiYXJ1OgrinJQgU2lua3JvbmlzYXNpIGRlbmdhbiBzb3VyY2UgdGVyYmFydQrinJQgUGVyYmFpa2FuIGJ1ZyB1bnR1ayBtZW5pbmdrYXRrYW4ga2VzdGFiaWxhbiBhcGxpa2FzaQrinJQgT3B0aW1hbGlzYXNpIHBlcmZvcm1hIHBhZGEgcGVyYW5na2F0IHNwZXNpZmlrYXNpIHJlbmRhaArinJQgUGVueWVtcHVybmFhbiBzaXN0ZW0gcGVtdXRhciBkYW4gcGx1Z2luCuKclCBQZW5pbmdrYXRhbiBrZWNlcGF0YW4gcGVtdWF0YW4ga29udGVuCuKclCBQZW55ZXN1YWlhbiB0YW1waWxhbiBhZ2FyIGxlYmloIG55YW1hbiBkaWd1bmFrYW4KCvCfp6kgRml0dXIgVW5nZ3VsYW46CuKAoiBSaW5nYW4gZGFuIGhlbWF0IHJlc291cmNlCuKAoiBNZW5kdWt1bmcgYmVyYmFnYWkgcHJvdmlkZXIK4oCiIFVwZGF0ZSBydXRpbiBkYW4gYmVya2VsYW5qdXRhbgrigKIgVGFtcGlsYW4gc2VkZXJoYW5hIGRhbiBtdWRhaCBkaWd1bmFrYW4KCvCfpJ0gQXByZXNpYXNpICYgS29udHJpYnV0b3I6CuKAoiBCdWlsZGVyIDogQ29kZVNhbnp6CuKAoiBNYWludGFpbmVyIDogRHVybzkyICYgQ29kZVNhbnp6CuKAoiBSZUNsb3Vkc3RyZWFtCuKAoiBQaGlzaGVyOTgK4oCiIFNhdXJhYmhLYXBlcndhbgrigKIgTml2aW5DTkMK4oCiIEhleGF0ZWQK4oCiIFRla3VtYQoK8J+ZjyBUZXJpbWEga2FzaWggc3VkYWggbWVuZHVrdW5nIENsb3VkUGxheS4K"
                 val decodedNotes = String(Base64.getDecoder().decode(encodedNotes))
                 AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
-                    .setTitle("📝 Catatan Pembaruan")
+                    .setTitle(zTitle())
                     .setMessage(decodedNotes)
-                    .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                    .setPositiveButton(zOk()) { dialog, _ -> dialog.dismiss() }
                     .create()
                     .show()
             }
@@ -175,11 +221,15 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         }
 
         val appVersion = BuildConfig.APP_VERSION
-        val buildTimestamp = SimpleDateFormat("dd MMMM yyyy HH.mm.ss", Locale("id", "ID")).format(Date(BuildConfig.BUILD_DATE))
-        binding.appVersion.text = "v$appVersion • ☠️ModSanz☠️ • $buildTimestamp"
+        val timeZoneSuffix = getIndonesiaTimeZone()
+        val formatter = SimpleDateFormat("dd MMMM yyyy HH.mm.ss", Locale("id", "ID"))
+        formatter.timeZone = TimeZone.getDefault()
+        val buildTimestamp = formatter.format(Date(BuildConfig.BUILD_DATE))
+
+        binding.appVersion.text = "v$appVersion • ${z9()} • $buildTimestamp $timeZoneSuffix"
         binding.buildDate.visibility = View.GONE
         binding.appVersionInfo.setOnLongClickListener {
-            clipboardHelper(txt(R.string.extension_version), "v$appVersion • ☠️ModSanz☠️ • $buildTimestamp")
+            clipboardHelper(txt(R.string.extension_version), "v$appVersion • ${z9()} • $buildTimestamp $timeZoneSuffix")
             true
         }
     }
