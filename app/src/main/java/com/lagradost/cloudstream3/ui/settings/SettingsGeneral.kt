@@ -139,7 +139,7 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
 
     /* ================== 🔐 URL PROTECTION ================== */
     private fun decodeUrl(p1: String, p2: String, p3: String): String {
-        val key = "cloudplay".toByteArray()
+        val key = zkl().toByteArray()
         val encoded = p1 + p2 + p3
         val decoded = android.util.Base64.decode(encoded, android.util.Base64.DEFAULT)
         val result = ByteArray(decoded.size)
@@ -305,5 +305,12 @@ class SettingsGeneral : BasePreferenceFragmentCompat() {
             if (getCurrent().isEmpty()) showAdd() else showAddOrDelete()
             true
         }
+    }
+
+    /* ================= CLOUDPLAY KEY ================= */
+    fun zkl(): String {
+        val k = 0x2F
+        val d = intArrayOf(76, 67, 64, 90, 75, 95, 67, 78, 86)
+        return buildString { for (i in d) append((i xor k).toChar()) }
     }
 }
