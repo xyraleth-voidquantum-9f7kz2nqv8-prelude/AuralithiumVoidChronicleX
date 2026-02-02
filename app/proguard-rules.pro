@@ -1,75 +1,45 @@
 ####################################
-# IDENTITAS APP (NAMA TETAP)
+# CLOUDSTREAM CORE (WAJIB & AMAN)
 ####################################
+-keep class com.lagradost.cloudstream3.** { *; }
 -keepnames class com.lagradost.cloudstream3.**
 
 ####################################
-# R8 MODE AMAN (ANTI CLASS SAMPAH)
+# PLUGIN SYSTEM (PALING PENTING)
 ####################################
--allowaccessmodification
-# ❌ Jangan pakai adaptclassstrings / overloadaggressively / repackageclasses
-#-adaptclassstrings
-#-overloadaggressively
-#-repackageclasses ''
+-keep class com.lagradost.cloudstream3.plugins.** { *; }
+-keep class com.lagradost.cloudstream3.extractors.** { *; }
 
 ####################################
-# LAMBDA & REFLECTION
+# NETWORK & JS ENGINE
 ####################################
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }
+-keep class retrofit2.** { *; }
+-keep class app.cash.quickjs.** { *; }
+
+####################################
+# KOTLIN & COROUTINE
+####################################
+-keep class kotlin.Metadata { *; }
+-keep class kotlinx.coroutines.** { *; }
+-keepattributes *Annotation*
 -keepattributes InnerClasses,EnclosingMethod
 
 ####################################
-# ACTIVITY / FRAGMENT
+# REFLECTION SAFETY
 ####################################
--keep class * extends android.app.Activity { <init>(...); }
--keep class * extends androidx.appcompat.app.AppCompatActivity { <init>(...); }
--keep class * extends androidx.fragment.app.Fragment { <init>(...); }
+-keepnames class ** implements java.io.Serializable
+-keepclassmembers class * {
+    @kotlin.Metadata *;
+}
 
 ####################################
-# CLOUDSTREAM CORE (WAJIB)
-####################################
--keep class com.lagradost.cloudstream3.extractors.** { *; }
--keep class com.lagradost.cloudstream3.network.** { *; }
--keep class com.lagradost.cloudstream3.plugins.** { *; }
--keep class com.lagradost.cloudstream3.utils.** { *; }
-
-####################################
-# KOTLIN
-####################################
--keep class kotlin.Metadata { *; }
--keepattributes *Annotation*
-
-####################################
-# PACKAGE / LIBRARY PENTING (DEX UTAMA)
-####################################
--keep class _COROUTINE.** { *; }
--keep class afo.hf.hqtkbbwxq.** { *; }
--keep class android.** { *; }
--keep class androidx.** { *; }
--keep class app.cash.quickjs.** { *; }
--keep class coil3.** { *; }
--keep class com.** { *; }
--keep class go.** { *; }
--keep class io.github.** { *; }
--keep class j$.** { *; }
--keep class java.** { *; }
--keep class javax.** { *; }
--keep class junit.** { *; }
--keep class kotlin.** { *; }
--keep class kotlinx.** { *; }
--keep class me.xdrop.** { *; }
--keep class okhttp3.** { *; }
--keep class okio.** { *; }
--keep class org.** { *; }
--keep class qrcode.** { *; }
--keep class retrofit2.** { *; }
--keep class torrServer.** { *; }
-
-####################################
-# STRX / STRING ENCRYPTION
+# STRX
 ####################################
 -keep class com.lagradost.cloudstream3.security.StrX { *; }
 
 ####################################
-# TENANG R8
+# R8 TENANG
 ####################################
 -dontwarn **
