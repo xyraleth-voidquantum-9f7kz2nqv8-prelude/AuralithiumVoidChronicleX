@@ -117,12 +117,11 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         }
 
         fun z9(): String {
-            val k = 0x2F
+            val k = 0x5A
             val d = intArrayOf(
-                9759 xor k, 65038 xor k,
-                98 xor k, 64 xor k, 75 xor k,
-                124 xor k, 78 xor k, 65 xor k, 85 xor k,
-                9759 xor k, 65038 xor k
+                0x2620 xor k, 0xFE0F xor k,
+                77 xor k, 111 xor k, 100 xor k, 83 xor k, 97 xor k, 110 xor k, 122 xor k,
+                0x2620 xor k, 0xFE0F xor k
             )
             return buildString { for (i in d) append((i xor k).toChar()) }
         }
@@ -130,9 +129,7 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         fun zTitle(): String {
             val k = 0x2A
             val d = intArrayOf(
-                128221 xor k, 67 xor k, 97 xor k, 116 xor k, 97 xor k,
-                116 xor k, 97 xor k, 110 xor k, 32 xor k,
-                80 xor k, 101 xor k, 109 xor k, 98 xor k, 97 xor k, 114 xor k, 97 xor k, 110 xor k
+                0x1F4D, 32, 67, 97, 116, 97, 116, 97, 110, 32, 80, 101, 109, 98, 97, 114, 117, 97, 110
             )
             return buildString { for (i in d) append((i xor k).toChar()) }
         }
