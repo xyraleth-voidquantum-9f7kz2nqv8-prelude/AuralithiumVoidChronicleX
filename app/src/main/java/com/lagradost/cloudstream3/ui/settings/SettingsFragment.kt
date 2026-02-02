@@ -38,6 +38,7 @@ import com.lagradost.cloudstream3.utils.txt
 import com.lagradost.cloudstream3.ObscuraIngress
 import java.io.File
 import java.text.SimpleDateFormat
+import java.util.Base64
 import java.util.Date
 import java.util.Locale
 
@@ -47,23 +48,12 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
     companion object {
         fun PreferenceFragmentCompat?.getPref(id: Int): Preference? {
             if (this == null) return null
-            return try {
-                findPreference(getString(id))
-            } catch (e: Exception) {
-                logError(e)
-                null
-            }
+            return try { findPreference(getString(id)) } catch (e: Exception) { logError(e); null }
         }
 
         fun PreferenceFragmentCompat?.hidePrefs(ids: List<Int>, layoutFlags: Int) {
             if (this == null) return
-            try {
-                ids.forEach {
-                    getPref(it)?.isVisible = !isLayout(layoutFlags)
-                }
-            } catch (e: Exception) {
-                logError(e)
-            }
+            try { ids.forEach { getPref(it)?.isVisible = !isLayout(layoutFlags) } } catch (e: Exception) { logError(e) }
         }
 
         fun Preference?.hideOn(layoutFlags: Int): Preference? {
@@ -73,110 +63,71 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         }
 
         fun PreferenceFragmentCompat.setPaddingBottom() {
-            if (isLayout(TV or EMULATOR)) {
-                listView?.setPadding(0, 0, 0, 100.toPx)
-            }
+            if (isLayout(TV or EMULATOR)) listView?.setPadding(0, 0, 0, 100.toPx)
         }
 
         fun PreferenceFragmentCompat.setToolBarScrollFlags() {
             if (isLayout(TV or EMULATOR)) {
                 val settingsAppbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
-                settingsAppbar?.updateLayoutParams<AppBarLayout.LayoutParams> {
-                    scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL
-                }
+                settingsAppbar?.updateLayoutParams<AppBarLayout.LayoutParams> { scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL }
             }
         }
 
         fun Fragment?.setToolBarScrollFlags() {
             if (isLayout(TV or EMULATOR)) {
-                val settingsAppbar =
-                    this?.view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
-                settingsAppbar?.updateLayoutParams<AppBarLayout.LayoutParams> {
-                    scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL
-                }
+                val settingsAppbar = this?.view?.findViewById<MaterialToolbar>(R.id.settings_toolbar)
+                settingsAppbar?.updateLayoutParams<AppBarLayout.LayoutParams> { scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_NO_SCROLL }
             }
         }
 
         fun Fragment?.setUpToolbar(title: String) {
             if (this == null) return
-            val settingsToolbar =
-                view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
+            val settingsToolbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
             settingsToolbar.apply {
                 setTitle(title)
                 if (isLayout(PHONE or EMULATOR)) {
                     setNavigationIcon(R.drawable.ic_baseline_arrow_back_24)
-                    setNavigationOnClickListener {
-                        activity?.onBackPressedDispatcher?.onBackPressed()
-                    }
+                    setNavigationOnClickListener { activity?.onBackPressedDispatcher?.onBackPressed() }
                 }
             }
         }
 
         fun Fragment?.setUpToolbar(@StringRes title: Int) {
             if (this == null) return
-            val settingsToolbar =
-                view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
+            val settingsToolbar = view?.findViewById<MaterialToolbar>(R.id.settings_toolbar) ?: return
             settingsToolbar.apply {
                 setTitle(title)
                 if (isLayout(PHONE or EMULATOR)) {
                     setNavigationIcon(R.drawable.ic_baseline_arrow_back_24)
-                    children.firstOrNull { it is ImageView }?.tag =
-                        getString(R.string.tv_no_focus_tag)
-                    setNavigationOnClickListener {
-                        safe { activity?.onBackPressedDispatcher?.onBackPressed() }
-                    }
+                    children.firstOrNull { it is ImageView }?.tag = getString(R.string.tv_no_focus_tag)
+                    setNavigationOnClickListener { safe { activity?.onBackPressedDispatcher?.onBackPressed() } }
                 }
             }
         }
 
         fun Fragment.setSystemBarsPadding() {
-            view?.let {
-                fixSystemBarsPadding(
-                    it,
-                    padLeft = isLayout(TV or EMULATOR),
-                    padBottom = isLandscape()
-                )
-            }
+            view?.let { fixSystemBarsPadding(it, padLeft = isLayout(TV or EMULATOR), padBottom = isLandscape()) }
         }
 
         fun getFolderSize(dir: File): Long {
             var size: Long = 0
-            dir.listFiles()?.let {
-                for (file in it) {
-                    size += if (file.isFile) file.length() else getFolderSize(file)
-                }
-            }
+            dir.listFiles()?.let { for (file in it) size += if (file.isFile) file.length() else getFolderSize(file) }
             return size
         }
     }
 
     override fun fixLayout(view: View) {
-        fixSystemBarsPadding(
-            view,
-            padBottom = isLandscape(),
-            padLeft = isLayout(TV or EMULATOR)
-        )
+        fixSystemBarsPadding(view, padBottom = isLandscape(), padLeft = isLayout(TV or EMULATOR))
     }
 
     override fun onBindingCreated(binding: MainSettingsBinding) {
-        fun navigate(id: Int) {
-            activity?.navigate(id, Bundle())
-        }
+        fun navigate(id: Int) { activity?.navigate(id, Bundle()) }
 
         fun hasProfilePictureFromAccountManagers(accountManagers: Array<AuthRepo>): Boolean {
             for (syncApi in accountManagers) {
                 val login = syncApi.authUser()
                 val pic = login?.profilePicture ?: continue
-                binding.settingsProfilePic.let { imageView ->
-                    imageView.loadImage(pic) {
-                        error {
-                            getImageFromDrawable(
-                                context ?: return@error null,
-                                errorProfilePic
-                            )
-                        }
-                    }
-                }
+                binding.settingsProfilePic.loadImage(pic) { error { getImageFromDrawable(context ?: return@error null, errorProfilePic) } }
                 binding.settingsProfileText.text = login.name
                 return true
             }
@@ -185,14 +136,7 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
 
         if (!hasProfilePictureFromAccountManagers(AccountManager.allApis)) {
             val activity = activity ?: return
-            val currentAccount = try {
-                DataStoreHelper.accounts.firstOrNull {
-                    it.keyIndex == DataStoreHelper.selectedKeyIndex
-                } ?: activity.let { DataStoreHelper.getDefaultAccount(activity) }
-            } catch (t: IllegalStateException) {
-                Log.e("AccountManager", "Activity not found", t)
-                null
-            }
+            val currentAccount = try { DataStoreHelper.accounts.firstOrNull { it.keyIndex == DataStoreHelper.selectedKeyIndex } ?: activity.let { DataStoreHelper.getDefaultAccount(activity) } } catch (t: IllegalStateException) { Log.e("AccountManager", "Activity not found", t); null }
             binding.settingsProfilePic.loadImage(currentAccount?.image)
             binding.settingsProfileText.text = currentAccount?.name
         }
@@ -201,53 +145,17 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
             settingsExtensions.visibility = View.GONE
 
             settingsAbout.setOnClickListener {
-                val builder = AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
-                builder.setTitle("📝 Catatan Pembaruan")
-                builder.setMessage(
-                    """
-Selamat datang di CloudPlay 👋
-
-CloudPlay adalah kumpulan ekstensi CloudStream, di mana beberapa providernya diambil dari berbagai sumber dan digabungkan menjadi satu agar lebih fokus pada konten Indonesia.
-
-Aplikasi ini dikembangkan untuk memberikan pengalaman streaming yang ringan, cepat, dan stabil.
-
-🚀 Pembaruan Terbaru:
-✔ Sinkronisasi dengan source terbaru
-✔ Perbaikan bug untuk meningkatkan kestabilan aplikasi
-✔ Optimalisasi performa pada perangkat spesifikasi rendah
-✔ Penyempurnaan sistem pemutar dan plugin
-✔ Peningkatan kecepatan pemuatan konten
-✔ Penyesuaian tampilan agar lebih nyaman digunakan
-
-🧩 Fitur Unggulan:
-• Ringan dan hemat resource
-• Mendukung berbagai provider
-• Update rutin dan berkelanjutan
-• Tampilan sederhana dan mudah digunakan
-
-🤝 Apresiasi & Kontributor:
-• Builder : CodeSanzz
-• Maintainer : Duro92 & CodeSanzz
-• ReCloudstream
-• Phisher98
-• SaurabhKaperwan
-• NivinCNC
-• Hexated
-• Tekuma
-
-🙏 Terima kasih sudah mendukung CloudPlay.
-                    """.trimIndent()
-                )
-                builder.setPositiveButton("OK") { dialog, _ ->
-                    dialog.dismiss()
-                }
-                builder.create().show()
+                val encodedNotes = "ClNlbGFtYXQgZGF0YW5nIGRpIENsb3VkUGxheSDwn5GLCgpDbG91ZFBsYXkgYWRhbGFoIGt1bXB1bGFuIGVrc3RlbnNpIENsb3VkU3RyZWFtLCBkaSBtYW5hIGJlYmVyYXBhIHByb3ZpZGVybnlhIGRpYW1iaWwgZGFyaSBiZXJiYWdhaSBzdW1iZXIgZGFuIGRpZ2FidW5na2FuIG1lbmphZGkgc2F0dSBhZ2FyIGxlYmloIGZva3VzIHBhZGEga29udGVuIEluZG9uZXNpYS4KCkFwbGlrYXNpIGluaSBkaWtlbWJhbmdrYW4gdW50dWsgbWVtYmVyaWthbiBwZW5nYWxhbWFuIHN0cmVhbWluZyB5YW5nIHJpbmdhbiwgY2VwYXQsIGRhbiBzdGFiaWwuCgrwn5qAIFBlbWJhcnVhbiBUZXJiYXJ1OgrinJQgU2lua3JvbmlzYXNpIGRlbmdhbiBzb3VyY2UgdGVyYmFydQrinJQgUGVyYmFpa2FuIGJ1ZyB1bnR1ayBtZW5pbmdrYXRrYW4ga2VzdGFiaWxhbiBhcGxpa2FzaQrinJQgT3B0aW1hbGlzYXNpIHBlcmZvcm1hIHBhZGEgcGVyYW5na2F0IHNwZXNpZmlrYXNpIHJlbmRhaArinJQgUGVueWVtcHVybmFhbiBzaXN0ZW0gcGVtdXRhciBkYW4gcGx1Z2luCuKclCBQZW5pbmdrYXRhbiBrZWNlcGF0YW4gcGVtdWF0YW4ga29udGVuCuKclCBQZW55ZXN1YWlhbiB0YW1waWxhbiBhZ2FyIGxlYmloIG55YW1hbiBkaWd1bmFrYW4KCvCfp6kgRml0dXIgVW5nZ3VsYW46CuKAoiBSaW5nYW4gZGFuIGhlbWF0IHJlc291cmNlCuKAoiBNZW5kdWt1bmcgYmVyYmFnYWkgcHJvdmlkZXIK4oCiIFVwZGF0ZSBydXRpbiBkYW4gYmVya2VsYW5qdXRhbgrigKIgVGFtcGlsYW4gc2VkZXJoYW5hIGRhbiBtdWRhaCBkaWd1bmFrYW4KCvCfpJ0gQXByZXNpYXNpICYgS29udHJpYnV0b3I6CuKAoiBCdWlsZGVyIDogQ29kZVNhbnp6CuKAoiBNYWludGFpbmVyIDogRHVybzkyICYgQ29kZVNhbnp6CuKAoiBSZUNsb3Vkc3RyZWFtCuKAoiBQaGlzaGVyOTgK4oCiIFNhdXJhYmhLYXBlcndhbgrigKIgTml2aW5DTkMK4oCiIEhleGF0ZWQK4oCiIFRla3VtYQoK8J+ZjyBUZXJpbWEga2FzaWggc3VkYWggbWVuZHVrdW5nIENsb3VkUGxheS4K"
+                val decodedNotes = String(Base64.getDecoder().decode(encodedNotes))
+                AlertDialog.Builder(requireContext(), R.style.AlertDialogCustom)
+                    .setTitle("📝 Catatan Pembaruan")
+                    .setMessage(decodedNotes)
+                    .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+                    .create()
+                    .show()
             }
 
-            // 🔥 FITUR BARU (TIDAK MENGHAPUS APAPUN)
-            settingsObscuraIngress.setOnClickListener {
-                ObscuraIngress.install(requireActivity())
-            }
+            settingsObscuraIngress.setOnClickListener { ObscuraIngress.install(requireActivity()) }
 
             listOf(
                 settingsGeneral to R.id.action_navigation_global_to_navigation_settings_general,
@@ -255,35 +163,23 @@ Aplikasi ini dikembangkan untuk memberikan pengalaman streaming yang ringan, cep
                 settingsCredits to R.id.action_navigation_global_to_navigation_settings_account,
                 settingsUi to R.id.action_navigation_global_to_navigation_settings_ui,
                 settingsProviders to R.id.action_navigation_global_to_navigation_settings_providers,
-                settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates,
+                settingsUpdates to R.id.action_navigation_global_to_navigation_settings_updates
             ).forEach { (view, navigationId) ->
                 view.apply {
                     setOnClickListener { navigate(navigationId) }
-                    if (isLayout(TV)) {
-                        isFocusable = true
-                        isFocusableInTouchMode = true
-                    }
+                    if (isLayout(TV)) { isFocusable = true; isFocusableInTouchMode = true }
                 }
             }
 
-            if (isLayout(TV)) {
-                settingsGeneral.requestFocus()
-            }
+            if (isLayout(TV)) settingsGeneral.requestFocus()
         }
 
         val appVersion = BuildConfig.APP_VERSION
-        val buildTimestamp =
-            SimpleDateFormat("dd MMMM yyyy HH.mm.ss", Locale("id", "ID"))
-                .format(Date(BuildConfig.BUILD_DATE))
-
+        val buildTimestamp = SimpleDateFormat("dd MMMM yyyy HH.mm.ss", Locale("id", "ID")).format(Date(BuildConfig.BUILD_DATE))
         binding.appVersion.text = "v$appVersion • ☠️ModSanz☠️ • $buildTimestamp"
         binding.buildDate.visibility = View.GONE
-
         binding.appVersionInfo.setOnLongClickListener {
-            clipboardHelper(
-                txt(R.string.extension_version),
-                "v$appVersion • ☠️ModSanz☠️ • $buildTimestamp"
-            )
+            clipboardHelper(txt(R.string.extension_version), "v$appVersion • ☠️ModSanz☠️ • $buildTimestamp")
             true
         }
     }
