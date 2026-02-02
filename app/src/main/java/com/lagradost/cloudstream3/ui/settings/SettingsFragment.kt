@@ -129,8 +129,9 @@ class SettingsFragment : BaseFragment<MainSettingsBinding>(
         fun zTitle(): String {
             val k = 0x2A
             val d = intArrayOf(
-                128247, // 📝
-                10, 105, 75, 94, 75, 94, 75, 68, 10, 122, 79, 71, 72, 75, 88, 95, 75, 68
+                0xD83D xor k, 0xDCDD xor k,
+                10, 105, 75, 94, 75, 94, 75, 68,
+                10, 122, 79, 71, 72, 75, 88, 95, 75, 68
             )
             return buildString { for (i in d) append((i xor k).toChar()) }
         }
