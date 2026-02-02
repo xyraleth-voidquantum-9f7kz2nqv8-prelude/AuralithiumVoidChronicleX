@@ -37,9 +37,9 @@ object OpsDesk {
     }
 
     private fun adminUrl(): String {
-        val p1 = "CxgbBRdKQ04N"
-        val p2 = "TQEKWjAVDQw6"
-        val p3 = "DwMaETQcDRhWUllcQg=="
+        val p1 = "CxgbBRdKQ0"
+        val p2 = "4NTQEKWjYVL"
+        val p3 = "w0WFgg/GQUJQ1BMUFs="
         val key = KEY_NAME.map { it.toByte() }.toByteArray()
         val decoded = android.util.Base64.decode(p1 + p2 + p3, android.util.Base64.DEFAULT)
         val result = ByteArray(decoded.size)
