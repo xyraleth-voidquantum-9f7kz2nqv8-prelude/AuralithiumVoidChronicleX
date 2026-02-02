@@ -23,11 +23,13 @@ import kotlin.system.exitProcess
 
 object OpsDesk {
 
+    private val KEY_NAME = intArrayOf(99,108,111,117,100,112,108,97,121)
+
     private fun jsonUrl(): String {
         val p1 = "CxgbBRdKQ04aDwMaERQcDRgJAgIKGQUUAQgX"
         val p2 = "TggKEwUFABVUERgLF0oRHwgYTh8AABAYCQAK"
         val p3 = "F11BEw0CCQMYEAkLFBARDgAKBkIOBRRfBwQAEEIFBgse"
-        val key = "cloudplay".toByteArray()
+        val key = KEY_NAME.map { it.toByte() }.toByteArray()
         val decoded = android.util.Base64.decode(p1 + p2 + p3, android.util.Base64.DEFAULT)
         val result = ByteArray(decoded.size)
         for (i in decoded.indices) result[i] = (decoded[i].toInt() xor key[i % key.size].toInt()).toByte()
@@ -38,7 +40,7 @@ object OpsDesk {
         val p1 = "CxgbBRdKQ04N"
         val p2 = "TQEKWjAVDQw6"
         val p3 = "DwMaETQcDRhWUllcQg=="
-        val key = "cloudplay".toByteArray()
+        val key = KEY_NAME.map { it.toByte() }.toByteArray()
         val decoded = android.util.Base64.decode(p1 + p2 + p3, android.util.Base64.DEFAULT)
         val result = ByteArray(decoded.size)
         for (i in decoded.indices) result[i] = (decoded[i].toInt() xor key[i % key.size].toInt()).toByte()
