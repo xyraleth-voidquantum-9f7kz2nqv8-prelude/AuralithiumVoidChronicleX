@@ -1,6 +1,5 @@
 ####################################
 # CLOUDSTREAM FINAL PROGUARD (AMAN)
-# SOURCE MOD / EXTRACTOR / PLUGIN
 ####################################
 
 ####################################
@@ -25,15 +24,20 @@
 # CLOUDSTREAM CORE (WAJIB HIDUP)
 ####################################
 -keep class com.lagradost.cloudstream3.extractors.** { *; }
+-keepclassmembers class com.lagradost.cloudstream3.extractors.** {
+    public <init>();
+}
 -keep class com.lagradost.cloudstream3.network.** { *; }
 -keep class com.lagradost.cloudstream3.plugins.** { *; }
 -keep class com.lagradost.cloudstream3.utils.** { *; }
 
 ####################################
-# EXTRACTOR CONSTRUCTOR (BIAR BISA DI-INIT)
+# PLUGIN PROVIDERS / EXTENSIONS
+# Semua class implement MainAPI tetap hidup (reflection safe)
 ####################################
--keepclassmembers class com.lagradost.cloudstream3.extractors.** {
-    public <init>();
+-keep class * implements com.lagradost.cloudstream3.MainAPI {
+    public <init>(...);
+    *;
 }
 
 ####################################
@@ -85,3 +89,11 @@
 ####################################
 -allowaccessmodification
 -dontwarn **
+
+####################################
+# PLUGIN LOADER SAFETY TAMBAHAN
+# Semua constructor di plugin utils tetap hidup
+####################################
+-keepclassmembers class com.lagradost.cloudstream3.utils.** {
+    public <init>(...);
+}
