@@ -1,10 +1,11 @@
 ####################################
-# CLOUDSTREAM CORE
+# CLOUDSTREAM CORE (WAJIB & AMAN)
 ####################################
 -keep class com.lagradost.cloudstream3.** { *; }
+-keepnames class com.lagradost.cloudstream3.**
 
 ####################################
-# PLUGIN SYSTEM
+# PLUGIN SYSTEM (PALING PENTING)
 ####################################
 -keep class com.lagradost.cloudstream3.plugins.** { *; }
 -keep class com.lagradost.cloudstream3.extractors.** { *; }
@@ -17,10 +18,12 @@
 -keep class retrofit2.** { *; }
 -keep class app.cash.quickjs.** { *; }
 
--dontwarn okhttp3.**
--dontwarn okio.**
--dontwarn retrofit2.**
--dontwarn app.cash.quickjs.**
+# Rhino / JavaScript engine
+-keep class org.mozilla.javascript.** { *; }
+-keep class org.mozilla.javascript.engine.** { *; }
+-dontwarn org.mozilla.javascript.**
+-dontwarn java.beans.**
+-dontwarn javax.script.**
 
 ####################################
 # KOTLIN & COROUTINE
@@ -33,11 +36,28 @@
 ####################################
 # REFLECTION SAFETY
 ####################################
+-keepnames class ** implements java.io.Serializable
 -keepclassmembers class * {
     @kotlin.Metadata *;
 }
 
 ####################################
-# STRX
+# STRX (Security)
 ####################################
 -keep class com.lagradost.cloudstream3.security.StrX { *; }
+
+####################################
+# R8 WARNING SUPPRESSION
+####################################
+-dontwarn **
+
+####################################
+# OPTIONAL (SAFE) SHRINK RULES
+####################################
+# Jika R8 masih error, bisa pakai ini untuk Rhino
+-keep class java.beans.** { *; }
+-keep class javax.script.** { *; }
+
+# Jangan obfuscate plugin & extractors
+-keepclassmembers class com.lagradost.cloudstream3.plugins.** { *; }
+-keepclassmembers class com.lagradost.cloudstream3.extractors.** { *; }
