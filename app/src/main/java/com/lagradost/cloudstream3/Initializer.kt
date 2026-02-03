@@ -9,7 +9,7 @@ import kotlinx.coroutines.*
 
 object Initializer {
 
-    private const val AUTO_REPO_FLAG = "auto_repo_added_v1"
+    private const val AUTO_REPO_FLAG = "auto_repo_added_v2"
 
     private fun decode(data: IntArray, key: Int = 7): String =
         data.map { (it xor key).toChar() }.joinToString("")
@@ -51,15 +51,32 @@ object Initializer {
             iconUrl = null
         )
 
-        CoroutineScope(Dispatchers.IO).launch {
+        // 🔥 FIX UTAMA ADA DI SINI
+        activity.lifecycleScope.launch {
             try {
+                // 1️⃣ Pastikan repository system siap
+                withContext(Dispatchers.IO) {
+                    RepositoryManager.loadRepositories(activity)
+                }
+
+                delay(500) // penting, jangan dihapus
+
+                // 2️⃣ Add repo kalau belum ada
                 if (RepositoryManager.getRepositories().none { it.url == repo.url }) {
                     RepositoryManager.addRepository(repo)
                 }
 
-                // ✅ SATU-SATUNYA CARA YANG VALID
+                // 3️⃣ Reload repo supaya plugin kebaca
+                withContext(Dispatchers.IO) {
+                    RepositoryManager.loadRepositories(activity)
+                }
+
+                delay(800) // ⚠️ INI KUNCI AUTO DOWNLOAD
+
+                // 4️⃣ AUTO DOWNLOAD SEMUA PROVIDER
                 PluginsViewModel.downloadAll(activity, repo.url, null)
 
+                // 5️⃣ Tandai selesai
                 prefs.edit()
                     .putBoolean(AUTO_REPO_FLAG, true)
                     .apply()
