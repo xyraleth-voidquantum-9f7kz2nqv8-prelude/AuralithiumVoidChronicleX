@@ -6,27 +6,34 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.os.Build
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import com.lagradost.api.setContext
+import com.lagradost.cloudstream3.mvvm.safe
+import com.lagradost.cloudstream3.mvvm.safeAsync
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.ui.settings.Globals.EMULATOR
 import com.lagradost.cloudstream3.ui.settings.Globals.TV
 import com.lagradost.cloudstream3.ui.settings.Globals.isLayout
 import com.lagradost.cloudstream3.utils.AppContextUtils.openBrowser
+import com.lagradost.cloudstream3.utils.Coroutines.runOnMainThread
 import com.lagradost.cloudstream3.utils.DataStore.getKey
 import com.lagradost.cloudstream3.utils.DataStore.getKeys
 import com.lagradost.cloudstream3.utils.DataStore.removeKey
 import com.lagradost.cloudstream3.utils.DataStore.removeKeys
 import com.lagradost.cloudstream3.utils.DataStore.setKey
 import com.lagradost.cloudstream3.utils.ImageLoader.buildImageLoader
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.PrintStream
 import java.lang.ref.WeakReference
+import java.util.Locale
+import kotlin.concurrent.thread
 import kotlin.system.exitProcess
 
 class ExceptionHandler(
@@ -50,12 +57,10 @@ class ExceptionHandler(
             }
         } catch (_: FileNotFoundException) {
         }
-
         try {
             onError()
         } catch (_: Exception) {
         }
-
         exitProcess(1)
     }
 }
@@ -65,14 +70,12 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
-
-        // 🔥🔥🔥 INI KUNCI SEMUANYA 🔥🔥🔥
-        // Tanpa ini: Idlix & Kissasian MATI
-        app.initClient(this)
+        // If we want to initialize Coil as early as possible, maybe when
+        // loading an image or GIF in a splash screen activity.
+        // buildImageLoader(applicationContext)
 
         ExceptionHandler(filesDir.resolve("last_error")) {
-            val intent = context!!.packageManager
-                .getLaunchIntentForPackage(context!!.packageName)
+            val intent = context!!.packageManager.getLaunchIntentForPackage(context!!.packageName)
             startActivity(Intent.makeRestartActivityTask(intent!!.component))
         }.also {
             exceptionHandler = it
@@ -83,10 +86,12 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
         context = base
+        // This can be removed without deprecation after next stable
         AcraApplication.context = context
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {
+        // Coil module will be initialized globally when first loadImage() is invoked.
         return buildImageLoader(applicationContext)
     }
 
@@ -158,14 +163,12 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
             context?.removeKey(path)
         }
 
-        fun openBrowser(
-            url: String,
-            fallbackWebView: Boolean = false,
-            fragment: Fragment? = null
-        ) {
+        /** If fallbackWebView is true and a fragment is supplied then it will open a WebView with the URL if the browser fails. */
+        fun openBrowser(url: String, fallbackWebView: Boolean = false, fragment: Fragment? = null) {
             context?.openBrowser(url, fallbackWebView, fragment)
         }
 
+        /** Will fall back to WebView if in TV or emulator layout. */
         fun openBrowser(url: String, activity: FragmentActivity?) {
             openBrowser(
                 url,
