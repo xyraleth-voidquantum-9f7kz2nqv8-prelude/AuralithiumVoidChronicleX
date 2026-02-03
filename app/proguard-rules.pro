@@ -1,60 +1,21 @@
-########################################
-# ProGuard Super Aman CloudStream Mod
-# Langsung bisa build signed APK
-########################################
+# Add project specific ProGuard rules here.
+# You can control the set of applied configuration files using the
+# proguardFiles setting in build.gradle.kts.
+#
+# For more details, see
+#   http://developer.android.com/guide/developing/tools/proguard.html
 
-# ------------------------------------------------
-# 1️⃣ Jangan hancurkan kelas penting CloudStream
-# Semua core, plugin, dan extractor tetap aman
-# ------------------------------------------------
--keep class com.lagradost.cloudstream3.** { *; }
--dontwarn com.lagradost.cloudstream3.**
-
-# Plugin / extractor eksternal (jika ada)
--keep class com.lagradost.cloudstream3.extractor.** { *; }
-
-# ------------------------------------------------
-# 2️⃣ Kotlin & Reflection
-# Agar Kotlin, reflection, dan serialisasi aman
-# ------------------------------------------------
--keepclassmembers class kotlin.Metadata { *; }
--keepclassmembers class kotlin.reflect.** { *; }
--keepclassmembers class kotlinx.serialization.** { *; }
-
-# ------------------------------------------------
-# 3️⃣ Room / Database (jika digunakan)
-# ------------------------------------------------
--keepclassmembers class androidx.room.** { *; }
-
-# ------------------------------------------------
-# 4️⃣ Library AndroidX tambahan
-# ------------------------------------------------
--keep class androidx.** { *; }
--dontwarn androidx.**
-
-# ------------------------------------------------
-# 5️⃣ WebView JS Interfaces (opsional)
-# Jika aplikasi pakai WebView dengan JS, ganti nama kelasnya
-# ------------------------------------------------
-#-keepclassmembers class com.example.MyWebAppInterface {
-#    public *;
+# If your project uses WebView with JS, uncomment the following
+# and specify the fully qualified class name to the JavaScript interface
+# class:
+#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
+#   public *;
 #}
 
-# ------------------------------------------------
-# 6️⃣ Nomor baris stack trace
-# Agar crash report tetap jelas
-# ------------------------------------------------
--keepattributes SourceFile,LineNumberTable
+# Uncomment this to preserve the line number information for
+# debugging stack traces.
+#-keepattributes SourceFile,LineNumberTable
 
-# ------------------------------------------------
-# 7️⃣ Sembunyikan nama file sumber (opsional)
-# ------------------------------------------------
+# If you keep the line number information, uncomment this to
+# hide the original source file name.
 #-renamesourcefileattribute SourceFile
-
-# ------------------------------------------------
-# 8️⃣ Nonaktifkan sementara optimisasi R8 untuk aman
-# Bisa dihapus kalau semua sudah stabil
-# ------------------------------------------------
--dontobfuscate
--dontoptimize
--dontshrink
