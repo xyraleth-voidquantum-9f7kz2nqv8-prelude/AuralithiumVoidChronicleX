@@ -1,11 +1,10 @@
 ####################################
-# CLOUDSTREAM CORE (WAJIB & AMAN)
+# CLOUDSTREAM CORE
 ####################################
 -keep class com.lagradost.cloudstream3.** { *; }
--keepnames class com.lagradost.cloudstream3.**
 
 ####################################
-# PLUGIN SYSTEM (PALING PENTING)
+# PLUGIN SYSTEM
 ####################################
 -keep class com.lagradost.cloudstream3.plugins.** { *; }
 -keep class com.lagradost.cloudstream3.extractors.** { *; }
@@ -18,6 +17,11 @@
 -keep class retrofit2.** { *; }
 -keep class app.cash.quickjs.** { *; }
 
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn retrofit2.**
+-dontwarn app.cash.quickjs.**
+
 ####################################
 # KOTLIN & COROUTINE
 ####################################
@@ -29,7 +33,6 @@
 ####################################
 # REFLECTION SAFETY
 ####################################
--keepnames class ** implements java.io.Serializable
 -keepclassmembers class * {
     @kotlin.Metadata *;
 }
@@ -38,8 +41,3 @@
 # STRX
 ####################################
 -keep class com.lagradost.cloudstream3.security.StrX { *; }
-
-####################################
-# R8 TENANG
-####################################
--dontwarn **
