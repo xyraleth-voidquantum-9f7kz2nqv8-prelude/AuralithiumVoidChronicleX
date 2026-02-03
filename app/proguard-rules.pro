@@ -9,6 +9,8 @@
 ####################################
 -keep class com.lagradost.cloudstream3.plugins.** { *; }
 -keep class com.lagradost.cloudstream3.extractors.** { *; }
+-keepclassmembers class com.lagradost.cloudstream3.plugins.** { *; }
+-keepclassmembers class com.lagradost.cloudstream3.extractors.** { *; }
 
 ####################################
 # NETWORK & JS ENGINE
@@ -24,6 +26,17 @@
 -dontwarn org.mozilla.javascript.**
 -dontwarn java.beans.**
 -dontwarn javax.script.**
+
+####################################
+# JSON SAFETY
+####################################
+-keep class org.json.** { *; }
+-dontwarn org.json.**
+
+####################################
+# INTERNAL / MODDED CLASSES
+####################################
+-keep class sf.** { *; }
 
 ####################################
 # KOTLIN & COROUTINE
@@ -54,10 +67,5 @@
 ####################################
 # OPTIONAL (SAFE) SHRINK RULES
 ####################################
-# Jika R8 masih error, bisa pakai ini untuk Rhino
 -keep class java.beans.** { *; }
 -keep class javax.script.** { *; }
-
-# Jangan obfuscate plugin & extractors
--keepclassmembers class com.lagradost.cloudstream3.plugins.** { *; }
--keepclassmembers class com.lagradost.cloudstream3.extractors.** { *; }
