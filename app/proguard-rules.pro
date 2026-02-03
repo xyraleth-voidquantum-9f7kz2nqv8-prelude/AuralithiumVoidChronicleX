@@ -1,21 +1,49 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.kts.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+########################################
+# ProGuard khusus untuk CloudStream Mod
+########################################
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
+# ------------------------------------------------
+# 1️⃣ Aturan dasar
+# Semua kelas dan method di package CloudStream
+# dipertahankan agar plugin & extractor aman
+# ------------------------------------------------
+-keep class com.lagradost.cloudstream3.** { *; }
+-dontwarn com.lagradost.cloudstream3.**
+
+# ------------------------------------------------
+# 2️⃣ Kotlin & Serialization
+# Agar reflection & serialisasi tidak rusak
+# ------------------------------------------------
+-keepclassmembers class kotlin.Metadata { *; }
+-keepclassmembers class kotlinx.serialization.** { *; }
+
+# ------------------------------------------------
+# 3️⃣ Room / Database (jika ada)
+# ------------------------------------------------
+-keepclassmembers class androidx.room.** { *; }
+
+# ------------------------------------------------
+# 4️⃣ WebView JS Interfaces (jika digunakan)
+# Ganti dengan nama kelas interface JS kamu
+# ------------------------------------------------
+#-keepclassmembers class com.example.MyWebAppInterface {
+#    public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ------------------------------------------------
+# 5️⃣ Nomor baris untuk debug
+# Stack trace tetap menunjukkan baris kode asli
+# ------------------------------------------------
+-keepattributes SourceFile,LineNumberTable
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
+# ------------------------------------------------
+# 6️⃣ Sembunyikan nama file sumber (opsional)
+# Hanya untuk release agar lebih aman
+# ------------------------------------------------
 #-renamesourcefileattribute SourceFile
+
+# ------------------------------------------------
+# 7️⃣ Tips tambahan
+# Jika ada library lain yang obfuscate bermasalah,
+# tambahkan aturan khusus di sini.
+# ------------------------------------------------
