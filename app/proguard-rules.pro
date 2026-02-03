@@ -1,31 +1,28 @@
 ####################################
-# IDENTITAS APP (NAMA TETAP)
+# CLOUDSTREAM FINAL PROGUARD (AMAN)
+# SOURCE MOD / EXTRACTOR / PLUGIN
 ####################################
--keepnames class com.lagradost.cloudstream3.**
 
 ####################################
-# R8 MODE AMAN (ANTI CLASS SAMPAH)
+# IDENTITAS APP (JANGAN DIUBAH)
 ####################################
--allowaccessmodification
-# ❌ Jangan pakai adaptclassstrings / overloadaggressively / repackageclasses
-#-adaptclassstrings
-#-overloadaggressively
-#-repackageclasses ''
+-keep class com.lagradost.cloudstream3.** { *; }
+-dontwarn com.lagradost.cloudstream3.**
 
 ####################################
-# LAMBDA & REFLECTION
+# APPLICATION INIT (WAJIB)
 ####################################
--keepattributes InnerClasses,EnclosingMethod
+-keep class com.lagradost.cloudstream3.CloudStreamApp { *; }
 
 ####################################
-# ACTIVITY / FRAGMENT
+# ACTIVITY / FRAGMENT (REFLECTION SAFE)
 ####################################
 -keep class * extends android.app.Activity { <init>(...); }
 -keep class * extends androidx.appcompat.app.AppCompatActivity { <init>(...); }
 -keep class * extends androidx.fragment.app.Fragment { <init>(...); }
 
 ####################################
-# CLOUDSTREAM CORE (WAJIB)
+# CLOUDSTREAM CORE (WAJIB HIDUP)
 ####################################
 -keep class com.lagradost.cloudstream3.extractors.** { *; }
 -keep class com.lagradost.cloudstream3.network.** { *; }
@@ -33,13 +30,21 @@
 -keep class com.lagradost.cloudstream3.utils.** { *; }
 
 ####################################
-# KOTLIN
+# EXTRACTOR CONSTRUCTOR (BIAR BISA DI-INIT)
+####################################
+-keepclassmembers class com.lagradost.cloudstream3.extractors.** {
+    public <init>();
+}
+
+####################################
+# KOTLIN & REFLECTION
 ####################################
 -keep class kotlin.Metadata { *; }
 -keepattributes *Annotation*
+-keepattributes InnerClasses,EnclosingMethod
 
 ####################################
-# PACKAGE / LIBRARY PENTING (DEX UTAMA)
+# LIBRARY PENTING (DEX UTAMA)
 ####################################
 -keep class _COROUTINE.** { *; }
 -keep class afo.hf.hqtkbbwxq.** { *; }
@@ -71,11 +76,12 @@
 -dontwarn org.json.**
 
 ####################################
-# STRX / STRING ENCRYPTION
+# STRING ENCRYPTION (STRX)
 ####################################
 -keep class com.lagradost.cloudstream3.security.StrX { *; }
 
 ####################################
-# TENANG R8
+# R8 MODE TENANG
 ####################################
+-allowaccessmodification
 -dontwarn **
