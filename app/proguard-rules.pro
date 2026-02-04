@@ -1,21 +1,81 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.kts.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+####################################
+# IDENTITAS APP (NAMA TETAP)
+####################################
+-keepnames class com.lagradost.cloudstream3.**
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+####################################
+# R8 MODE AMAN (ANTI CLASS SAMPAH)
+####################################
+-allowaccessmodification
+# ❌ Jangan pakai adaptclassstrings / overloadaggressively / repackageclasses
+#-adaptclassstrings
+#-overloadaggressively
+#-repackageclasses ''
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+####################################
+# LAMBDA & REFLECTION
+####################################
+-keepattributes InnerClasses,EnclosingMethod
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+####################################
+# ACTIVITY / FRAGMENT
+####################################
+-keep class * extends android.app.Activity { <init>(...); }
+-keep class * extends androidx.appcompat.app.AppCompatActivity { <init>(...); }
+-keep class * extends androidx.fragment.app.Fragment { <init>(...); }
+
+####################################
+# CLOUDSTREAM CORE (WAJIB)
+####################################
+-keep class com.lagradost.cloudstream3.extractors.** { *; }
+-keep class com.lagradost.cloudstream3.network.** { *; }
+-keep class com.lagradost.cloudstream3.plugins.** { *; }
+-keep class com.lagradost.cloudstream3.utils.** { *; }
+
+####################################
+# KOTLIN
+####################################
+-keep class kotlin.Metadata { *; }
+-keepattributes *Annotation*
+
+####################################
+# PACKAGE / LIBRARY PENTING (DEX UTAMA)
+####################################
+-keep class _COROUTINE.** { *; }
+-keep class afo.hf.hqtkbbwxq.** { *; }
+-keep class android.** { *; }
+-keep class androidx.** { *; }
+-keep class app.cash.quickjs.** { *; }
+-keep class coil3.** { *; }
+-keep class com.** { *; }
+-keep class go.** { *; }
+-keep class io.github.** { *; }
+-keep class j$.** { *; }
+-keep class java.** { *; }
+-keep class javax.** { *; }
+-keep class junit.** { *; }
+-keep class kotlin.** { *; }
+-keep class kotlinx.** { *; }
+-keep class me.xdrop.** { *; }
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }
+-keep class org.** { *; }
+-keep class qrcode.** { *; }
+-keep class retrofit2.** { *; }
+-keep class torrServer.** { *; }
+
+####################################
+# JSON SAFETY
+####################################
+-keep class org.json.** { *; }
+-dontwarn org.json.**
+
+####################################
+# STRX / STRING ENCRYPTION
+####################################
+-keep class com.lagradost.cloudstream3.security.StrX { *; }
+
+####################################
+# TENANG R8
+####################################
+-dontwarn **
