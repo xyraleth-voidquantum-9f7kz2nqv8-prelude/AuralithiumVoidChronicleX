@@ -11,13 +11,13 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.lagradost.cloudstream3.MainActivity.Companion.afterRepositoryLoadedEvent
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.databinding.FragmentExtensionsBinding
 import com.lagradost.cloudstream3.databinding.AddRepoInputBinding
+import com.lagradost.cloudstream3.databinding.FragmentExtensionsBinding
 import com.lagradost.cloudstream3.mvvm.observe
 import com.lagradost.cloudstream3.mvvm.observeNullable
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.plugins.RepositoryManager.RepositoryData
+import com.lagradost.cloudstream3.plugins.RepositoryManager.Repository
 import com.lagradost.cloudstream3.ui.BaseFragment
 import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
 import com.lagradost.cloudstream3.ui.result.setLinearListLayout
@@ -146,7 +146,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             setLinearListLayout(
                 isHorizontal = false,
                 nextUp = R.id.settings_toolbar,
-                nextDown = R.id.pluginStorageAppbar,
+                nextDown = R.id.pluginStorage, // pastikan id ini ada di XML
                 nextRight = FOCUS_SELF,
                 nextLeft = R.id.nav_rail_view
             )
@@ -181,7 +181,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         }
 
         // Tombol update plugin → langsung load .cs3
-        binding.pluginStorageAppbar.setOnClickListener {
+        binding.pluginStorage.setOnClickListener {
             ioSafe {
                 PluginManager.loadPlugins(activity ?: return@ioSafe)
             }
@@ -211,7 +211,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                         return@ioSafe
                     }
                     val fixedRepo = repo.copy(name = name?.takeIf { it.isNotBlank() } ?: repo.name)
-                    RepositoryManager.addRepository(fixedRepo) // pakai RepositoryData resmi
+                    RepositoryManager.addRepository(fixedRepo)
                     viewModel.loadStats()
                     viewModel.loadRepositories()
                 }
