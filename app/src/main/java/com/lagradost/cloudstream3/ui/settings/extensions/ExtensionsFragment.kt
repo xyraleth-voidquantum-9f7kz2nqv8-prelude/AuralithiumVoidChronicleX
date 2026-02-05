@@ -1,6 +1,5 @@
 package com.lagradost.cloudstream3.ui.settings.extensions
 
-import android.app.Activity
 import android.os.Bundle
 import android.util.Base64
 import android.view.LayoutInflater
@@ -8,19 +7,18 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.view.isGone
-import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.lagradost.cloudstream3.MainActivity.Companion.afterRepositoryLoadedEvent
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.databinding.FragmentExtensionsBinding
 import com.lagradost.cloudstream3.databinding.AddRepoInputBinding
+import com.lagradost.cloudstream3.databinding.FragmentExtensionsBinding
 import com.lagradost.cloudstream3.mvvm.observe
 import com.lagradost.cloudstream3.mvvm.observeNullable
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.plugins.models.RepositoryData
+import com.lagradost.cloudstream3.plugins.RepositoryManager.Repository
 import com.lagradost.cloudstream3.ui.BaseFragment
 import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
 import com.lagradost.cloudstream3.ui.result.setLinearListLayout
@@ -182,7 +180,8 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
 
         binding.pluginStorageAppbar.setOnClickListener {
             ioSafe {
-                PluginManager.reloadPlugins(activity ?: return@ioSafe)
+                // reloadPlugins diganti loadPlugins
+                PluginManager.loadPlugins(activity ?: return@ioSafe)
             }
         }
 
