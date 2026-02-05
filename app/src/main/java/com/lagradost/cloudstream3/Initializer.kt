@@ -5,7 +5,9 @@ import android.util.Base64
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 object Initializer {
 
@@ -32,10 +34,10 @@ object Initializer {
         66, 115, 115, 68, 107, 114, 99
     )
 
-    private const val P1 = "CxgbBRdKQ04LAhtBEg0EBBQb"
-    private const val P2 = "Fh8KBwcfAhUcDRhBFgsdQwUM"
-    private const val P3 = "EQNWR0s1FBU6DwMaEUsdDQgX"
-    private const val P4 = "TB4KBQteBhIWDQ=="
+    private const val P1 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNl"
+    private const val P2 = "cmNvbnRlbnQuY29tL0dpbGFu"
+    private const val P3 = "Z0FkaXRhbWEvTm9udG9ubW92"
+    private const val P4 = "aWVzL21haW4vcmVwby5qc29u"
 
     private fun repoUrl(): String {
         val key = decode(KEY_STR).toByteArray()
@@ -65,7 +67,6 @@ object Initializer {
             try {
                 if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
                     RepositoryManager.addRepository(repo)
-
                     PluginsViewModel.downloadAll(activity, repo.url, null)
 
                     prefs.edit()
