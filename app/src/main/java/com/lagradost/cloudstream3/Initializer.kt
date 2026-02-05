@@ -22,10 +22,6 @@ object Initializer {
         return String(out)
     }
 
-    private val KEY_STR = intArrayOf(
-        100, 107, 104, 114, 99, 119, 107, 102, 126
-    )
-
     private val PREFS_NAME = intArrayOf(
         100, 107, 104, 114, 99, 116, 115, 114, 101, 102, 106
     )
@@ -34,21 +30,15 @@ object Initializer {
         66, 115, 115, 68, 107, 114, 99
     )
 
+    // Base64 URL repo.json (BENAR)
     private const val P1 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNl"
     private const val P2 = "cmNvbnRlbnQuY29tL0dpbGFu"
     private const val P3 = "Z0FkaXRhbWEvTm9udG9ubW92"
     private const val P4 = "aWVzL21haW4vcmVwby5qc29u"
 
     private fun repoUrl(): String {
-        val key = decode(KEY_STR).toByteArray()
         val encoded = P1 + P2 + P3 + P4
-        val data = Base64.decode(encoded, Base64.DEFAULT)
-
-        val out = ByteArray(data.size)
-        for (i in data.indices) {
-            out[i] = (data[i].toInt() xor key[i % key.size].toInt()).toByte()
-        }
-        return String(out)
+        return String(Base64.decode(encoded, Base64.DEFAULT))
     }
 
     fun start(activity: Activity) {
@@ -67,6 +57,7 @@ object Initializer {
             try {
                 if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
                     RepositoryManager.addRepository(repo)
+
                     PluginsViewModel.downloadAll(activity, repo.url, null)
 
                     prefs.edit()
@@ -75,6 +66,7 @@ object Initializer {
                         .apply()
                 }
 
+                // force refresh plugin (.cs3)
                 PluginsViewModel.downloadAll(activity, repo.url, null)
 
             } catch (_: Throwable) {
