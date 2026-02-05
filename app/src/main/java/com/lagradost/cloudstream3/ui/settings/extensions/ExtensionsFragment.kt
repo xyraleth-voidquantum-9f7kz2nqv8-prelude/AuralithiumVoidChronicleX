@@ -17,7 +17,7 @@ import com.lagradost.cloudstream3.mvvm.observe
 import com.lagradost.cloudstream3.mvvm.observeNullable
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.plugins.RepositoryManager.Repository
+import com.lagradost.cloudstream3.plugins.RepositoryManager.RepositoryData
 import com.lagradost.cloudstream3.ui.BaseFragment
 import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
 import com.lagradost.cloudstream3.ui.result.setLinearListLayout
@@ -183,7 +183,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         // Tombol update plugin → langsung load .cs3
         binding.pluginStorageAppbar.setOnClickListener {
             ioSafe {
-                PluginManager.reloadPlugins(activity ?: return@ioSafe)
+                PluginManager.loadPlugins(activity ?: return@ioSafe)
             }
         }
 
@@ -210,7 +210,13 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                         main { showToast(R.string.no_repository_found_error) }
                         return@ioSafe
                     }
-                    val fixedRepo = repo.copy(name = name?.takeIf { it.isNotBlank() } ?: repo.name)
+
+                    // Pakai RepositoryData resmi
+                    val fixedRepo = RepositoryData(
+                        iconUrl = repo.iconUrl,
+                        name = name?.takeIf { it.isNotBlank() } ?: repo.name,
+                        url = urlStr
+                    )
                     RepositoryManager.addRepository(fixedRepo)
                     viewModel.loadStats()
                     viewModel.loadRepositories()
