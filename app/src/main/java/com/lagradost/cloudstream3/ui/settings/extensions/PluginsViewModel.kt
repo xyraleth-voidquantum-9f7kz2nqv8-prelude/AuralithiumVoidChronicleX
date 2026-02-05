@@ -2,7 +2,6 @@ package com.lagradost.cloudstream3.ui.settings.extensions
 
 import android.app.Activity
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -19,10 +18,10 @@ import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.PluginManager.getPluginPath
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.plugins.SitePlugin
-import com.lagradost.cloudstream3.utils.txt
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.Coroutines.main
 import com.lagradost.cloudstream3.utils.Coroutines.runOnMainThread
+import com.lagradost.cloudstream3.utils.txt
 import me.xdrop.fuzzywuzzy.FuzzySearch
 import java.io.File
 
@@ -42,7 +41,7 @@ class PluginsViewModel : ViewModel() {
             field = value
         }
 
-    private val pluginLanguages = mutableSetOf<String>()
+    val pluginLanguages: MutableSet<String> = mutableSetOf()
 
     private val _filteredPlugins = MutableLiveData<PluginViewDataUpdate>()
     val filteredPlugins: LiveData<PluginViewDataUpdate> = _filteredPlugins
@@ -52,7 +51,6 @@ class PluginsViewModel : ViewModel() {
     private var currentQuery: String? = null
 
     companion object {
-        private const val TAG = "PLG"
 
         private fun isDownloaded(
             context: Context,
@@ -63,7 +61,7 @@ class PluginsViewModel : ViewModel() {
         }
 
         private suspend fun getPlugins(repositoryUrl: String): List<Plugin> {
-            RepositoryManager.getRepoPlugins(repositoryUrl) ?: emptyList()
+            return RepositoryManager.getRepoPlugins(repositoryUrl) ?: emptyList()
         }
 
         fun downloadAll(
@@ -74,7 +72,6 @@ class PluginsViewModel : ViewModel() {
             if (activity == null) return@ioSafe
 
             val plugins = getPlugins(repositoryUrl)
-
             val needDownload = plugins.filter {
                 !isDownloaded(activity, it.second.internalName, repositoryUrl)
             }
