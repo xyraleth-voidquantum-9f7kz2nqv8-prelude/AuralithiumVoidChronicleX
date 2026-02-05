@@ -146,7 +146,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             setLinearListLayout(
                 isHorizontal = false,
                 nextUp = R.id.settings_toolbar,
-                nextDown = R.id.plugin_storage_appbar,
+                nextDown = R.id.pluginStorageAppbar,
                 nextRight = FOCUS_SELF,
                 nextLeft = R.id.nav_rail_view
             )
@@ -210,14 +210,8 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                         main { showToast(R.string.no_repository_found_error) }
                         return@ioSafe
                     }
-
-                    // Pakai RepositoryData resmi
-                    val fixedRepo = RepositoryData(
-                        iconUrl = repo.iconUrl,
-                        name = name?.takeIf { it.isNotBlank() } ?: repo.name,
-                        url = urlStr
-                    )
-                    RepositoryManager.addRepository(fixedRepo)
+                    val fixedRepo = repo.copy(name = name?.takeIf { it.isNotBlank() } ?: repo.name)
+                    RepositoryManager.addRepository(fixedRepo) // pakai RepositoryData resmi
                     viewModel.loadStats()
                     viewModel.loadRepositories()
                 }
