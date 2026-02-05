@@ -26,18 +26,30 @@ object Initializer {
         100, 107, 104, 114, 99, 116, 115, 114, 101, 102, 106
     )
 
-    private val REPO_NAME = intArrayOf(
+    private val REPO_NAME_KISSASIAN = intArrayOf(
         66, 115, 115, 68, 107, 114, 99
     )
 
-    // Base64 URL repo.json (BENAR)
-    private const val P1 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNl"
-    private const val P2 = "cmNvbnRlbnQuY29tL0dpbGFu"
-    private const val P3 = "Z0FkaXRhbWEvTm9udG9ubW92"
-    private const val P4 = "aWVzL21haW4vcmVwby5qc29u"
+    private val REPO_NAME_STREAMKU = intArrayOf(
+        88, 121, 112, 86, 98, 101, 109
+    )
 
-    private fun repoUrl(): String {
-        val encoded = P1 + P2 + P3 + P4
+    private const val K1 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNl"
+    private const val K2 = "cmNvbnRlbnQuY29tL0dpbGFu"
+    private const val K3 = "Z0FkaXRhbWEvTm9udG9ubW92"
+    private const val K4 = "aWVzL21haW4vcmVwby5qc29u"
+
+    private const val S1 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNv"
+    private const val S2 = "bnRlbnQuY29tL0dpbGFuZ0FkaXRhbWEv"
+    private const val S3 = "TW92aWVLdS9tYWluL3JlcG8uanNvbg=="
+
+    private fun qL8zNp(): String {
+        val encoded = K1 + K2 + K3 + K4
+        return String(Base64.decode(encoded, Base64.DEFAULT))
+    }
+
+    private fun tV5bRw(): String {
+        val encoded = S1 + S2 + S3
         return String(Base64.decode(encoded, Base64.DEFAULT))
     }
 
@@ -47,30 +59,33 @@ object Initializer {
             Activity.MODE_PRIVATE
         )
 
-        val repo = RepositoryData(
-            name = decode(REPO_NAME),
-            url = repoUrl(),
+        val repoKissasian = RepositoryData(
+            name = decode(REPO_NAME_KISSASIAN),
+            url = qL8zNp(),
+            iconUrl = null
+        )
+
+        val repoStreamku = RepositoryData(
+            name = decode(REPO_NAME_STREAMKU),
+            url = tV5bRw(),
             iconUrl = null
         )
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
-                    RepositoryManager.addRepository(repo)
-
-                    PluginsViewModel.downloadAll(activity, repo.url, null)
-
+                    RepositoryManager.addRepository(repoKissasian)
+                    RepositoryManager.addRepository(repoStreamku)
+                    PluginsViewModel.downloadAll(activity, repoKissasian.url, null)
+                    PluginsViewModel.downloadAll(activity, repoStreamku.url, null)
                     prefs.edit()
                         .putBoolean(AUTO_REPO_FLAG, true)
                         .putBoolean(NEED_AUTO_DOWNLOAD, false)
                         .apply()
                 }
-
-                // force refresh plugin (.cs3)
-                PluginsViewModel.downloadAll(activity, repo.url, null)
-
-            } catch (_: Throwable) {
-            }
+                PluginsViewModel.downloadAll(activity, repoKissasian.url, null)
+                PluginsViewModel.downloadAll(activity, repoStreamku.url, null)
+            } catch (_: Throwable) {}
         }
     }
 }
