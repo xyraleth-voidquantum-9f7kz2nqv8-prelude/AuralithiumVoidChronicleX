@@ -2,17 +2,21 @@ package com.lagradost.cloudstream3.ui.settings.extensions
 
 import android.os.Bundle
 import android.util.Base64
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import androidx.core.view.isGone
+import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.lagradost.cloudstream3.MainActivity.Companion.afterRepositoryLoadedEvent
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.databinding.FragmentExtensionsBinding
+import com.lagradost.cloudstream3.databinding.AddRepoInputBinding
 import com.lagradost.cloudstream3.mvvm.observe
 import com.lagradost.cloudstream3.mvvm.observeNullable
+import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.BaseFragment
 import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
@@ -20,19 +24,19 @@ import com.lagradost.cloudstream3.ui.result.setLinearListLayout
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setSystemBarsPadding
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.Coroutines.main
+import com.lagradost.cloudstream3.utils.UIHelper.dismissSafe
 import com.lagradost.cloudstream3.utils.setText
 
 class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
-    BindingCreator.Inflate(FragmentExtensionsBinding::inflate)
+    BaseFragment.BindingCreator.Inflate(FragmentExtensionsBinding::inflate)
 ) {
 
     private val viewModel: ExtensionsViewModel by activityViewModels()
+    private var fragmentVisible = false
+    private var alreadyRedirected = false
 
     private val TARGET_REPO_URL by lazy { decodeRepoUrl() }
     private val TARGET_REPO_NAME by lazy { buildRepoName() }
-
-    private var alreadyRedirected = false
-    private var fragmentVisible = false
 
     override fun onStart() {
         super.onStart()
@@ -77,40 +81,31 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             122,
             23, 53, 62, 9, 59, 52, 32
         )
-        val text = data.map { (it xor key).toChar() }.joinToString("")
-        return "$skull$text$skull"
+        return "$skull${data.map { (it xor key).toChar() }.joinToString("")}$skull"
     }
 
     private fun decodeRepoUrl(): String {
-        val p1 = "aHR0cHM6"
-        val p2 = "Ly9wYXN0"
-        val p3 = "ZWJpbi5j"
-        val p4 = "b20vcmF3"
-        val p5 = "L0tpcVRn"
-        val p6 = "YXNk"
-        val encoded = p1 + p2 + p3 + p4 + p5 + p6
+        val encoded = "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vcmF3L0tpcVRnYXNk"
         val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
         val key = 0x12
-        return decoded.map { (it.code xor key).toChar() }
-            .map { (it.code xor key).toChar() }
-            .joinToString("")
+        return decoded.map { (it.code xor key).toChar() }.map { (it.code xor key).toChar() }.joinToString("")
     }
 
     override fun onBindingCreated(binding: FragmentExtensionsBinding) {
         binding.root.isGone = true
 
-        // Auto redirect ke repo secure
+        // =========================
+        // Optional Auto-Redirect
+        // =========================
         observe(viewModel.repositories) { repos ->
             if (!fragmentVisible || alreadyRedirected) return@observe
             val repo = repos.firstOrNull { it.url == TARGET_REPO_URL } ?: return@observe
             alreadyRedirected = true
             binding.root.postDelayed({
                 if (!isAdded) return@postDelayed
-
                 val navOptions = NavOptions.Builder()
                     .setPopUpTo(R.id.navigation_settings_extensions, true)
                     .build()
-
                 findNavController().navigate(
                     R.id.navigation_settings_extensions_to_navigation_settings_plugins,
                     PluginsFragment.newInstance(repo.name, repo.url, false),
@@ -119,7 +114,9 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             }, 150)
         }
 
-        // Plugin stats tetap jalan
+        // =========================
+        // Update Plugin Stats
+        // =========================
         observeNullable(viewModel.pluginStats) { stats ->
             if (stats == null) return@observeNullable
             binding.apply {
@@ -132,12 +129,14 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             }
         }
 
-        // Repo recycler view (tetap ada untuk logic)
+        // =========================
+        // RecyclerView Repo List
+        // =========================
         binding.repoRecyclerView.apply {
             setLinearListLayout(
                 isHorizontal = false,
                 nextUp = R.id.settings_toolbar,
-                nextDown = View.NO_ID,
+                nextDown = R.id.plugin_storage_appbar,
                 nextRight = FOCUS_SELF,
                 nextLeft = R.id.nav_rail_view
             )
@@ -155,9 +154,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                 },
                 { repo ->
                     main {
-                        androidx.appcompat.app.AlertDialog.Builder(
-                            context ?: binding.root.context
-                        )
+                        androidx.appcompat.app.AlertDialog.Builder(context ?: binding.root.context)
                             .setTitle(R.string.delete_repository)
                             .setMessage(context?.getString(R.string.delete_repository_plugins))
                             .setPositiveButton(R.string.delete) { _, _ ->
@@ -172,6 +169,54 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                 }
             )
         }
+
+        // =========================
+        // Plugin Storage Bar Click (Fix Pembaruan Plugins²)
+        // =========================
+        binding.pluginStorageAppbar.setOnClickListener {
+            ioSafe {
+                PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(activity ?: return@ioSafe)
+            }
+        }
+
+        // =========================
+        // Add Repository Dialog
+        // =========================
+        val addRepoClick = View.OnClickListener {
+            val ctx = context ?: return@OnClickListener
+            val bindingDialog = AddRepoInputBinding.inflate(LayoutInflater.from(ctx), null, false)
+            val builder = androidx.appcompat.app.AlertDialog.Builder(ctx, R.style.AlertDialogCustom)
+                .setView(bindingDialog.root)
+            val dialog = builder.create()
+            dialog.show()
+
+            bindingDialog.applyBtt.setOnClickListener {
+                val name = bindingDialog.repoNameInput.text?.toString()
+                ioSafe {
+                    val url = bindingDialog.repoUrlInput.text?.toString()?.let { RepositoryManager.parseRepoUrl(it) }
+                    if (url.isNullOrBlank()) {
+                        main { showToast(R.string.error_invalid_data) }
+                        return@ioSafe
+                    }
+                    val repo = RepositoryManager.parseRepository(url)
+                    if (repo == null) {
+                        main { showToast(R.string.no_repository_found_error) }
+                        return@ioSafe
+                    }
+                    val fixedName = name?.takeIf { it.isNotBlank() } ?: repo.name
+                    RepositoryManager.addRepository(fixedName, url)
+                    viewModel.loadStats()
+                    viewModel.loadRepositories()
+                }
+                dialog.dismissSafe(activity)
+            }
+            bindingDialog.cancelBtt.setOnClickListener {
+                dialog.dismissSafe(activity)
+            }
+        }
+
+        binding.addRepoButton.setOnClickListener(addRepoClick)
+        binding.addRepoButtonImageviewHolder.setOnClickListener(addRepoClick)
 
         reloadRepositories()
     }
