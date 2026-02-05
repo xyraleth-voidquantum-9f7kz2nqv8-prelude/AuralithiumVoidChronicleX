@@ -16,7 +16,7 @@ import com.lagradost.cloudstream3.mvvm.observe
 import com.lagradost.cloudstream3.mvvm.observeNullable
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.plugins.RepositoryManager.RepositoryData
+import com.lagradost.cloudstream3.plugins.RepositoryManager.Repository
 import com.lagradost.cloudstream3.ui.BaseFragment
 import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
 import com.lagradost.cloudstream3.ui.result.setLinearListLayout
@@ -144,7 +144,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             )
             adapter = RepoAdapter(
                 false,
-                { repo: RepositoryData ->
+                { repo: Repository ->
                     val navOptions = NavOptions.Builder()
                         .setPopUpTo(R.id.navigation_settings_extensions, true)
                         .build()
@@ -154,7 +154,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                         navOptions
                     )
                 },
-                { repo: RepositoryData ->
+                { repo: Repository ->
                     main {
                         androidx.appcompat.app.AlertDialog.Builder(context ?: binding.root.context)
                             .setTitle(R.string.delete_repository)
