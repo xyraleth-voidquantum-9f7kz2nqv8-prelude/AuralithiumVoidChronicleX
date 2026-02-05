@@ -1,6 +1,5 @@
 package com.lagradost.cloudstream3.ui.settings.extensions
 
-import android.app.Activity
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
@@ -18,7 +17,7 @@ import com.lagradost.cloudstream3.mvvm.observe
 import com.lagradost.cloudstream3.mvvm.observeNullable
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.plugins.RepositoryManager.RepositoryData
+import com.lagradost.cloudstream3.plugins.RepositoryManager.Repository
 import com.lagradost.cloudstream3.ui.BaseFragment
 import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
 import com.lagradost.cloudstream3.ui.result.setLinearListLayout
@@ -170,7 +169,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                             .setMessage(context?.getString(R.string.delete_repository_plugins))
                             .setPositiveButton(R.string.delete) { _, _ ->
                                 ioSafe {
-                                    RepositoryManager.removeRepository(binding.root.context, repo.toRepositoryData())
+                                    RepositoryManager.removeRepository(binding.root.context, repo)
                                     reloadRepositories()
                                 }
                             }
@@ -184,7 +183,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         // Tombol update plugin → langsung load .cs3
         binding.pluginStorageAppbar.setOnClickListener {
             ioSafe {
-                PluginManager.loadPlugins(activity ?: return@ioSafe)
+                PluginManager.reloadPlugins(activity ?: return@ioSafe)
             }
         }
 
@@ -212,7 +211,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                         return@ioSafe
                     }
                     val fixedRepo = repo.copy(name = name?.takeIf { it.isNotBlank() } ?: repo.name)
-                    RepositoryManager.addRepository(fixedRepo.toRepositoryData())
+                    RepositoryManager.addRepository(fixedRepo)
                     viewModel.loadStats()
                     viewModel.loadRepositories()
                 }
