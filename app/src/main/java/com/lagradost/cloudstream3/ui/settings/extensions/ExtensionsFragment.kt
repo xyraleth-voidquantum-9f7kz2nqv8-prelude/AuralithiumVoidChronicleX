@@ -5,6 +5,7 @@ import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
@@ -18,6 +19,7 @@ import com.lagradost.cloudstream3.mvvm.observe
 import com.lagradost.cloudstream3.mvvm.observeNullable
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.RepositoryManager
+import com.lagradost.cloudstream3.plugins.models.RepositoryData
 import com.lagradost.cloudstream3.ui.BaseFragment
 import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
 import com.lagradost.cloudstream3.ui.result.setLinearListLayout
@@ -99,6 +101,10 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             .joinToString("")
     }
 
+    private fun showToast(resId: Int) {
+        Toast.makeText(requireContext(), resId, Toast.LENGTH_SHORT).show()
+    }
+
     override fun onBindingCreated(binding: FragmentExtensionsBinding) {
         binding.root.isGone = true
 
@@ -171,7 +177,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
 
         binding.pluginStorageAppbar.setOnClickListener {
             ioSafe {
-                PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(activity ?: return@ioSafe)
+                PluginManager.reloadPlugins(activity ?: return@ioSafe)
             }
         }
 
@@ -197,7 +203,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                         return@ioSafe
                     }
                     val fixedName = name?.takeIf { it.isNotBlank() } ?: repo.name
-                    RepositoryManager.addRepository(fixedName, url)
+                    RepositoryManager.addRepository(repo.copy(name = fixedName))
                     viewModel.loadStats()
                     viewModel.loadRepositories()
                 }
