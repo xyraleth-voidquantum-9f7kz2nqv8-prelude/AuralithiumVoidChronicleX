@@ -1,24 +1,24 @@
 package com.lagradost.cloudstream3.ui.settings.extensions
 
-import android.os.Bundle
-import android.util.Base64
+import android.app.Activity
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.view.isGone
+import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.lagradost.cloudstream3.MainActivity.Companion.afterRepositoryLoadedEvent
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.databinding.AddRepoInputBinding
 import com.lagradost.cloudstream3.databinding.FragmentExtensionsBinding
+import com.lagradost.cloudstream3.databinding.AddRepoInputBinding
 import com.lagradost.cloudstream3.mvvm.observe
 import com.lagradost.cloudstream3.mvvm.observeNullable
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.plugins.RepositoryManager.Repository
+import com.lagradost.cloudstream3.plugins.RepositoryManager.RepositoryData
 import com.lagradost.cloudstream3.ui.BaseFragment
 import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
 import com.lagradost.cloudstream3.ui.result.setLinearListLayout
@@ -93,7 +93,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         val p5 = "L0tpcVRn"
         val p6 = "YXNk"
         val encoded = p1 + p2 + p3 + p4 + p5 + p6
-        val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
+        val decoded = String(android.util.Base64.decode(encoded, android.util.Base64.DEFAULT))
         val key = 0x12
         return decoded.map { (it.code xor key).toChar() }
             .map { (it.code xor key).toChar() }
@@ -111,6 +111,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     override fun onBindingCreated(binding: FragmentExtensionsBinding) {
         binding.root.isGone = true
 
+        // Redirect ke plugin jika target repo ada
         observe(viewModel.repositories) { repos ->
             if (!fragmentVisible || alreadyRedirected) return@observe
             val repo = repos.firstOrNull { it.url == TARGET_REPO_URL } ?: return@observe
@@ -128,6 +129,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             }, 150)
         }
 
+        // Update stats UI
         observeNullable(viewModel.pluginStats) { stats ->
             if (stats == null) return@observeNullable
             binding.apply {
@@ -140,6 +142,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             }
         }
 
+        // Recycler view repo
         binding.repoRecyclerView.apply {
             setLinearListLayout(
                 isHorizontal = false,
@@ -167,7 +170,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                             .setMessage(context?.getString(R.string.delete_repository_plugins))
                             .setPositiveButton(R.string.delete) { _, _ ->
                                 ioSafe {
-                                    RepositoryManager.removeRepository(binding.root.context, repo)
+                                    RepositoryManager.removeRepository(binding.root.context, repo.toRepositoryData())
                                     reloadRepositories()
                                 }
                             }
@@ -178,13 +181,14 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             )
         }
 
+        // Tombol update plugin → langsung load .cs3
         binding.pluginStorageAppbar.setOnClickListener {
             ioSafe {
-                // reloadPlugins diganti loadPlugins
                 PluginManager.loadPlugins(activity ?: return@ioSafe)
             }
         }
 
+        // Tambah repository
         val addRepoClick = View.OnClickListener {
             val ctx = context ?: return@OnClickListener
             val bindingDialog = AddRepoInputBinding.inflate(LayoutInflater.from(ctx), null, false)
@@ -208,7 +212,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                         return@ioSafe
                     }
                     val fixedRepo = repo.copy(name = name?.takeIf { it.isNotBlank() } ?: repo.name)
-                    RepositoryManager.addRepository(fixedRepo)
+                    RepositoryManager.addRepository(fixedRepo.toRepositoryData())
                     viewModel.loadStats()
                     viewModel.loadRepositories()
                 }
