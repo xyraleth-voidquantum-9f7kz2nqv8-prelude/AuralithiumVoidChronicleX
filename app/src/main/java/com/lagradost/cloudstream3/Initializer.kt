@@ -26,30 +26,25 @@ object Initializer {
         100, 107, 104, 114, 99, 116, 115, 114, 101, 102, 106
     )
 
-    private val REPO_NAME_KISSASIAN = intArrayOf(
-        66, 115, 115, 68, 107, 114, 99
-    )
+    private val REPO_NAME_X1 = intArrayOf(66, 115, 115, 68, 107, 114, 99)
+    private val REPO_NAME_X2 = intArrayOf(88, 121, 112, 86, 98, 101, 109)
 
-    private val REPO_NAME_STREAMKU = intArrayOf(
-        88, 121, 112, 86, 98, 101, 109
-    )
+    private const val URL_A1 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNl"
+    private const val URL_A2 = "cmNvbnRlbnQuY29tL0dpbGFu"
+    private const val URL_A3 = "Z0FkaXRhbWEvTm9udG9ubW92"
+    private const val URL_A4 = "aWVzL21haW4vcmVwby5qc29u"
 
-    private const val K1 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNl"
-    private const val K2 = "cmNvbnRlbnQuY29tL0dpbGFu"
-    private const val K3 = "Z0FkaXRhbWEvTm9udG9ubW92"
-    private const val K4 = "aWVzL21haW4vcmVwby5qc29u"
+    private const val URL_B1 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNv"
+    private const val URL_B2 = "bnRlbnQuY29tL0dpbGFuZ0FkaXRhbWEv"
+    private const val URL_B3 = "TW92aWVLdS9tYWluL3JlcG8uanNvbg=="
 
-    private const val S1 = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNv"
-    private const val S2 = "bnRlbnQuY29tL0dpbGFuZ0FkaXRhbWEv"
-    private const val S3 = "TW92aWVLdS9tYWluL3JlcG8uanNvbg=="
-
-    private fun qL8zNp(): String {
-        val encoded = K1 + K2 + K3 + K4
+    private fun jX7(): String {
+        val encoded = URL_A1 + URL_A2 + URL_A3 + URL_A4
         return String(Base64.decode(encoded, Base64.DEFAULT))
     }
 
-    private fun tV5bRw(): String {
-        val encoded = S1 + S2 + S3
+    private fun kM9(): String {
+        val encoded = URL_B1 + URL_B2 + URL_B3
         return String(Base64.decode(encoded, Base64.DEFAULT))
     }
 
@@ -59,32 +54,32 @@ object Initializer {
             Activity.MODE_PRIVATE
         )
 
-        val repoKissasian = RepositoryData(
-            name = decode(REPO_NAME_KISSASIAN),
-            url = qL8zNp(),
+        val rX = RepositoryData(
+            name = decode(REPO_NAME_X1),
+            url = jX7(),
             iconUrl = null
         )
 
-        val repoStreamku = RepositoryData(
-            name = decode(REPO_NAME_STREAMKU),
-            url = tV5bRw(),
+        val sY = RepositoryData(
+            name = decode(REPO_NAME_X2),
+            url = kM9(),
             iconUrl = null
         )
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
-                    RepositoryManager.addRepository(repoKissasian)
-                    RepositoryManager.addRepository(repoStreamku)
-                    PluginsViewModel.downloadAll(activity, repoKissasian.url, null)
-                    PluginsViewModel.downloadAll(activity, repoStreamku.url, null)
+                    RepositoryManager.addRepository(rX)
+                    RepositoryManager.addRepository(sY)
+                    PluginsViewModel.downloadAll(activity, rX.url, null)
+                    PluginsViewModel.downloadAll(activity, sY.url, null)
                     prefs.edit()
                         .putBoolean(AUTO_REPO_FLAG, true)
                         .putBoolean(NEED_AUTO_DOWNLOAD, false)
                         .apply()
                 }
-                PluginsViewModel.downloadAll(activity, repoKissasian.url, null)
-                PluginsViewModel.downloadAll(activity, repoStreamku.url, null)
+                PluginsViewModel.downloadAll(activity, rX.url, null)
+                PluginsViewModel.downloadAll(activity, sY.url, null)
             } catch (_: Throwable) {}
         }
     }
