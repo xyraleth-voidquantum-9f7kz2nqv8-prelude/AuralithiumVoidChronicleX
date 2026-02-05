@@ -11,8 +11,8 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.lagradost.cloudstream3.MainActivity.Companion.afterRepositoryLoadedEvent
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.databinding.AddRepoInputBinding
 import com.lagradost.cloudstream3.databinding.FragmentExtensionsBinding
+import com.lagradost.cloudstream3.databinding.AddRepoInputBinding
 import com.lagradost.cloudstream3.mvvm.observe
 import com.lagradost.cloudstream3.mvvm.observeNullable
 import com.lagradost.cloudstream3.plugins.PluginManager
@@ -146,7 +146,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             setLinearListLayout(
                 isHorizontal = false,
                 nextUp = R.id.settings_toolbar,
-                nextDown = R.id.pluginStorage, // pastikan id ini ada di XML
+                nextDown = R.id.plugin_storage_appbar,
                 nextRight = FOCUS_SELF,
                 nextLeft = R.id.nav_rail_view
             )
@@ -180,8 +180,8 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             )
         }
 
-        // Tombol update plugin → langsung load .cs3
-        binding.pluginStorage.setOnClickListener {
+        // Tombol update plugin → langsung load plugins
+        binding.pluginStorageAppbar.setOnClickListener {
             ioSafe {
                 PluginManager.loadPlugins(activity ?: return@ioSafe)
             }
