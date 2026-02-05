@@ -1,5 +1,6 @@
 package com.lagradost.cloudstream3.ui.settings.extensions
 
+import android.app.Activity
 import android.os.Bundle
 import android.util.Base64
 import android.view.LayoutInflater
@@ -101,8 +102,12 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             .joinToString("")
     }
 
+    private fun showToast(message: String) {
+        Toast.makeText(context ?: return, message, Toast.LENGTH_SHORT).show()
+    }
+
     private fun showToast(resId: Int) {
-        Toast.makeText(requireContext(), resId, Toast.LENGTH_SHORT).show()
+        Toast.makeText(context ?: return, resId, Toast.LENGTH_SHORT).show()
     }
 
     override fun onBindingCreated(binding: FragmentExtensionsBinding) {
@@ -192,18 +197,19 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             bindingDialog.applyBtt.setOnClickListener {
                 val name = bindingDialog.repoNameInput.text?.toString()
                 ioSafe {
-                    val url = bindingDialog.repoUrlInput.text?.toString()?.let { RepositoryManager.parseRepoUrl(it) }
-                    if (url.isNullOrBlank()) {
+                    val urlStr = bindingDialog.repoUrlInput.text?.toString()
+                        ?.let { RepositoryManager.parseRepoUrl(it) }
+                    if (urlStr.isNullOrBlank()) {
                         main { showToast(R.string.error_invalid_data) }
                         return@ioSafe
                     }
-                    val repo = RepositoryManager.parseRepository(url)
+                    val repo = RepositoryManager.parseRepository(urlStr)
                     if (repo == null) {
                         main { showToast(R.string.no_repository_found_error) }
                         return@ioSafe
                     }
-                    val fixedName = name?.takeIf { it.isNotBlank() } ?: repo.name
-                    RepositoryManager.addRepository(repo.copy(name = fixedName))
+                    val fixedRepo = repo.copy(name = name?.takeIf { it.isNotBlank() } ?: repo.name)
+                    RepositoryManager.addRepository(fixedRepo)
                     viewModel.loadStats()
                     viewModel.loadRepositories()
                 }
