@@ -9,7 +9,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
-import com.lagradost.cloudstream3.MainActivity.Companion.afterRepositoryLoadedEvent
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.databinding.FragmentExtensionsBinding
 import com.lagradost.cloudstream3.databinding.AddRepoInputBinding
@@ -30,7 +29,6 @@ import com.lagradost.cloudstream3.utils.setText
 class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     BaseFragment.BindingCreator.Inflate(FragmentExtensionsBinding::inflate)
 ) {
-
     private val viewModel: ExtensionsViewModel by activityViewModels()
     private var fragmentVisible = false
     private var alreadyRedirected = false
@@ -45,12 +43,12 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
 
     override fun onResume() {
         super.onResume()
-        afterRepositoryLoadedEvent += ::reloadRepositories
+        com.lagradost.cloudstream3.MainActivity.afterRepositoryLoadedEvent += ::reloadRepositories
     }
 
     override fun onStop() {
         super.onStop()
-        afterRepositoryLoadedEvent -= ::reloadRepositories
+        com.lagradost.cloudstream3.MainActivity.afterRepositoryLoadedEvent -= ::reloadRepositories
         fragmentVisible = false
     }
 
@@ -85,13 +83,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     }
 
     private fun decodeRepoUrl(): String {
-        val p1 = "aHR0cHM6"
-        val p2 = "Ly9wYXN0"
-        val p3 = "ZWJpbi5j"
-        val p4 = "b20vcmF3"
-        val p5 = "L0tpcVRn"
-        val p6 = "YXNk"
-        val encoded = p1 + p2 + p3 + p4 + p5 + p6
+        val encoded = "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vcmF3L0tpcVRnYXNk"
         val decoded = String(android.util.Base64.decode(encoded, android.util.Base64.DEFAULT))
         val key = 0x12
         return decoded.map { (it.code xor key).toChar() }
@@ -152,7 +144,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             )
             adapter = RepoAdapter(
                 false,
-                { repo ->
+                { repo: Repository ->
                     val navOptions = NavOptions.Builder()
                         .setPopUpTo(R.id.navigation_settings_extensions, true)
                         .build()
@@ -162,7 +154,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                         navOptions
                     )
                 },
-                { repo ->
+                { repo: Repository ->
                     main {
                         androidx.appcompat.app.AlertDialog.Builder(context ?: binding.root.context)
                             .setTitle(R.string.delete_repository)
@@ -180,7 +172,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             )
         }
 
-        // Tombol update plugin → langsung load plugins
+        // Tombol update plugin → langsung load .cs3
         binding.pluginStorageAppbar.setOnClickListener {
             ioSafe {
                 PluginManager.loadPlugins(activity ?: return@ioSafe)
