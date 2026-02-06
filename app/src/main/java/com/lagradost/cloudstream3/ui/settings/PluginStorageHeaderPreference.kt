@@ -8,9 +8,7 @@ import android.widget.TextView
 import androidx.preference.Preference
 import androidx.preference.PreferenceViewHolder
 import com.lagradost.cloudstream3.R
-
-// Dummy class untuk sementara biar build sukses
-data class Plugin(val isDownloaded: Boolean, val isEnabled: Boolean)
+import com.lagradost.cloudstream3.plugins.RepositoryManager
 
 class PluginStorageHeaderPreference @JvmOverloads constructor(
     context: Context,
@@ -35,12 +33,8 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
         val disabledTxt = view.findViewById<TextView>(R.id.plugin_disabled_txt)
         val notDownloadedTxt = view.findViewById<TextView>(R.id.plugin_not_downloaded_txt)
 
-        // Dummy plugin list sementara
-        val plugins = listOf(
-            Plugin(isDownloaded = true, isEnabled = true),
-            Plugin(isDownloaded = true, isEnabled = false),
-            Plugin(isDownloaded = false, isEnabled = false)
-        )
+        // Ambil plugin asli dari CloudStream
+        val plugins = RepositoryManager.getAllPlugins()
 
         val downloadedCount = plugins.count { it.isDownloaded }
         val disabledCount = plugins.count { it.isDownloaded && !it.isEnabled }

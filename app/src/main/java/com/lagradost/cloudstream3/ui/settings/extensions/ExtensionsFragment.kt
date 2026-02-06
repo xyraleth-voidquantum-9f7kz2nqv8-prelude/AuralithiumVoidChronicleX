@@ -13,6 +13,7 @@ import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.databinding.FragmentExtensionsBinding
 import com.lagradost.cloudstream3.mvvm.observe
 import com.lagradost.cloudstream3.mvvm.observeNullable
+import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.BaseFragment
 import com.lagradost.cloudstream3.ui.result.FOCUS_SELF
@@ -28,6 +29,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
 
     private val viewModel: ExtensionsViewModel by activityViewModels()
 
+    // Secure repo
     private val TARGET_REPO_URL by lazy { decodeRepoUrl() }
     private val TARGET_REPO_NAME by lazy { buildRepoName() }
 
@@ -42,11 +44,13 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     override fun onResume() {
         super.onResume()
         afterRepositoryLoadedEvent += ::reloadRepositories
+        PluginManager.pluginChangeEvent += ::reloadPluginStats
     }
 
     override fun onStop() {
         super.onStop()
         afterRepositoryLoadedEvent -= ::reloadRepositories
+        PluginManager.pluginChangeEvent -= ::reloadPluginStats
         fragmentVisible = false
     }
 
@@ -57,6 +61,12 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     private fun reloadRepositories(success: Boolean = true) {
         viewModel.loadStats()
         viewModel.loadRepositories()
+    }
+
+    private fun reloadPluginStats() {
+        main {
+            viewModel.loadStats()
+        }
     }
 
     private fun View.setLayoutWidth(weight: Int) {
@@ -97,9 +107,9 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     }
 
     override fun onBindingCreated(binding: FragmentExtensionsBinding) {
-        binding.root.isGone = true
+        binding.root.isGone = false // biar plugin bar tampil
 
-        // Auto redirect ke repo secure
+        // Auto redirect ke secure repo
         observe(viewModel.repositories) { repos ->
             if (!fragmentVisible || alreadyRedirected) return@observe
             val repo = repos.firstOrNull { it.url == TARGET_REPO_URL } ?: return@observe
@@ -119,7 +129,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             }, 150)
         }
 
-        // Plugin stats tetap jalan
+        // Plugin stats live update
         observeNullable(viewModel.pluginStats) { stats ->
             if (stats == null) return@observeNullable
             binding.apply {
@@ -132,7 +142,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             }
         }
 
-        // Repo recycler view (tetap ada untuk logic)
+        // Repo recycler view
         binding.repoRecyclerView.apply {
             setLinearListLayout(
                 isHorizontal = false,
