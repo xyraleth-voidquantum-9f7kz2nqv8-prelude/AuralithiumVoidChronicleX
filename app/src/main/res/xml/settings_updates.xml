@@ -27,9 +27,7 @@
     </PreferenceCategory>
 
     <!-- HEADER BAR PLUGIN (DITARUH DI BAWAH) -->
-    <Preference
-        android:key="plugin_storage_header"
-        android:selectable="false"
-        app:layout="@layout/plugin_storage_header" />
+    <com.lagradost.cloudstream3.ui.settings.PluginStorageHeaderPreference
+        android:key="plugin_storage_header" />
 
 </PreferenceScreen>
