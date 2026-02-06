@@ -3,10 +3,12 @@ package com.lagradost.cloudstream3.ui.settings
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.edit
 import androidx.navigation.fragment.findNavController
+import androidx.preference.Preference
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.lagradost.cloudstream3.AutoDownloadMode
@@ -71,7 +73,29 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         hideKeyboard()
         setPreferencesFromResource(R.xml.settings_updates, rootKey)
+
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+
+        // ================= HEADER BAR PLUGIN =================
+        val headerPref = findPreference<Preference>("plugin_storage_header")
+        headerPref?.setOnBindViewHolderListener { holder ->
+            val view = holder.itemView
+
+            val downloadedTxt = view.findViewById<TextView>(R.id.plugin_download_txt)
+            val disabledTxt = view.findViewById<TextView>(R.id.plugin_disabled_txt)
+            val notDownloadedTxt = view.findViewById<TextView>(R.id.plugin_not_downloaded_txt)
+
+            val plugins = PluginManager.plugins
+
+            val downloaded = plugins.count { it.isDownloaded }
+            val disabled = plugins.count { it.isDownloaded && !it.isEnabled }
+            val notDownloaded = plugins.count { !it.isDownloaded }
+
+            downloadedTxt.text = "Downloaded: $downloaded"
+            disabledTxt.text = "Disabled: $disabled"
+            notDownloadedTxt.text = "Not downloaded: $notDownloaded"
+        }
+        // =====================================================
 
         getPref(R.string.backup_key)?.setOnPreferenceClickListener {
             BackupUtils.backup(activity)
