@@ -3,8 +3,6 @@ package com.lagradost.cloudstream3.ui.settings
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.edit
@@ -57,7 +55,6 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         setUpToolbar(R.string.category_updates)
         setPaddingBottom()
         setToolBarScrollFlags()
-        setupPluginStorageHeader()
     }
 
     private val pathPicker = getChooseFolderLauncher { uri, path ->
@@ -204,41 +201,17 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         }
     }
 
-    private fun setupPluginStorageHeader() {
-        val pref = findPreference<androidx.preference.Preference>("plugin_storage_header") ?: return
-        val view = pref.view ?: return
-
-        val downloadedView = view.findViewById<View>(R.id.plugin_download)
-        val disabledView = view.findViewById<View>(R.id.plugin_disabled)
-        val notDownloadedView = view.findViewById<View>(R.id.plugin_not_downloaded)
-
-        val downloadedTxt = view.findViewById<TextView>(R.id.plugin_download_txt)
-        val disabledTxt = view.findViewById<TextView>(R.id.plugin_disabled_txt)
-        val notDownloadedTxt = view.findViewById<TextView>(R.id.plugin_not_downloaded_txt)
-
-        val plugins = PluginManager.plugins
-
-        val downloaded = plugins.count { it.isDownloaded }
-        val disabled = plugins.count { it.isDownloaded && !it.isEnabled }
-        val notDownloaded = plugins.count { !it.isDownloaded }
-
-        downloadedTxt.text = "Downloaded: $downloaded"
-        disabledTxt.text = "Disabled: $disabled"
-        notDownloadedTxt.text = "Not downloaded: $notDownloaded"
-
-        val total = (downloaded + disabled + notDownloaded).coerceAtLeast(1)
-
-        (downloadedView.layoutParams as LinearLayout.LayoutParams).weight =
-            downloaded.toFloat() / total
-
-        (disabledView.layoutParams as LinearLayout.LayoutParams).weight =
-            disabled.toFloat() / total
-
-        (notDownloadedView.layoutParams as LinearLayout.LayoutParams).weight =
-            notDownloaded.toFloat() / total
-
-        downloadedView.requestLayout()
-        disabledView.requestLayout()
-        notDownloadedView.requestLayout()
+    private fun getBackupDirsForDisplay(): List<String> {
+        return safe {
+            context?.let { ctx ->
+                val defaultDir = BackupUtils.getDefaultBackupDir(ctx)?.filePath()
+                val first = listOf(defaultDir)
+                (runCatching {
+                    first + BackupUtils.getCurrentBackupDir(ctx).let {
+                        it.first?.filePath() ?: it.second
+                    }
+                }.getOrNull() ?: first).filterNotNull().distinct()
+            }
+        } ?: emptyList()
     }
 }
