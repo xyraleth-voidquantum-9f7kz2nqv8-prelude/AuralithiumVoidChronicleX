@@ -2,12 +2,6 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- HEADER BAR PLUGIN (yang kita buat tadi) -->
-    <Preference
-        android:key="plugin_storage_header"
-        android:selectable="false"
-        app:layout="@layout/plugin_storage_header" />
-
     <!-- Kategori Ekstensi -->
     <PreferenceCategory
         android:title="@string/pref_category_extensions">
@@ -29,6 +23,13 @@
             android:key="@string/manual_update_plugins_key"
             android:title="@string/update_plugins"
             android:summary="@string/update_plugins_manually"/>
+
     </PreferenceCategory>
+
+    <!-- HEADER BAR PLUGIN (DITARUH DI BAWAH) -->
+    <Preference
+        android:key="plugin_storage_header"
+        android:selectable="false"
+        app:layout="@layout/plugin_storage_header" />
 
 </PreferenceScreen>
