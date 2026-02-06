@@ -33,7 +33,11 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
         val disabledTxt = view.findViewById<TextView>(R.id.plugin_disabled_txt)
         val notDownloadedTxt = view.findViewById<TextView>(R.id.plugin_not_downloaded_txt)
 
-        val stats = RepositoryManager.getPluginStats() ?: return
+        val plugins = RepositoryManager.getAllPlugins()
+
+        val downloadedCount = plugins.count { it.isDownloaded }
+        val disabledCount = plugins.count { it.isDownloaded && !it.isEnabled }
+        val notDownloadedCount = plugins.count { !it.isDownloaded }
 
         fun View.setWeight(weight: Int) {
             val param = LinearLayout.LayoutParams(
@@ -44,12 +48,12 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
             layoutParams = param
         }
 
-        downloaded.setWeight(stats.downloaded)
-        disabled.setWeight(stats.disabled)
-        notDownloaded.setWeight(stats.notDownloaded)
+        downloaded.setWeight(downloadedCount)
+        disabled.setWeight(disabledCount)
+        notDownloaded.setWeight(notDownloadedCount)
 
-        downloadedTxt.text = stats.downloadedText
-        disabledTxt.text = stats.disabledText
-        notDownloadedTxt.text = stats.notDownloadedText
+        downloadedTxt.text = "Downloaded: $downloadedCount"
+        disabledTxt.text = "Disabled: $disabledCount"
+        notDownloadedTxt.text = "Not downloaded: $notDownloadedCount"
     }
 }
