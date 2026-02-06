@@ -2,7 +2,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- Kategori Ekstensi tetap dipertahankan -->
+    <!-- HEADER BAR PLUGIN (yang kita buat tadi) -->
+    <Preference
+        android:key="plugin_storage_header"
+        android:selectable="false"
+        app:layout="@layout/plugin_storage_header" />
+
+    <!-- Kategori Ekstensi -->
     <PreferenceCategory
         android:title="@string/pref_category_extensions">
 
