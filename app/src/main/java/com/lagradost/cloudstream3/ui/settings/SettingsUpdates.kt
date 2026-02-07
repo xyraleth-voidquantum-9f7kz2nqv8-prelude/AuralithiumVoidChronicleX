@@ -7,40 +7,28 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.edit
-import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.lagradost.cloudstream3.BuildConfig
 import com.lagradost.cloudstream3.CloudStreamApp
 import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.app
-import com.lagradost.cloudstream3.databinding.LogcatBinding
-import com.lagradost.cloudstream3.mvvm.logError
-import com.lagradost.cloudstream3.mvvm.safe
-import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.plugins.BasePlugin
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.services.BackupWorkManager
 import com.lagradost.cloudstream3.ui.BasePreferenceFragmentCompat
-import com.lagradost.cloudstream3.ui.settings.Globals.EMULATOR
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.getPref
-import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.hideOn
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setPaddingBottom
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
 import com.lagradost.cloudstream3.ui.settings.PluginStorageHeaderPreference
 import com.lagradost.cloudstream3.ui.settings.utils.getChooseFolderLauncher
 import com.lagradost.cloudstream3.utils.BackupUtils
-import com.lagradost.cloudstream3.utils.BackupUtils.restorePrompt
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
+import com.lagradost.cloudstream3.utils.safe
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 // =======================
 // STUBS
@@ -137,7 +125,10 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     // RELOAD PLUGINS SUSPEND
     // =======================
     private suspend fun reloadPlugins(activity: Activity) {
-        // Jangan panggil load/unload plugin karena private
+        PluginManager.plugins?.values?.forEach { plugin ->
+            PluginManager.unloadPlugin(plugin)
+            PluginManager.loadPlugin(plugin)
+        }
         activity.runOnUiThread { updatePluginStats() }
     }
 
@@ -148,9 +139,10 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         val header = pluginHeader ?: return
         val plugins: List<BasePlugin> = safe { PluginManager.plugins?.values?.toList() } ?: emptyList()
 
-        header.downloadedCount = plugins.count { it.isDownloaded }
-        header.disabledCount = plugins.count { !it.isEnabled }
-        header.notDownloadedCount = plugins.count { !it.isDownloaded }
+        // Pakai properti yang benar: downloaded & enabled
+        header.downloadedCount = plugins.count { it.downloaded }
+        header.disabledCount = plugins.count { !it.enabled }
+        header.notDownloadedCount = plugins.count { !it.downloaded }
 
         header.safeRefreshCounts()
     }
