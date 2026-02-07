@@ -73,12 +73,13 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
         super.onCreate()
 
         // ================================
-        // 🔥 INI YANG SEBELUMNYA HILANG
+        // 🔥 ENGINE BARU (pengganti loader lama)
         // ================================
-
-        // Nyalakan engine repo & plugin sejak app start
-        RepositoryManager.loadRepositories(this)
-        PluginManager.loadAllPlugins(this)
+        // DULU:
+        // RepositoryManager.loadRepositories(this)
+        // PluginManager.loadAllPlugins(this)
+        // SEKARANG:
+        initAll()
 
         // Jalankan repo milik kamu (Initializer + Obscura)
         runOnMainThread {
