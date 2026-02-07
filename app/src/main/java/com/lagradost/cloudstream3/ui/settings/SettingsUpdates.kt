@@ -1,48 +1,73 @@
 package com.lagradost.cloudstream3.ui.settings
 
 import android.app.Activity
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.edit
-import androidx.core.view.isVisible
-import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.lagradost.cloudstream3.AutoDownloadMode
 import com.lagradost.cloudstream3.BuildConfig
 import com.lagradost.cloudstream3.CloudStreamApp
+import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.app
-import com.lagradost.cloudstream3.databinding.SettingsUpdatesBinding
+import com.lagradost.cloudstream3.databinding.LogcatBinding
+import com.lagradost.cloudstream3.mvvm.logError
+import com.lagradost.cloudstream3.mvvm.safe
+import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.plugins.PluginManager
+import com.lagradost.cloudstream3.services.BackupWorkManager
 import com.lagradost.cloudstream3.ui.BasePreferenceFragmentCompat
+import com.lagradost.cloudstream3.ui.settings.Globals.EMULATOR
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.getPref
+import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.hideOn
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setPaddingBottom
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
-import com.lagradost.cloudstream3.ui.settings.extensions.ExtensionsViewModel
-import com.lagradost.cloudstream3.ui.settings.extensions.RepoAdapter
-import com.lagradost.cloudstream3.ui.settings.plugins.PluginsFragment
 import com.lagradost.cloudstream3.ui.settings.utils.getChooseFolderLauncher
+import com.lagradost.cloudstream3.utils.BackupUtils
+import com.lagradost.cloudstream3.utils.BackupUtils.restorePrompt
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
-import com.lagradost.cloudstream3.utils.Coroutines.main
-import com.lagradost.cloudstream3.utils.UIHelper.setText
+import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
+import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showDialog
+import com.lagradost.cloudstream3.utils.UIHelper.clipboardHelper
+import com.lagradost.cloudstream3.utils.UIHelper.dismissSafe
+import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
+import com.lagradost.cloudstream3.utils.VideoDownloadManager
+import com.lagradost.cloudstream3.utils.txt
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 // =======================
 // STUBS (EXTENSION — WAJIB)
 // =======================
-fun Activity.installPreReleaseIfNeeded() { /* no-op */ }
-fun Activity.runAutoUpdate(checkOnly: Boolean = false): Boolean = false
+fun Activity.installPreReleaseIfNeeded() {
+    // no-op (stable build)
+}
+
+fun Activity.runAutoUpdate(checkOnly: Boolean = false): Boolean {
+    return false
+}
 
 // =======================
 // SETTINGS UPDATES
 // =======================
 class SettingsUpdates : BasePreferenceFragmentCompat() {
 
-    private val extensionsViewModel: ExtensionsViewModel by activityViewModels()
-    private lateinit var binding: SettingsUpdatesBinding
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setUpToolbar(R.string.category_updates)
+        setPaddingBottom()
+        setToolBarScrollFlags()
+    }
 
     private val pathPicker = getChooseFolderLauncher { uri, path ->
         val ctx = context ?: CloudStreamApp.context ?: return@getChooseFolderLauncher
@@ -54,21 +79,14 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        binding = SettingsUpdatesBinding.bind(view)
-        setUpToolbar(R.string.category_updates)
-        setPaddingBottom()
-        setToolBarScrollFlags()
-        setupUI()
-        observeViewModel()
-    }
-
+    @Suppress("DEPRECATION_ERROR")
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        hideKeyboard()
         setPreferencesFromResource(R.xml.settings_updates, rootKey)
-    }
 
-    private fun setupUI() {
+        val settingsManager =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+
         // =======================
         // MANUAL UPDATE
         // =======================
@@ -78,7 +96,10 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
                 ioSafe {
                     if (activity?.runAutoUpdate(false) == false) {
                         activity?.runOnUiThread {
-                            Toast.makeText(context, R.string.no_update_found, Toast.LENGTH_SHORT).show()
+                            showToast(
+                                R.string.no_update_found,
+                                Toast.LENGTH_SHORT
+                            )
                         }
                     }
                 }
@@ -95,80 +116,36 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         }
 
         // =======================
-        // MANUAL UPDATE PLUGINS
+        // AUTO UPDATE PLUGINS
         // =======================
-        getPref(R.string.manual_update_plugins_key)?.setOnPreferenceClickListener {
-            ioSafe {
-                PluginManager.reloadPlugins(activity ?: return@ioSafe)
-            }
-            true
-        }
-
-        // Setup RecyclerView
-        binding.repoRecyclerView.layoutManager = LinearLayoutManager(context)
-        binding.repoRecyclerView.adapter = RepoAdapter(false, { repo ->
-            try {
-                findNavController().navigate(
-                    R.id.navigation_settings_updates_to_navigation_settings_plugins,
-                    PluginsFragment.newInstance(repo.name, repo.url, false)
-                )
-            } catch (_: Exception) {}
-        }, { repo ->
-            main {
+        getPref(R.string.manual_update_plugins_key)
+            ?.setOnPreferenceClickListener {
                 ioSafe {
-                    PluginManager.removeRepository(repo)
-                    extensionsViewModel.loadRepositories()
-                    extensionsViewModel.loadStats()
+                    PluginManager
+                        .___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(
+                            activity ?: return@ioSafe
+                        )
                 }
+                true
             }
-        })
     }
 
-    private fun observeViewModel() {
-        extensionsViewModel.loadRepositories()
-        extensionsViewModel.loadStats()
-
-        extensionsViewModel.repositories.observe(viewLifecycleOwner) { list ->
-            (binding.repoRecyclerView.adapter as? RepoAdapter)?.submitList(list.toList())
-            binding.repoRecyclerView.isVisible = list.isNotEmpty()
-        }
-
-        extensionsViewModel.pluginStats.observe(viewLifecycleOwner) { stats ->
-            if (stats == null) return@observeViewModel
-            binding.apply {
-                pluginStorageAppbar.isVisible = true
-
-                fun setWeight(view: View, value: Float) {
-                    val lp = view.layoutParams
-                    if (lp is LinearLayout.LayoutParams) {
-                        lp.weight = value
-                        view.layoutParams = lp
-                    }
-                }
-
-                if (stats.total == 0) {
-                    setWeight(pluginDownload, 1f)
-                    setWeight(pluginDisabled, 0f)
-                    setWeight(pluginNotDownloaded, 0f)
-                } else {
-                    setWeight(pluginDownload, stats.downloaded.toFloat())
-                    setWeight(pluginDisabled, stats.disabled.toFloat())
-                    setWeight(pluginNotDownloaded, stats.notDownloaded.toFloat())
-                }
-
-                pluginDownloadTxt.setText(stats.downloadedText)
-                pluginDisabledTxt.setText(stats.disabledText)
-                pluginNotDownloadedTxt.setText(stats.notDownloadedText)
-            }
-        }
-
-        binding.pluginStorageAppbar.setOnClickListener {
-            try {
-                findNavController().navigate(
-                    R.id.navigation_settings_updates_to_navigation_settings_plugins,
-                    PluginsFragment.newInstance(getString(R.string.extensions), "", true)
+    private fun getBackupDirsForDisplay(): List<String> {
+        return safe {
+            context?.let { ctx ->
+                val defaultDir =
+                    BackupUtils.getDefaultBackupDir(ctx)?.filePath()
+                val first = listOf(defaultDir)
+                (
+                    runCatching {
+                        first + BackupUtils.getCurrentBackupDir(ctx).let {
+                            it.first?.filePath() ?: it.second
+                        }
+                    }.getOrNull() ?: first
                 )
-            } catch (_: Exception) {}
-        }
+                    .filterNotNull()
+                    .distinct()
+            }
+        } ?: emptyList()
     }
 }
