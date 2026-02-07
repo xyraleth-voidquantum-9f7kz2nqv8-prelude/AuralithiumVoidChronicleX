@@ -3,6 +3,7 @@ package com.lagradost.cloudstream3.ui.settings.extensions
 import android.util.Base64
 import android.view.View
 import android.widget.LinearLayout
+import androidx.core.view.isGone
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
