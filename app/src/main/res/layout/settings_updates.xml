@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settings_updates_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- Plugin stats bar -->
+    <LinearLayout
+        android:id="@+id/pluginStorageAppbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <View
+            android:id="@+id/pluginDownload"
+            android:layout_width="0dp"
+            android:layout_height="8dp"
+            android:layout_weight="1"
+            android:background="@color/green" />
+
+        <View
+            android:id="@+id/pluginDisabled"
+            android:layout_width="0dp"
+            android:layout_height="8dp"
+            android:layout_weight="1"
+            android:background="@color/yellow" />
+
+        <View
+            android:id="@+id/pluginNotDownloaded"
+            android:layout_width="0dp"
+            android:layout_height="8dp"
+            android:layout_weight="1"
+            android:background="@color/red" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/pluginDownloadTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Downloaded" />
+
+    <TextView
+        android:id="@+id/pluginDisabledTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Disabled" />
+
+    <TextView
+        android:id="@+id/pluginNotDownloadedTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Not downloaded" />
+
+    <!-- RecyclerView untuk daftar repository -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/repoRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+</LinearLayout>
