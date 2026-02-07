@@ -90,8 +90,8 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
 
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
-        // Ambil Plugin Header Preference
-        pluginHeader = findPreference(getString(R.string.plugin_storage_header))
+        // Ambil Plugin Header Preference (FIXED: gunakan key _key dari strings.xml)
+        pluginHeader = findPreference(getString(R.string.plugin_storage_header_key))
 
         // =======================
         // MANUAL UPDATE
@@ -150,13 +150,14 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     // =======================
     private fun updatePluginStats() {
         val header = pluginHeader ?: return
-        val plugins = PluginManager.getPlugins()
+        val plugins = PluginManager.getPlugins() // FIXED: panggil getPlugins
 
         header.downloadedCount = plugins.count { it.isDownloaded }
         header.disabledCount = plugins.count { it.isDisabled }
         header.notDownloadedCount = plugins.count { !it.isDownloaded }
 
-        header.notifyChanged()
+        // Jika notifyChanged protected, gunakan method public refreshCounts() di PluginStorageHeaderPreference
+        header.refreshCounts()
     }
 
     private fun getBackupDirsForDisplay(): List<String> {
