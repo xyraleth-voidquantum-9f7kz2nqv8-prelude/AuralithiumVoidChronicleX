@@ -10,7 +10,6 @@ import androidx.core.content.edit
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.lagradost.cloudstream3.AutoDownloadMode
 import com.lagradost.cloudstream3.BuildConfig
 import com.lagradost.cloudstream3.CloudStreamApp
 import com.lagradost.cloudstream3.CommonActivity.showToast
@@ -66,8 +65,7 @@ fun Activity.runAutoUpdate(checkOnly: Boolean = false): Boolean {
 fun PluginStorageHeaderPreference.safeRefreshCounts() {
     try {
         this.notifyChanged()
-    } catch (_: Exception) {
-    }
+    } catch (_: Exception) { }
 }
 
 // =======================
@@ -137,7 +135,6 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
                         .___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(
                             activity ?: return@ioSafe
                         )
-
                     activity?.runOnUiThread {
                         updatePluginStats()
                     }
@@ -148,7 +145,13 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         // =======================
         // UPDATE HEADER SAAT OPEN FRAGMENT
         // =======================
-        updatePluginStats()
+        ioSafe {
+            // Hanya reload plugin yang sudah ada, tanpa menambah repo baru
+            PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(
+                activity ?: return@ioSafe
+            )
+            activity?.runOnUiThread { updatePluginStats() }
+        }
     }
 
     // =======================
