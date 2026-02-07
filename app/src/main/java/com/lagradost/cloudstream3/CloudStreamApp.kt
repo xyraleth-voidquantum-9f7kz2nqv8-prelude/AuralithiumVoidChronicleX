@@ -16,7 +16,6 @@ import com.lagradost.api.setContext
 import com.lagradost.cloudstream3.mvvm.safe
 import com.lagradost.cloudstream3.mvvm.safeAsync
 import com.lagradost.cloudstream3.plugins.PluginManager
-import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.Globals.EMULATOR
 import com.lagradost.cloudstream3.ui.settings.Globals.TV
 import com.lagradost.cloudstream3.ui.settings.Globals.isLayout
@@ -71,29 +70,9 @@ class CloudStreamApp : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
-
-        // ================================
-        // 🔥 ENGINE BARU (pengganti loader lama)
-        // ================================
-        // DULU:
-        // RepositoryManager.loadRepositories(this)
-        // PluginManager.loadAllPlugins(this)
-        // SEKARANG:
-        initAll()
-
-        // Jalankan repo milik kamu (Initializer + Obscura)
-        runOnMainThread {
-            val ctx = context ?: return@runOnMainThread
-            val act = ctx.getActivity()
-            if (act != null) {
-                Initializer.start(act)
-                ObscuraIngress.install(act)
-            }
-        }
-
-        // ================================
-        // KODE ASLI KAMU (TIDAK DIUBAH)
-        // ================================
+        // If we want to initialize Coil as early as possible, maybe when
+        // loading an image or GIF in a splash screen activity.
+        // buildImageLoader(applicationContext)
 
         ExceptionHandler(filesDir.resolve("last_error")) {
             val intent = context!!.packageManager.getLaunchIntentForPackage(context!!.packageName)
