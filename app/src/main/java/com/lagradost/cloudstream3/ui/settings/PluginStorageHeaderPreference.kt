@@ -9,6 +9,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceViewHolder
 import com.lagradost.cloudstream3.MainActivity
 import com.lagradost.cloudstream3.R
+import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.PluginsFragment
 
 class PluginStorageHeaderPreference @JvmOverloads constructor(
@@ -16,13 +17,28 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : Preference(context, attrs) {
 
-    var downloadedCount = 0
-    var disabledCount = 0
-    var notDownloadedCount = 0
+    private var downloadedCount = 0
+    private var disabledCount = 0
+    private var notDownloadedCount = 0
 
     init {
         layoutResource = R.layout.plugin_storage_header
-        isSelectable = false // ✅ WAJIB, BIAR BISA DIKLIK
+        isSelectable = true // ✅ HARUS TRUE BIAR BISA DIKLIK
+    }
+
+    /**
+     * Ambil data plugin asli dari RepositoryManager
+     */
+    override fun onAttached() {
+        super.onAttached()
+
+        val stats = RepositoryManager.getAllPluginsStats()
+
+        downloadedCount = stats.downloaded
+        disabledCount = stats.disabled
+        notDownloadedCount = stats.notDownloaded
+
+        notifyChanged() // 🔥 refresh UI preference
     }
 
     override fun onBindViewHolder(holder: PreferenceViewHolder) {
@@ -60,13 +76,15 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
 
         downloadedTxt.text =
             context.getString(R.string.plugin_downloaded_format, downloadedCount)
+
         disabledTxt.text =
             context.getString(R.string.plugin_disabled_format, disabledCount)
+
         notDownloadedTxt.text =
             context.getString(R.string.plugin_not_downloaded_format, notDownloadedCount)
 
         // =========================
-        // CLICK → BUKA PLUGIN LIST
+        // CLICK → BUKA SEMUA PLUGIN
         // =========================
         view.setOnClickListener {
             val activity = context as? MainActivity ?: return@setOnClickListener
