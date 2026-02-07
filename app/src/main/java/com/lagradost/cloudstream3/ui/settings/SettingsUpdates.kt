@@ -158,11 +158,11 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     // =======================
     private fun updatePluginStats() {
         val header = pluginHeader ?: return
-        val plugins: List<Plugin> = safe { PluginManager.getPlugins() } ?: emptyList()
+        val plugins: List<Plugin> = safe { PluginManager.plugins } ?: emptyList()
 
-        header.downloadedCount = plugins.count { it.isDownloaded }
-        header.disabledCount = plugins.count { it.isDisabled }
-        header.notDownloadedCount = plugins.count { !it.isDownloaded }
+        header.downloadedCount = plugins.count { it.downloaded }
+        header.disabledCount = plugins.count { it.disabled }
+        header.notDownloadedCount = plugins.count { !it.downloaded }
 
         header.safeRefreshCounts()
     }
