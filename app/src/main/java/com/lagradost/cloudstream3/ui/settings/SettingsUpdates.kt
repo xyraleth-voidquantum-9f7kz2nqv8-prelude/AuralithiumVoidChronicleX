@@ -61,6 +61,16 @@ fun Activity.runAutoUpdate(checkOnly: Boolean = false): Boolean {
 }
 
 // =======================
+// EXTENSION SAFE REFRESH COUNTS
+// =======================
+fun PluginStorageHeaderPreference.safeRefreshCounts() {
+    try {
+        this.notifyChanged()
+    } catch (_: Exception) {
+    }
+}
+
+// =======================
 // SETTINGS UPDATES
 // =======================
 class SettingsUpdates : BasePreferenceFragmentCompat() {
@@ -89,9 +99,7 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         hideKeyboard()
         setPreferencesFromResource(R.xml.settings_updates, rootKey)
 
-        val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
-
-        // Ambil Plugin Header Preference (FIXED: gunakan key _key dari strings.xml)
+        // Ambil Plugin Header Preference
         pluginHeader = findPreference(getString(R.string.plugin_storage_header_key))
 
         // =======================
@@ -103,10 +111,7 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
                 ioSafe {
                     if (activity?.runAutoUpdate(false) == false) {
                         activity?.runOnUiThread {
-                            showToast(
-                                R.string.no_update_found,
-                                Toast.LENGTH_SHORT
-                            )
+                            showToast(R.string.no_update_found, Toast.LENGTH_SHORT)
                         }
                     }
                 }
@@ -151,16 +156,18 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     // =======================
     private fun updatePluginStats() {
         val header = pluginHeader ?: return
-        val plugins: List<Plugin> = safe { PluginManager.allPlugins } ?: emptyList()
+        val plugins: List<Plugin> = safe { PluginManager.getPlugins() } ?: emptyList()
 
         header.downloadedCount = plugins.count { it.isDownloaded }
         header.disabledCount = plugins.count { it.isDisabled }
         header.notDownloadedCount = plugins.count { !it.isDownloaded }
 
-        // FIX BUILD: gunakan notifyChanged() karena refreshCounts() mungkin protected
-        header.notifyChanged()
+        header.safeRefreshCounts()
     }
 
+    // =======================
+    // BACKUP DIRS
+    // =======================
     private fun getBackupDirsForDisplay(): List<String> {
         return safe {
             context?.let { ctx ->
