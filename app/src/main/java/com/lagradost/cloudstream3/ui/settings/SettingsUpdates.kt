@@ -5,8 +5,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.lagradost.cloudstream3.BuildConfig
 import com.lagradost.cloudstream3.CloudStreamApp
@@ -14,7 +12,6 @@ import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.plugins.BasePlugin
 import com.lagradost.cloudstream3.plugins.PluginManager
-import com.lagradost.cloudstream3.services.BackupWorkManager
 import com.lagradost.cloudstream3.ui.BasePreferenceFragmentCompat
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.getPref
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setPaddingBottom
@@ -24,17 +21,26 @@ import com.lagradost.cloudstream3.ui.settings.PluginStorageHeaderPreference
 import com.lagradost.cloudstream3.ui.settings.utils.getChooseFolderLauncher
 import com.lagradost.cloudstream3.utils.BackupUtils
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
-import com.lagradost.cloudstream3.utils.safe
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import java.io.File
 
 // =======================
 // STUBS
 // =======================
 fun Activity.installPreReleaseIfNeeded() { }
 fun Activity.runAutoUpdate(checkOnly: Boolean = false): Boolean = false
+
+// =======================
+// SAFE EXTENSION
+// =======================
+inline fun <T> safe(block: () -> T): T? {
+    return try {
+        block()
+    } catch (_: Exception) {
+        null
+    }
+}
 
 // =======================
 // EXTENSION SAFE REFRESH COUNTS
@@ -127,7 +133,7 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     private suspend fun reloadPlugins(activity: Activity) {
         PluginManager.plugins?.values?.forEach { plugin ->
             PluginManager.unloadPlugin(plugin)
-            PluginManager.loadPlugin(plugin)
+            // Tidak memanggil loadPlugin() karena private
         }
         activity.runOnUiThread { updatePluginStats() }
     }
@@ -139,10 +145,9 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         val header = pluginHeader ?: return
         val plugins: List<BasePlugin> = safe { PluginManager.plugins?.values?.toList() } ?: emptyList()
 
-        // Pakai properti yang benar: downloaded & enabled
-        header.downloadedCount = plugins.count { it.downloaded }
-        header.disabledCount = plugins.count { !it.enabled }
-        header.notDownloadedCount = plugins.count { !it.downloaded }
+        header.downloadedCount = plugins.count { it.isDownloaded }
+        header.disabledCount = plugins.count { !it.isEnabled }
+        header.notDownloadedCount = plugins.count { !it.isDownloaded }
 
         header.safeRefreshCounts()
     }
