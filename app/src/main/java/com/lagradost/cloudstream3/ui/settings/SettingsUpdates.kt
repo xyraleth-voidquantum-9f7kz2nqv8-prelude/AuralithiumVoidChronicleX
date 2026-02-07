@@ -1,29 +1,58 @@
 package com.lagradost.cloudstream3.ui.settings
 
 import android.app.Activity
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.edit
+import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
-import androidx.preference.Preference
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.lagradost.cloudstream3.AutoDownloadMode
 import com.lagradost.cloudstream3.BuildConfig
 import com.lagradost.cloudstream3.CloudStreamApp
 import com.lagradost.cloudstream3.CommonActivity.showToast
 import com.lagradost.cloudstream3.R
+import com.lagradost.cloudstream3.app
+import com.lagradost.cloudstream3.databinding.LogcatBinding
+import com.lagradost.cloudstream3.mvvm.logError
+import com.lagradost.cloudstream3.mvvm.safe
+import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.plugins.PluginManager
+import com.lagradost.cloudstream3.services.BackupWorkManager
 import com.lagradost.cloudstream3.ui.BasePreferenceFragmentCompat
+import com.lagradost.cloudstream3.ui.settings.Globals.EMULATOR
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.getPref
+import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.hideOn
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setPaddingBottom
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setToolBarScrollFlags
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setUpToolbar
-import com.lagradost.cloudstream3.ui.settings.extensions.PluginStorageHeaderPreference
+import com.lagradost.cloudstream3.ui.settings.PluginStorageHeaderPreference
+import com.lagradost.cloudstream3.ui.settings.utils.getChooseFolderLauncher
+import com.lagradost.cloudstream3.utils.BackupUtils
+import com.lagradost.cloudstream3.utils.BackupUtils.restorePrompt
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
+import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
+import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showDialog
+import com.lagradost.cloudstream3.utils.UIHelper.clipboardHelper
+import com.lagradost.cloudstream3.utils.UIHelper.dismissSafe
+import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
+import com.lagradost.cloudstream3.utils.VideoDownloadManager
+import com.lagradost.cloudstream3.utils.txt
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.OutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 // =======================
-// STUBS (WAJIB BIAR BUILD)
+// STUBS (EXTENSION — WAJIB)
 // =======================
 fun Activity.installPreReleaseIfNeeded() {
-    // stable build → no-op
+    // no-op (stable build)
 }
 
 fun Activity.runAutoUpdate(checkOnly: Boolean = false): Boolean {
@@ -35,6 +64,8 @@ fun Activity.runAutoUpdate(checkOnly: Boolean = false): Boolean {
 // =======================
 class SettingsUpdates : BasePreferenceFragmentCompat() {
 
+    private var pluginHeader: PluginStorageHeaderPreference? = null
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setUpToolbar(R.string.category_updates)
@@ -42,37 +73,28 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         setToolBarScrollFlags()
     }
 
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        setPreferencesFromResource(R.xml.settings_updates, rootKey)
-
-        // =======================
-        // HEADER (PLUGIN STORAGE)
-        // =======================
-        val header =
-            findPreference<PluginStorageHeaderPreference>(
-                getString(R.string.plugin_storage_header_key)
-            )
-
-        fun refreshPluginStats() {
-            val plugins = PluginManager.getPlugins()
-            val disabled = PluginManager.getDisabledPlugins()
-
-            val downloaded = plugins.size
-            val disabledCount = disabled.size
-            val notDownloaded = 0 // cloudstream juga 0
-
-            header?.apply {
-                downloadedCount = downloaded
-                disabledCount = disabledCount
-                notDownloadedCount = notDownloaded
-                notifyChanged()
+    private val pathPicker = getChooseFolderLauncher { uri, path ->
+        val ctx = context ?: CloudStreamApp.context ?: return@getChooseFolderLauncher
+        (path ?: uri.toString()).let {
+            PreferenceManager.getDefaultSharedPreferences(ctx).edit {
+                putString(getString(R.string.backup_path_key), uri.toString())
+                putString(getString(R.string.backup_dir_key), it)
             }
         }
+    }
 
-        refreshPluginStats()
+    @Suppress("DEPRECATION_ERROR")
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        hideKeyboard()
+        setPreferencesFromResource(R.xml.settings_updates, rootKey)
+
+        val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+
+        // Ambil Plugin Header Preference
+        pluginHeader = findPreference(getString(R.string.plugin_storage_header))
 
         // =======================
-        // MANUAL APP UPDATE
+        // MANUAL UPDATE
         // =======================
         getPref(R.string.manual_check_update_key)?.let { pref ->
             pref.summary = BuildConfig.VERSION_NAME
@@ -100,7 +122,7 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         }
 
         // =======================
-        // UPDATE PLUGINS
+        // AUTO UPDATE PLUGINS
         // =======================
         getPref(R.string.manual_update_plugins_key)
             ?.setOnPreferenceClickListener {
@@ -111,14 +133,47 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
                         )
 
                     activity?.runOnUiThread {
-                        refreshPluginStats()
-                        showToast(
-                            R.string.updated_plugins,
-                            Toast.LENGTH_SHORT
-                        )
+                        updatePluginStats()
                     }
                 }
                 true
             }
+
+        // =======================
+        // UPDATE HEADER SAAT OPEN FRAGMENT
+        // =======================
+        updatePluginStats()
+    }
+
+    // =======================
+    // HELPER: UPDATE HEADER PLUGIN
+    // =======================
+    private fun updatePluginStats() {
+        val header = pluginHeader ?: return
+        val plugins = PluginManager.getPlugins()
+
+        header.downloadedCount = plugins.count { it.isDownloaded }
+        header.disabledCount = plugins.count { it.isDisabled }
+        header.notDownloadedCount = plugins.count { !it.isDownloaded }
+
+        header.notifyChanged()
+    }
+
+    private fun getBackupDirsForDisplay(): List<String> {
+        return safe {
+            context?.let { ctx ->
+                val defaultDir = BackupUtils.getDefaultBackupDir(ctx)?.filePath()
+                val first = listOf(defaultDir)
+                (
+                    runCatching {
+                        first + BackupUtils.getCurrentBackupDir(ctx).let {
+                            it.first?.filePath() ?: it.second
+                        }
+                    }.getOrNull() ?: first
+                )
+                    .filterNotNull()
+                    .distinct()
+            }
+        } ?: emptyList()
     }
 }
