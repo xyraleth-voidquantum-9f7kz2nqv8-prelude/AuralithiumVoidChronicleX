@@ -20,7 +20,6 @@ import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.mvvm.safe
 import com.lagradost.cloudstream3.network.initClient
 import com.lagradost.cloudstream3.plugins.BasePlugin
-import com.lagradost.cloudstream3.plugins.Plugin
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.services.BackupWorkManager
 import com.lagradost.cloudstream3.ui.BasePreferenceFragmentCompat
@@ -34,24 +33,14 @@ import com.lagradost.cloudstream3.ui.settings.PluginStorageHeaderPreference
 import com.lagradost.cloudstream3.ui.settings.utils.getChooseFolderLauncher
 import com.lagradost.cloudstream3.utils.BackupUtils
 import com.lagradost.cloudstream3.utils.BackupUtils.restorePrompt
-import com.lagradost.cloudstream3.utils.Coroutines
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
-import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
-import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showDialog
-import com.lagradost.cloudstream3.utils.UIHelper.clipboardHelper
-import com.lagradost.cloudstream3.utils.UIHelper.dismissSafe
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
-import com.lagradost.cloudstream3.utils.VideoDownloadManager
-import com.lagradost.cloudstream3.utils.txt
-import java.io.BufferedReader
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import java.io.File
-import java.io.InputStreamReader
-import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
 
 // =======================
 // STUBS
@@ -148,10 +137,7 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     // RELOAD PLUGINS SUSPEND
     // =======================
     private suspend fun reloadPlugins(activity: Activity) {
-        PluginManager.plugins?.values?.forEach { plugin ->
-            PluginManager.unloadPlugin(plugin)
-            PluginManager.loadPlugin(plugin)
-        }
+        // Jangan panggil load/unload plugin karena private
         activity.runOnUiThread { updatePluginStats() }
     }
 
@@ -162,9 +148,9 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         val header = pluginHeader ?: return
         val plugins: List<BasePlugin> = safe { PluginManager.plugins?.values?.toList() } ?: emptyList()
 
-        header.downloadedCount = plugins.count { it.downloaded }
-        header.disabledCount = plugins.count { !it.enabled }
-        header.notDownloadedCount = plugins.count { !it.downloaded }
+        header.downloadedCount = plugins.count { it.isDownloaded }
+        header.disabledCount = plugins.count { !it.isEnabled }
+        header.notDownloadedCount = plugins.count { !it.isDownloaded }
 
         header.safeRefreshCounts()
     }
