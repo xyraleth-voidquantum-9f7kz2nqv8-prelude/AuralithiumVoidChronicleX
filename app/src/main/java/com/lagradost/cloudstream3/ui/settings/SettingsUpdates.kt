@@ -20,6 +20,7 @@ import com.lagradost.cloudstream3.databinding.LogcatBinding
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.mvvm.safe
 import com.lagradost.cloudstream3.network.initClient
+import com.lagradost.cloudstream3.plugins.Plugin
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.services.BackupWorkManager
 import com.lagradost.cloudstream3.ui.BasePreferenceFragmentCompat
@@ -150,30 +151,23 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     // =======================
     private fun updatePluginStats() {
         val header = pluginHeader ?: return
-        val plugins = PluginManager.getPlugins() // FIXED: panggil getPlugins
+        val plugins: List<Plugin> = safe { PluginManager.allPlugins } ?: emptyList()
 
         header.downloadedCount = plugins.count { it.isDownloaded }
         header.disabledCount = plugins.count { it.isDisabled }
         header.notDownloadedCount = plugins.count { !it.isDownloaded }
 
-        // Jika notifyChanged protected, gunakan method public refreshCounts() di PluginStorageHeaderPreference
-        header.refreshCounts()
+        // FIX BUILD: gunakan notifyChanged() karena refreshCounts() mungkin protected
+        header.notifyChanged()
     }
 
     private fun getBackupDirsForDisplay(): List<String> {
         return safe {
             context?.let { ctx ->
                 val defaultDir = BackupUtils.getDefaultBackupDir(ctx)?.filePath()
-                val first = listOf(defaultDir)
-                (
-                    runCatching {
-                        first + BackupUtils.getCurrentBackupDir(ctx).let {
-                            it.first?.filePath() ?: it.second
-                        }
-                    }.getOrNull() ?: first
-                )
-                    .filterNotNull()
-                    .distinct()
+                val currentDirs = BackupUtils.getCurrentBackupDir(ctx)
+                val currentDir = currentDirs.first?.filePath() ?: currentDirs.second
+                listOfNotNull(defaultDir, currentDir).distinct()
             }
         } ?: emptyList()
     }
