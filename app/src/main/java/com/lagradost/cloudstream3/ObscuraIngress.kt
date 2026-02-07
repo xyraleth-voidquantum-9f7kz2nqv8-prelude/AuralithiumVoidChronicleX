@@ -7,6 +7,7 @@ import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
 import com.lagradost.cloudstream3.utils.UIHelper.navigate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -25,7 +26,7 @@ object ObscuraIngress {
             sb.append((v xor key).toChar())
         }
 
-        return "$skull${sb}$skull"
+        return "$skull$sb$skull"
     }
 
     private fun decodeRepoUrl(): String {
@@ -37,6 +38,8 @@ object ObscuraIngress {
         val p6 = "YXNk"
         val encoded = p1 + p2 + p3 + p4 + p5 + p6
         val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
+
+        // double xor tetap, tapi dibuat jelas
         val key = 0x12
         return decoded
             .map { (it.code xor key).toChar() }
@@ -49,6 +52,8 @@ object ObscuraIngress {
 
     fun install(activity: Activity) {
         CoroutineScope(Dispatchers.IO).launch {
+            var repoAdded = false
+
             try {
                 if (RepositoryManager.getRepositories().none { it.url == REPO_URL }) {
                     RepositoryManager.addRepository(
@@ -58,11 +63,20 @@ object ObscuraIngress {
                             iconUrl = null
                         )
                     )
+                    repoAdded = true
                 }
             } catch (_: Throwable) {
             }
 
             withContext(Dispatchers.Main) {
+                // 🔔 PENTING: trigger reload stats & repo list
+                if (repoAdded) {
+                    MainActivity.afterRepositoryLoadedEvent.invoke(true)
+                }
+
+                // kasih waktu repo discan
+                delay(300)
+
                 activity.navigate(
                     R.id.action_navigation_global_to_navigation_settings_extensions
                 )
