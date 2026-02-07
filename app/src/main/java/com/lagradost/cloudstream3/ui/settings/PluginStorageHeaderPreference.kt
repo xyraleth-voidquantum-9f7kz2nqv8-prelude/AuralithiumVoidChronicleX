@@ -9,7 +9,6 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceViewHolder
 import com.lagradost.cloudstream3.MainActivity
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.plugins.RepositoryManager
 import com.lagradost.cloudstream3.ui.settings.extensions.PluginsFragment
 
 class PluginStorageHeaderPreference @JvmOverloads constructor(
@@ -26,18 +25,13 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
         isSelectable = true
     }
 
-    override fun onAttached() {
-        super.onAttached()
-
-        // =========================
-        // AMBIL DATA PLUGIN (AMAN)
-        // =========================
-        val plugins = RepositoryManager.getAllPlugins()
-
-        downloadedCount = plugins.count { it.isDownloaded }
-        disabledCount = plugins.count { it.isDownloaded && !it.isEnabled }
-        notDownloadedCount = plugins.count { !it.isDownloaded }
-
+    /**
+     * DIPANGGIL DARI SettingsFragment
+     */
+    fun setStats(downloaded: Int, disabled: Int, notDownloaded: Int) {
+        downloadedCount = downloaded
+        disabledCount = disabled
+        notDownloadedCount = notDownloaded
         notifyChanged()
     }
 
@@ -76,19 +70,14 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
 
         downloadedTxt.text =
             context.getString(R.string.plugin_downloaded_format, downloadedCount)
-
         disabledTxt.text =
             context.getString(R.string.plugin_disabled_format, disabledCount)
-
         notDownloadedTxt.text =
             context.getString(R.string.plugin_not_downloaded_format, notDownloadedCount)
 
-        // =========================
-        // CLICK → BUKA SEMUA PLUGIN
-        // =========================
+        // CLICK → PLUGINS LIST
         view.setOnClickListener {
             val activity = context as? MainActivity ?: return@setOnClickListener
-
             activity.loadFragment(
                 PluginsFragment.newInstance(
                     context.getString(R.string.extensions),
