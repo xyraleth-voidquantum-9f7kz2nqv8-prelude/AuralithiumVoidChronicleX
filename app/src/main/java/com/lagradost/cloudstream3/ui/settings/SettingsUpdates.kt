@@ -19,6 +19,7 @@ import com.lagradost.cloudstream3.databinding.LogcatBinding
 import com.lagradost.cloudstream3.mvvm.logError
 import com.lagradost.cloudstream3.mvvm.safe
 import com.lagradost.cloudstream3.network.initClient
+import com.lagradost.cloudstream3.plugins.BasePlugin
 import com.lagradost.cloudstream3.plugins.Plugin
 import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.services.BackupWorkManager
@@ -48,6 +49,7 @@ import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
 // =======================
@@ -73,6 +75,7 @@ fun PluginStorageHeaderPreference.safeRefreshCounts() {
 class SettingsUpdates : BasePreferenceFragmentCompat() {
 
     private var pluginHeader: PluginStorageHeaderPreference? = null
+    private val mainScope = MainScope()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -91,7 +94,6 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         }
     }
 
-    @Suppress("DEPRECATION_ERROR")
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         hideKeyboard()
         setPreferencesFromResource(R.xml.settings_updates, rootKey)
@@ -128,9 +130,7 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         // =======================
         getPref(R.string.manual_update_plugins_key)?.setOnPreferenceClickListener {
             activity?.let { act ->
-                Coroutines.mainScope.launch {
-                    reloadPlugins(act)
-                }
+                mainScope.launch { reloadPlugins(act) }
             }
             true
         }
@@ -139,9 +139,7 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         // UPDATE HEADER SAAT OPEN FRAGMENT
         // =======================
         activity?.let { act ->
-            Coroutines.mainScope.launch {
-                reloadPlugins(act)
-            }
+            mainScope.launch { reloadPlugins(act) }
         }
     }
 
@@ -149,7 +147,10 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     // RELOAD PLUGINS SUSPEND
     // =======================
     private suspend fun reloadPlugins(activity: Activity) {
-        PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(activity)
+        PluginManager.plugins?.values?.forEach { plugin ->
+            PluginManager.unloadPlugin(plugin)
+            PluginManager.loadPlugin(plugin)
+        }
         activity.runOnUiThread { updatePluginStats() }
     }
 
@@ -158,10 +159,10 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     // =======================
     private fun updatePluginStats() {
         val header = pluginHeader ?: return
-        val plugins: List<Plugin> = safe { PluginManager.plugins } ?: emptyList()
+        val plugins: List<BasePlugin> = safe { PluginManager.plugins?.values?.toList() } ?: emptyList()
 
         header.downloadedCount = plugins.count { it.downloaded }
-        header.disabledCount = plugins.count { it.disabled }
+        header.disabledCount = plugins.count { !it.enabled }
         header.notDownloadedCount = plugins.count { !it.downloaded }
 
         header.safeRefreshCounts()
