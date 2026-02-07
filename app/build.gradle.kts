@@ -13,6 +13,9 @@ plugins {
 
 val javaTarget = JvmTarget.fromTarget(libs.versions.jvmTarget.get())
 
+// =========================
+// FIXED: Kotlin try/catch
+// =========================
 fun getGitCommitHash(): String {
     return try {
         val headFile = file("${project.rootDir}/.git/HEAD")
@@ -22,7 +25,9 @@ fun getGitCommitHash(): String {
                 val refPath = headContent.substring(5).trim()
                 val commitFile = file("${project.rootDir}/.git/$refPath")
                 if (commitFile.exists()) commitFile.readText().trim() else ""
-            } else headContent
+            } else {
+                headContent
+            }
         } else ""
         hash.take(7)
     } catch (_: Throwable) {
@@ -31,15 +36,34 @@ fun getGitCommitHash(): String {
 }
 
 android {
+    @Suppress("UnstableApiUsage")
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
+    viewBinding { enable = true }
+
+    // =========================
+    // SIGNING CONFIG (GITHUB ACTIONS)
+    // =========================
+    signingConfigs {
+        create("release") {
+            storeFile = file("release.keystore")
+            storePassword = System.getenv("STORE_PASSWORD")
+            keyAlias = System.getenv("KEY_ALIAS")
+            keyPassword = System.getenv("KEY_PASSWORD")
+        }
+    }
+
     compileSdk = libs.versions.compileSdk.get().toInt()
+
     defaultConfig {
         applicationId = "com.cloudplay.app"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
+
         versionCode = 74
         versionName = "1.6.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         resValue("string", "commit_hash", getGitCommitHash())
         resValue("bool", "is_prerelease", "false")
@@ -47,6 +71,7 @@ android {
         resValue("color", "blackBoarder", "#FF000000")
 
         manifestPlaceholders["target_sdk_version"] = libs.versions.targetSdk.get()
+
         gradleLocalProperties(rootDir, project.providers)
 
         buildConfigField("long", "BUILD_DATE", "${System.currentTimeMillis()}")
@@ -62,15 +87,8 @@ android {
             "SIMKL_CLIENT_SECRET",
             "\"e7b4f88776e677cfd60f0a6269ce55b528c5a74f5f136b86f4094c066d9dd1bf\""
         )
-    }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file("release.keystore")
-            storePassword = System.getenv("STORE_PASSWORD")
-            keyAlias = System.getenv("KEY_ALIAS")
-            keyPassword = System.getenv("KEY_PASSWORD")
-        }
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -123,26 +141,28 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true     // <== HARUS AKTIF
         buildConfig = true
         resValues = true
     }
 
     namespace = "com.lagradost.cloudstream3"
-
-    @Suppress("UnstableApiUsage")
-    testOptions {
-        unitTests.isReturnDefaultValues = true
-    }
 }
 
 dependencies {
+    testImplementation(libs.junit)
+    testImplementation(libs.json)
+    androidTestImplementation(libs.core)
+    implementation(libs.junit.ktx)
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
+
     implementation(libs.core.ktx)
+    implementation(libs.activity.ktx)
     implementation(libs.appcompat)
     implementation(libs.fragment.ktx)
-    implementation(libs.activity.ktx)
     implementation(libs.bundles.lifecycle)
     implementation(libs.bundles.navigation)
+
     implementation(libs.preference.ktx)
     implementation(libs.material)
     implementation(libs.constraintlayout)
@@ -176,27 +196,12 @@ dependencies {
     implementation(libs.work.runtime.ktx)
     implementation(libs.nicehttp)
 
-    testImplementation(libs.junit)
-    testImplementation(libs.json)
-    androidTestImplementation(libs.core)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
-
     implementation(project(":library") {
         val isDebug = gradle.startParameter.taskRequests.any { task ->
             task.args.any { arg -> arg.contains("debug", true) }
         }
         extra.set("isDebug", isDebug)
     })
-}
-
-tasks.withType<KotlinJvmCompile>().configureEach {
-    compilerOptions {
-        jvmTarget.set(javaTarget)
-        jvmDefault.set(JvmDefaultMode.ENABLE)
-        optIn.add("com.lagradost.cloudstream3.Prerelease")
-        freeCompilerArgs.add("-Xannotation-default-target=param-property")
-    }
 }
 
 tasks.register<Jar>("androidSourcesJar") {
@@ -224,6 +229,15 @@ tasks.register<Jar>("makeJar") {
     )
     destinationDirectory.set(layout.buildDirectory)
     archiveBaseName = "classes"
+}
+
+tasks.withType<KotlinJvmCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(javaTarget)
+        jvmDefault.set(JvmDefaultMode.ENABLE)
+        optIn.add("com.lagradost.cloudstream3.Prerelease")
+        freeCompilerArgs.add("-Xannotation-default-target=param-property")
+    }
 }
 
 dokka {
