@@ -41,8 +41,6 @@ import com.lagradost.cloudstream3.utils.UIHelper.dismissSafe
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
 import com.lagradost.cloudstream3.utils.VideoDownloadManager
 import com.lagradost.cloudstream3.utils.txt
-import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
-import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStream
@@ -57,14 +55,14 @@ fun Activity.installPreReleaseIfNeeded() { }
 fun Activity.runAutoUpdate(checkOnly: Boolean = false): Boolean = false
 
 // =======================
-// EXTENSION SAFE REFRESH COUNTS
+// SAFE REFRESH COUNTS
 // =======================
 fun PluginStorageHeaderPreference.safeRefreshCounts() {
     try {
         val method = this.javaClass.superclass.getDeclaredMethod("notifyChanged")
         method.isAccessible = true
         method.invoke(this)
-    } catch (_: Exception) { }
+    } catch (_: Exception) {}
 }
 
 // =======================
@@ -91,7 +89,6 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         }
     }
 
-    @Suppress("DEPRECATION_ERROR")
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         hideKeyboard()
         setPreferencesFromResource(R.xml.settings_updates, rootKey)
@@ -124,25 +121,30 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         }
 
         // =======================
-        // AUTO UPDATE PLUGINS (HANYA RELOAD)
+        // AUTO UPDATE PLUGINS
         // =======================
         getPref(R.string.manual_update_plugins_key)?.setOnPreferenceClickListener {
-            ioSafe { reloadPluginsOnly() }
+            ioSafe {
+                reloadAndDownloadPlugins()
+            }
             true
         }
 
         // =======================
         // UPDATE HEADER SAAT OPEN FRAGMENT
         // =======================
-        ioSafe { reloadPluginsOnly() }
+        ioSafe { reloadAndDownloadPlugins() }
     }
 
     // =======================
-    // RELOAD HANYA PLUGIN YANG ADA
+    // RELOAD PLUGIN DAN UPDATE HEADER
     // =======================
-    private fun reloadPluginsOnly() {
+    private suspend fun reloadAndDownloadPlugins() {
         val act = activity ?: return
+        // Reload semua plugin yang ada (suspend)
         PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(act)
+
+        // Update header
         act.runOnUiThread { updatePluginStats() }
     }
 
@@ -153,9 +155,9 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         val header = pluginHeader ?: return
         val plugins: List<Plugin> = safe { PluginManager.getPlugins() } ?: emptyList()
 
-        header.downloadedCount = plugins.count { it.isDownloaded }
-        header.disabledCount = plugins.count { it.isDisabled }
-        header.notDownloadedCount = plugins.count { !it.isDownloaded }
+        header.downloadedCount = plugins.count { safe { it.isDownloaded } == true }
+        header.disabledCount = plugins.count { safe { it.isDisabled } == true }
+        header.notDownloadedCount = plugins.count { safe { it.isDownloaded } == false }
 
         header.safeRefreshCounts()
     }
