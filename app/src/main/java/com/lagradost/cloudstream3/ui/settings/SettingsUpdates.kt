@@ -32,8 +32,6 @@ import com.lagradost.cloudstream3.ui.settings.utils.getChooseFolderLauncher
 import com.lagradost.cloudstream3.utils.BackupUtils
 import com.lagradost.cloudstream3.utils.BackupUtils.restorePrompt
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
-import com.lagradost.cloudstream3.utils.InAppUpdater.installPreReleaseIfNeeded
-import com.lagradost.cloudstream3.utils.InAppUpdater.runAutoUpdate
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showDialog
 import com.lagradost.cloudstream3.utils.UIHelper.clipboardHelper
@@ -47,6 +45,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+// STUBS untuk stable build
+fun installPreReleaseIfNeeded() {}      // no-op stable
+fun runAutoUpdate(checkOnly: Boolean = false): Boolean = false
+
 class SettingsUpdates : BasePreferenceFragmentCompat() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -57,9 +59,9 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     }
 
     private val pathPicker = getChooseFolderLauncher { uri, path ->
-        val context = context ?: CloudStreamApp.context ?: return@getChooseFolderLauncher
+        val ctx = context ?: CloudStreamApp.context ?: return@getChooseFolderLauncher
         (path ?: uri.toString()).let {
-            PreferenceManager.getDefaultSharedPreferences(context).edit {
+            PreferenceManager.getDefaultSharedPreferences(ctx).edit {
                 putString(getString(R.string.backup_path_key), uri.toString())
                 putString(getString(R.string.backup_dir_key), it)
             }
@@ -97,9 +99,12 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
                 ?: context?.let { BackupUtils.getDefaultBackupDir(it)?.filePath() }
 
             activity?.showBottomDialog(dirs + listOf(getString(R.string.custom)), dirs.indexOf(currentDir),
-                getString(R.string.backup_path_title), true, {}) {
-                if (it == dirs.size) pathPicker.launch(Uri.EMPTY)
-                else settingsManager.edit { putString(getString(R.string.backup_path_key), dirs[it]); putString(getString(R.string.backup_dir_key), dirs[it]) }
+                getString(R.string.backup_path_title), true, {}) { selectedIndex ->
+                if (selectedIndex == dirs.size) pathPicker.launch(Uri.EMPTY)
+                else settingsManager.edit { 
+                    putString(getString(R.string.backup_path_key), dirs[selectedIndex])
+                    putString(getString(R.string.backup_dir_key), dirs[selectedIndex])
+                }
             }
             true
         }
@@ -138,7 +143,9 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
             val prefValues = resources.getIntArray(R.array.apk_installer_values)
             val currentInstaller = settingsManager.getInt(getString(R.string.apk_installer_key), 0)
             activity?.showBottomDialog(prefNames.toList(), prefValues.indexOf(currentInstaller),
-                getString(R.string.apk_installer_settings), true, {}) { settingsManager.edit { putInt(getString(R.string.apk_installer_key), prefValues[it]) } }
+                getString(R.string.apk_installer_settings), true, {}) { selectedIndex ->
+                settingsManager.edit { putInt(getString(R.string.apk_installer_key), prefValues[selectedIndex]) }
+            }
             true
         }
 
@@ -146,7 +153,9 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         getPref(R.string.manual_check_update_key)?.let { pref ->
             pref.summary = BuildConfig.VERSION_NAME
             pref.setOnPreferenceClickListener {
-                ioSafe { if (activity?.runAutoUpdate(false) == false) activity?.runOnUiThread { showToast(R.string.no_update_found, Toast.LENGTH_SHORT) } }
+                ioSafe { 
+                    if (activity?.runAutoUpdate(false) == false) activity?.runOnUiThread { showToast(R.string.no_update_found, Toast.LENGTH_SHORT) } 
+                }
                 true
             }
         }
@@ -162,8 +171,8 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
             val prefValues = enumValues<AutoDownloadMode>().sortedBy { it.value }.map { it.value }
             val current = settingsManager.getInt(getString(R.string.auto_download_plugins_key), 0)
             activity?.showBottomDialog(prefNames.toList(), prefValues.indexOf(current),
-                getString(R.string.automatic_plugin_download_mode_title), true, {}) {
-                settingsManager.edit { putInt(getString(R.string.auto_download_plugins_key), prefValues[it]) }
+                getString(R.string.automatic_plugin_download_mode_title), true, {}) { selectedIndex ->
+                settingsManager.edit { putInt(getString(R.string.auto_download_plugins_key), prefValues[selectedIndex]) }
                 (context ?: CloudStreamApp.context)?.let { app.initClient(it) }
             }
             true
