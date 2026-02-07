@@ -48,6 +48,7 @@ import java.util.Date
 import java.util.Locale
 
 class SettingsUpdates : BasePreferenceFragmentCompat() {
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setUpToolbar(R.string.category_updates)
@@ -71,70 +72,39 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.settings_updates, rootKey)
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
-        // Backup
-        getPref(R.string.backup_key)?.setOnPreferenceClickListener {
-            BackupUtils.backup(activity)
-            true
-        }
+        // BACKUP
+        getPref(R.string.backup_key)?.setOnPreferenceClickListener { BackupUtils.backup(activity); true }
 
         getPref(R.string.automatic_backup_key)?.setOnPreferenceClickListener {
             val prefNames = resources.getStringArray(R.array.periodic_work_names)
             val prefValues = resources.getIntArray(R.array.periodic_work_values)
             val current = settingsManager.getInt(getString(R.string.automatic_backup_key), 0)
 
-            activity?.showDialog(
-                prefNames.toList(),
-                prefValues.indexOf(current),
-                getString(R.string.backup_frequency),
-                true,
-                {}
-            ) { index ->
-                settingsManager.edit {
-                    putInt(getString(R.string.automatic_backup_key), prefValues[index])
-                }
-                BackupWorkManager.enqueuePeriodicWork(
-                    context ?: CloudStreamApp.context,
-                    prefValues[index].toLong()
-                )
+            activity?.showDialog(prefNames.toList(), prefValues.indexOf(current),
+                getString(R.string.backup_frequency), true, {}) { index ->
+                settingsManager.edit { putInt(getString(R.string.automatic_backup_key), prefValues[index]) }
+                BackupWorkManager.enqueuePeriodicWork(context ?: CloudStreamApp.context, prefValues[index].toLong())
             }
             true
         }
 
-        getPref(R.string.redo_setup_key)?.setOnPreferenceClickListener {
-            findNavController().navigate(R.id.navigation_setup_language)
-            true
-        }
-
-        getPref(R.string.restore_key)?.setOnPreferenceClickListener {
-            activity?.restorePrompt()
-            true
-        }
+        getPref(R.string.redo_setup_key)?.setOnPreferenceClickListener { findNavController().navigate(R.id.navigation_setup_language); true }
+        getPref(R.string.restore_key)?.setOnPreferenceClickListener { activity?.restorePrompt(); true }
 
         getPref(R.string.backup_path_key)?.hideOn(EMULATOR)?.setOnPreferenceClickListener {
             val dirs = getBackupDirsForDisplay()
-            val currentDir =
-                settingsManager.getString(getString(R.string.backup_dir_key), null)
-                    ?: context?.let { ctx -> BackupUtils.getDefaultBackupDir(ctx)?.filePath() }
+            val currentDir = settingsManager.getString(getString(R.string.backup_dir_key), null)
+                ?: context?.let { BackupUtils.getDefaultBackupDir(it)?.filePath() }
 
-            activity?.showBottomDialog(
-                dirs + listOf(getString(R.string.custom)),
-                dirs.indexOf(currentDir),
-                getString(R.string.backup_path_title),
-                true,
-                {}
-            ) {
+            activity?.showBottomDialog(dirs + listOf(getString(R.string.custom)), dirs.indexOf(currentDir),
+                getString(R.string.backup_path_title), true, {}) {
                 if (it == dirs.size) pathPicker.launch(Uri.EMPTY)
-                else {
-                    settingsManager.edit {
-                        putString(getString(R.string.backup_path_key), dirs[it])
-                        putString(getString(R.string.backup_dir_key), dirs[it])
-                    }
-                }
+                else settingsManager.edit { putString(getString(R.string.backup_path_key), dirs[it]); putString(getString(R.string.backup_dir_key), dirs[it]) }
             }
             true
         }
 
-        // Show logcat
+        // SHOW LOGCAT
         getPref(R.string.show_logcat_key)?.setOnPreferenceClickListener { pref ->
             val builder = AlertDialog.Builder(pref.context, R.style.AlertDialogCustom)
             val binding = LogcatBinding.inflate(layoutInflater, null, false)
@@ -145,88 +115,62 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
             val logList = mutableListOf<String>()
             try {
                 val process = Runtime.getRuntime().exec("logcat -d")
-                val bufferedReader = BufferedReader(InputStreamReader(process.inputStream))
-                bufferedReader.lineSequence().forEach { logList.add(it) }
-            } catch (e: Exception) {
-                logError(e)
-            }
+                BufferedReader(InputStreamReader(process.inputStream)).lineSequence().forEach { logList.add(it) }
+            } catch (e: Exception) { logError(e) }
 
             binding.logcatRecyclerView.layoutManager = LinearLayoutManager(pref.context)
             binding.logcatRecyclerView.adapter = LogcatAdapter().apply { submitList(logList) }
 
-            binding.copyBtt.setOnClickListener {
-                clipboardHelper(txt("Logcat"), logList.joinToString("\n"))
-                dialog.dismissSafe(activity)
-            }
-            binding.clearBtt.setOnClickListener {
-                Runtime.getRuntime().exec("logcat -c")
-                dialog.dismissSafe(activity)
-            }
+            binding.copyBtt.setOnClickListener { clipboardHelper(txt("Logcat"), logList.joinToString("\n")); dialog.dismissSafe(activity) }
+            binding.clearBtt.setOnClickListener { Runtime.getRuntime().exec("logcat -c"); dialog.dismissSafe(activity) }
             binding.saveBtt.setOnClickListener {
                 val date = SimpleDateFormat("yyyy_MM_dd_HH_mm", Locale.getDefault()).format(Date())
-                try {
-                    VideoDownloadManager.setupStream(it.context, "logcat_${date}", null, "txt", false)
-                        .openNew().writer().use { writer -> writer.write(logList.joinToString("\n")) }
-                    dialog.dismissSafe(activity)
-                } catch (t: Throwable) {
-                    logError(t)
-                    showToast(t.message)
-                }
+                try { VideoDownloadManager.setupStream(it.context, "logcat_$date", null, "txt", false).openNew().writer().use { w -> w.write(logList.joinToString("\n")) }; dialog.dismissSafe(activity) }
+                catch (t: Throwable) { logError(t); showToast(t.message) }
             }
             binding.closeBtt.setOnClickListener { dialog.dismissSafe(activity) }
             true
         }
 
-        // APK installer
+        // APK INSTALLER
         getPref(R.string.apk_installer_key)?.setOnPreferenceClickListener {
             val prefNames = resources.getStringArray(R.array.apk_installer_pref)
             val prefValues = resources.getIntArray(R.array.apk_installer_values)
             val currentInstaller = settingsManager.getInt(getString(R.string.apk_installer_key), 0)
             activity?.showBottomDialog(prefNames.toList(), prefValues.indexOf(currentInstaller),
-                getString(R.string.apk_installer_settings), true, {}) { num ->
-                settingsManager.edit { putInt(getString(R.string.apk_installer_key), prefValues[num]) }
-            }
+                getString(R.string.apk_installer_settings), true, {}) { settingsManager.edit { putInt(getString(R.string.apk_installer_key), prefValues[it]) } }
             true
         }
 
-        // Manual and pre-release updates
+        // MANUAL UPDATE / PRE-RELEASE
         getPref(R.string.manual_check_update_key)?.let { pref ->
             pref.summary = BuildConfig.VERSION_NAME
             pref.setOnPreferenceClickListener {
-                ioSafe {
-                    if (activity?.runAutoUpdate(false) == false)
-                        activity?.runOnUiThread { showToast(R.string.no_update_found, Toast.LENGTH_SHORT) }
-                }
+                ioSafe { if (activity?.runAutoUpdate(false) == false) activity?.runOnUiThread { showToast(R.string.no_update_found, Toast.LENGTH_SHORT) } }
                 true
             }
         }
 
         getPref(R.string.install_prerelease_key)?.let { pref ->
             pref.isVisible = BuildConfig.FLAVOR == "stable"
-            pref.setOnPreferenceClickListener {
-                activity?.installPreReleaseIfNeeded()
-                true
-            }
+            pref.setOnPreferenceClickListener { activity?.installPreReleaseIfNeeded(); true }
         }
 
-        // Auto-download plugins
+        // AUTO DOWNLOAD PLUGINS
         getPref(R.string.auto_download_plugins_key)?.setOnPreferenceClickListener {
             val prefNames = resources.getStringArray(R.array.auto_download_plugin)
             val prefValues = enumValues<AutoDownloadMode>().sortedBy { it.value }.map { it.value }
             val current = settingsManager.getInt(getString(R.string.auto_download_plugins_key), 0)
             activity?.showBottomDialog(prefNames.toList(), prefValues.indexOf(current),
-                getString(R.string.automatic_plugin_download_mode_title), true, {}) { num ->
-                settingsManager.edit { putInt(getString(R.string.auto_download_plugins_key), prefValues[num]) }
+                getString(R.string.automatic_plugin_download_mode_title), true, {}) {
+                settingsManager.edit { putInt(getString(R.string.auto_download_plugins_key), prefValues[it]) }
                 (context ?: CloudStreamApp.context)?.let { app.initClient(it) }
             }
             true
         }
 
-        // Manual update plugins
         getPref(R.string.manual_update_plugins_key)?.setOnPreferenceClickListener {
-            ioSafe {
-                PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(activity ?: return@ioSafe)
-            }
+            ioSafe { PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(activity ?: return@ioSafe) }
             true
         }
     }
@@ -236,11 +180,8 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
             context?.let { ctx ->
                 val defaultDir = BackupUtils.getDefaultBackupDir(ctx)?.filePath()
                 val first = listOf(defaultDir)
-                (runCatching {
-                    first + BackupUtils.getCurrentBackupDir(ctx).let {
-                        it.first?.filePath() ?: it.second
-                    }
-                }.getOrNull() ?: first).filterNotNull().distinct()
+                (runCatching { first + BackupUtils.getCurrentBackupDir(ctx).let { it.first?.filePath() ?: it.second } }.getOrNull() ?: first)
+                    .filterNotNull().distinct()
             }
         } ?: emptyList()
     }

@@ -10,8 +10,8 @@ import androidx.preference.PreferenceViewHolder
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.plugins.Plugin
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.plugins.isDownloaded   // IMPORT UNTUK EXTENSION
-import com.lagradost.cloudstream3.plugins.isEnabled      // IMPORT UNTUK EXTENSION
+import com.lagradost.cloudstream3.plugins.isDownloaded   // EXTENSION
+import com.lagradost.cloudstream3.plugins.isEnabled      // EXTENSION
 
 class PluginStorageHeaderPreference @JvmOverloads constructor(
     context: Context,
@@ -36,15 +36,12 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
         val disabledTxt = view.findViewById<TextView>(R.id.plugin_disabled_txt)
         val notDownloadedTxt = view.findViewById<TextView>(R.id.plugin_not_downloaded_txt)
 
-        // Ambil plugin asli dari RepositoryManager
         val plugins: List<Plugin> = RepositoryManager.plugins.values.toList()
 
-        // HITUNG STATUS PLUGIN
         val downloadedCount = plugins.count { it.isDownloaded }
         val disabledCount = plugins.count { it.isDownloaded && !it.isEnabled }
         val notDownloadedCount = plugins.count { !it.isDownloaded }
 
-        // Fungsi helper untuk set weight layout
         fun View.setWeight(weight: Int) {
             val param = LinearLayout.LayoutParams(
                 0,
