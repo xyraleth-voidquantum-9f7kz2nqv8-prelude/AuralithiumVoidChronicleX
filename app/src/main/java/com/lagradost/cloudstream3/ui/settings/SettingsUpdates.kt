@@ -1,9 +1,9 @@
 package com.lagradost.cloudstream3.ui.settings
 
 import android.app.Activity
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import android.view.View
 import android.widget.Toast
 import androidx.preference.PreferenceManager
 import com.lagradost.cloudstream3.BuildConfig
@@ -24,23 +24,18 @@ import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import androidx.core.content.edit
+
+// =======================
+// SAFE UTILITY
+// =======================
+inline fun <T> safe(block: () -> T): T? = try { block() } catch (_: Exception) { null }
 
 // =======================
 // STUBS
 // =======================
 fun Activity.installPreReleaseIfNeeded() { }
 fun Activity.runAutoUpdate(checkOnly: Boolean = false): Boolean = false
-
-// =======================
-// SAFE EXTENSION
-// =======================
-inline fun <T> safe(block: () -> T): T? {
-    return try {
-        block()
-    } catch (_: Exception) {
-        null
-    }
-}
 
 // =======================
 // EXTENSION SAFE REFRESH COUNTS
@@ -61,20 +56,21 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     private var pluginHeader: PluginStorageHeaderPreference? = null
     private val mainScope = MainScope()
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(view: android.view.View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setUpToolbar(R.string.category_updates)
         setPaddingBottom()
         setToolBarScrollFlags()
     }
 
-    private val pathPicker = getChooseFolderLauncher { uri, path ->
+    private val pathPicker = getChooseFolderLauncher { uri: Uri, path: String? ->
         val ctx = context ?: CloudStreamApp.context ?: return@getChooseFolderLauncher
-        (path ?: uri.toString()).let {
-            PreferenceManager.getDefaultSharedPreferences(ctx).edit {
-                putString(getString(R.string.backup_path_key), uri.toString())
-                putString(getString(R.string.backup_dir_key), it)
-            }
+        val actualPath = path ?: uri.toString()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(ctx)
+        prefs.edit().apply {
+            putString(ctx.getString(R.string.backup_path_key), uri.toString())
+            putString(ctx.getString(R.string.backup_dir_key), actualPath)
+            apply()
         }
     }
 
@@ -128,14 +124,16 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
     }
 
     // =======================
-    // RELOAD PLUGINS SUSPEND
+    // RELOAD PLUGINS SUSPEND (SAFE)
     // =======================
     private suspend fun reloadPlugins(activity: Activity) {
-        PluginManager.plugins?.values?.forEach { plugin ->
-            PluginManager.unloadPlugin(plugin)
-            // Tidak memanggil loadPlugin() karena private
+        safe {
+            PluginManager.plugins?.values?.forEach { plugin ->
+                PluginManager.unloadPlugin(plugin)
+                // Jangan panggil loadPlugin private
+            }
+            activity.runOnUiThread { updatePluginStats() }
         }
-        activity.runOnUiThread { updatePluginStats() }
     }
 
     // =======================
@@ -145,9 +143,9 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         val header = pluginHeader ?: return
         val plugins: List<BasePlugin> = safe { PluginManager.plugins?.values?.toList() } ?: emptyList()
 
-        header.downloadedCount = plugins.count { it.isDownloaded }
-        header.disabledCount = plugins.count { !it.isEnabled }
-        header.notDownloadedCount = plugins.count { !it.isDownloaded }
+        header.downloadedCount = plugins.count { safe { it.downloaded } ?: false }
+        header.disabledCount = plugins.count { safe { !(it.enabled) } ?: false }
+        header.notDownloadedCount = plugins.count { safe { !(it.downloaded) } ?: false }
 
         header.safeRefreshCounts()
     }
