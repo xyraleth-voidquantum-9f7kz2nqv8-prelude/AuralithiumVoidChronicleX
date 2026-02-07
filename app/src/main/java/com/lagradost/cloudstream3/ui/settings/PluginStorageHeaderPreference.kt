@@ -10,8 +10,8 @@ import androidx.preference.PreferenceViewHolder
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.plugins.Plugin
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.plugins.isDownloaded   // EXTENSION
-import com.lagradost.cloudstream3.plugins.isEnabled      // EXTENSION
+import com.lagradost.cloudstream3.plugins.isDownloaded
+import com.lagradost.cloudstream3.plugins.isEnabled
 
 class PluginStorageHeaderPreference @JvmOverloads constructor(
     context: Context,
@@ -38,25 +38,36 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
 
         val plugins: List<Plugin> = RepositoryManager.plugins.values.toList()
 
-        val downloadedCount = plugins.count { it.isDownloaded }
         val disabledCount = plugins.count { it.isDownloaded && !it.isEnabled }
+        val downloadedCount = plugins.count { it.isDownloaded && it.isEnabled }
         val notDownloadedCount = plugins.count { !it.isDownloaded }
 
+        val total = plugins.size
+
         fun View.setWeight(weight: Int) {
-            val param = LinearLayout.LayoutParams(
+            layoutParams = LinearLayout.LayoutParams(
                 0,
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 weight.toFloat()
             )
-            layoutParams = param
         }
 
-        downloaded.setWeight(downloadedCount)
-        disabled.setWeight(disabledCount)
-        notDownloaded.setWeight(notDownloadedCount)
+        // 🔥 FIX UTAMA: jangan biarin semua 0
+        if (total == 0) {
+            downloaded.setWeight(1)
+            disabled.setWeight(0)
+            notDownloaded.setWeight(0)
+        } else {
+            downloaded.setWeight(downloadedCount)
+            disabled.setWeight(disabledCount)
+            notDownloaded.setWeight(notDownloadedCount)
+        }
 
-        downloadedTxt.text = "Downloaded: $downloadedCount"
-        disabledTxt.text = "Disabled: $disabledCount"
-        notDownloadedTxt.text = "Not downloaded: $notDownloadedCount"
+        downloadedTxt.text =
+            context.getString(R.string.plugin_downloaded_format, downloadedCount)
+        disabledTxt.text =
+            context.getString(R.string.plugin_disabled_format, disabledCount)
+        notDownloadedTxt.text =
+            context.getString(R.string.plugin_not_downloaded_format, notDownloadedCount)
     }
 }
