@@ -22,7 +22,7 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
 
     init {
         layoutResource = R.layout.plugin_storage_header
-        isSelectable = true // ✅ WAJIB, BIAR BISA DIKLIK
+        isSelectable = false // ✅ WAJIB, BIAR BISA DIKLIK
     }
 
     override fun onBindViewHolder(holder: PreferenceViewHolder) {
