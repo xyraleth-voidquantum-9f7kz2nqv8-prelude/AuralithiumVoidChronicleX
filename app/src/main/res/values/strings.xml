@@ -701,6 +701,9 @@
     <string name="sort_button_date">Date %s</string>
     <string name="select_library">Select Library</string>
     <string name="open_with">Open with</string>
+    <string name="plugin_downloaded_format">%d Downloaded</string>
+    <string name="plugin_disabled_format">%d Disabled</string>
+    <string name="plugin_not_downloaded_format">%d Not Downloaded</string>
     <string name="install_prerelease_key">Install Pre-release</string>
     <string name="empty_library_no_accounts_message">Your library is empty :(
 \nLog in on a library account or add shows to your local library.</string>

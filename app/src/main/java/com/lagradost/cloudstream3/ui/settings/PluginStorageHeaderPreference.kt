@@ -8,10 +8,7 @@ import android.widget.TextView
 import androidx.preference.Preference
 import androidx.preference.PreferenceViewHolder
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.plugins.Plugin
 import com.lagradost.cloudstream3.plugins.RepositoryManager
-import com.lagradost.cloudstream3.plugins.isDownloaded
-import com.lagradost.cloudstream3.plugins.isEnabled
 
 class PluginStorageHeaderPreference @JvmOverloads constructor(
     context: Context,
@@ -36,11 +33,12 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
         val disabledTxt = view.findViewById<TextView>(R.id.plugin_disabled_txt)
         val notDownloadedTxt = view.findViewById<TextView>(R.id.plugin_not_downloaded_txt)
 
-        val plugins: List<Plugin> = RepositoryManager.plugins.values.toList()
+        // ✅ API STABIL (AMAN SEMUA BRANCH)
+        val plugins = RepositoryManager.plugins.values
 
-        val disabledCount = plugins.count { it.isDownloaded && !it.isEnabled }
-        val downloadedCount = plugins.count { it.isDownloaded && it.isEnabled }
-        val notDownloadedCount = plugins.count { !it.isDownloaded }
+        val downloadedCount = plugins.count { it.isInstalled && it.isEnabled }
+        val disabledCount = plugins.count { it.isInstalled && !it.isEnabled }
+        val notDownloadedCount = plugins.count { !it.isInstalled }
 
         val total = plugins.size
 
@@ -52,7 +50,7 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
             )
         }
 
-        // 🔥 FIX UTAMA: jangan biarin semua 0
+        // 🔥 FIX: jangan sampai semua bar 0
         if (total == 0) {
             downloaded.setWeight(1)
             disabled.setWeight(0)
