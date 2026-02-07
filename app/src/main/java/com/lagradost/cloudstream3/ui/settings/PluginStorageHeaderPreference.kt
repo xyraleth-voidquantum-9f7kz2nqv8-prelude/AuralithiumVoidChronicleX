@@ -23,22 +23,22 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
 
     init {
         layoutResource = R.layout.plugin_storage_header
-        isSelectable = true // ✅ HARUS TRUE BIAR BISA DIKLIK
+        isSelectable = true
     }
 
-    /**
-     * Ambil data plugin asli dari RepositoryManager
-     */
     override fun onAttached() {
         super.onAttached()
 
-        val stats = RepositoryManager.getAllPluginsStats()
+        // =========================
+        // AMBIL DATA PLUGIN (AMAN)
+        // =========================
+        val plugins = RepositoryManager.getAllPlugins()
 
-        downloadedCount = stats.downloaded
-        disabledCount = stats.disabled
-        notDownloadedCount = stats.notDownloaded
+        downloadedCount = plugins.count { it.isDownloaded }
+        disabledCount = plugins.count { it.isDownloaded && !it.isEnabled }
+        notDownloadedCount = plugins.count { !it.isDownloaded }
 
-        notifyChanged() // 🔥 refresh UI preference
+        notifyChanged()
     }
 
     override fun onBindViewHolder(holder: PreferenceViewHolder) {
