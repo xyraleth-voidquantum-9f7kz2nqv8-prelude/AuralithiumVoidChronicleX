@@ -23,7 +23,6 @@ import com.lagradost.cloudstream3.plugins.PluginManager
 import com.lagradost.cloudstream3.services.BackupWorkManager
 import com.lagradost.cloudstream3.ui.BasePreferenceFragmentCompat
 import com.lagradost.cloudstream3.ui.settings.Globals.EMULATOR
-import com.lagradost.cloudstream3.ui.settings.Globals.TV
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.getPref
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.hideOn
 import com.lagradost.cloudstream3.ui.settings.SettingsFragment.Companion.setPaddingBottom
@@ -74,9 +73,10 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.settings_updates, rootKey)
         val settingsManager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
+        // Backup
         getPref(R.string.backup_key)?.setOnPreferenceClickListener {
             BackupUtils.backup(activity)
-            return@setOnPreferenceClickListener true
+            true
         }
 
         getPref(R.string.automatic_backup_key)?.setOnPreferenceClickListener {
@@ -99,18 +99,19 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
                     prefValues[index].toLong()
                 )
             }
-            return@setOnPreferenceClickListener true
+            true
         }
 
         getPref(R.string.redo_setup_key)?.setOnPreferenceClickListener {
             findNavController().navigate(R.id.navigation_setup_language)
-            return@setOnPreferenceClickListener true
+            true
         }
 
         getPref(R.string.restore_key)?.setOnPreferenceClickListener {
             activity?.restorePrompt()
-            return@setOnPreferenceClickListener true
+            true
         }
+
         getPref(R.string.backup_path_key)?.hideOn(EMULATOR)?.setOnPreferenceClickListener {
             val dirs = getBackupDirsForDisplay()
             val currentDir =
@@ -124,162 +125,111 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
                 true,
                 {}
             ) {
-                // Last = custom
-                if (it == dirs.size) {
-                    try {
-                        pathPicker.launch(Uri.EMPTY)
-                    } catch (e: Exception) {
-                        logError(e)
-                    }
-                } else {
-                    // Sets both visual and actual paths.
-                    // path = used uri
-                    // dir = dir path
+                if (it == dirs.size) pathPicker.launch(Uri.EMPTY)
+                else {
                     settingsManager.edit {
                         putString(getString(R.string.backup_path_key), dirs[it])
                         putString(getString(R.string.backup_dir_key), dirs[it])
                     }
                 }
             }
-            return@setOnPreferenceClickListener true
+            true
         }
 
+        // Show logcat
         getPref(R.string.show_logcat_key)?.setOnPreferenceClickListener { pref ->
             val builder = AlertDialog.Builder(pref.context, R.style.AlertDialogCustom)
-
             val binding = LogcatBinding.inflate(layoutInflater, null, false)
             builder.setView(binding.root)
-
             val dialog = builder.create()
             dialog.show()
 
             val logList = mutableListOf<String>()
             try {
-                // https://developer.android.com/studio/command-line/logcat
                 val process = Runtime.getRuntime().exec("logcat -d")
                 val bufferedReader = BufferedReader(InputStreamReader(process.inputStream))
                 bufferedReader.lineSequence().forEach { logList.add(it) }
             } catch (e: Exception) {
-                logError(e) // kinda ironic
+                logError(e)
             }
 
-            val adapter = LogcatAdapter().apply { submitList(logList) }
             binding.logcatRecyclerView.layoutManager = LinearLayoutManager(pref.context)
-            binding.logcatRecyclerView.adapter = adapter
+            binding.logcatRecyclerView.adapter = LogcatAdapter().apply { submitList(logList) }
 
             binding.copyBtt.setOnClickListener {
                 clipboardHelper(txt("Logcat"), logList.joinToString("\n"))
                 dialog.dismissSafe(activity)
             }
-
             binding.clearBtt.setOnClickListener {
                 Runtime.getRuntime().exec("logcat -c")
                 dialog.dismissSafe(activity)
             }
-
             binding.saveBtt.setOnClickListener {
                 val date = SimpleDateFormat("yyyy_MM_dd_HH_mm", Locale.getDefault()).format(Date(currentTimeMillis()))
-                var fileStream: OutputStream? = null
                 try {
-                    fileStream = VideoDownloadManager.setupStream(
-                        it.context,
-                        "logcat_${date}",
-                        null,
-                        "txt",
-                        false
-                    ).openNew()
-                    fileStream.writer().use { writer -> writer.write(logList.joinToString("\n")) }
+                    VideoDownloadManager.setupStream(it.context, "logcat_${date}", null, "txt", false)
+                        .openNew().writer().use { writer -> writer.write(logList.joinToString("\n")) }
                     dialog.dismissSafe(activity)
                 } catch (t: Throwable) {
                     logError(t)
                     showToast(t.message)
                 }
             }
-
-            binding.closeBtt.setOnClickListener {
-                dialog.dismissSafe(activity)
-            }
-
-            return@setOnPreferenceClickListener true
+            binding.closeBtt.setOnClickListener { dialog.dismissSafe(activity) }
+            true
         }
 
+        // APK installer
         getPref(R.string.apk_installer_key)?.setOnPreferenceClickListener {
             val prefNames = resources.getStringArray(R.array.apk_installer_pref)
             val prefValues = resources.getIntArray(R.array.apk_installer_values)
-
-            val currentInstaller =
-                settingsManager.getInt(getString(R.string.apk_installer_key), 0)
-
-            activity?.showBottomDialog(
-                prefNames.toList(),
-                prefValues.indexOf(currentInstaller),
-                getString(R.string.apk_installer_settings),
-                true,
-                {}
-            ) { num ->
-                try {
-                    settingsManager.edit {
-                        putInt(getString(R.string.apk_installer_key), prefValues[num])
-                    }
-                } catch (e: Exception) {
-                    logError(e)
-                }
+            val currentInstaller = settingsManager.getInt(getString(R.string.apk_installer_key), 0)
+            activity?.showBottomDialog(prefNames.toList(), prefValues.indexOf(currentInstaller),
+                getString(R.string.apk_installer_settings), true, {}) { num ->
+                settingsManager.edit { putInt(getString(R.string.apk_installer_key), prefValues[num]) }
             }
-            return@setOnPreferenceClickListener true
+            true
         }
 
+        // Manual and pre-release updates
         getPref(R.string.manual_check_update_key)?.let { pref ->
             pref.summary = BuildConfig.VERSION_NAME
             pref.setOnPreferenceClickListener {
                 ioSafe {
-                    if (activity?.runAutoUpdate(false) == false) {
-                        activity?.runOnUiThread {
-                            showToast(
-                                R.string.no_update_found,
-                                Toast.LENGTH_SHORT
-                            )
-                        }
-                    }
+                    if (activity?.runAutoUpdate(false) == false)
+                        activity?.runOnUiThread { showToast(R.string.no_update_found, Toast.LENGTH_SHORT) }
                 }
-                return@setOnPreferenceClickListener true
+                true
             }
         }
-        
+
         getPref(R.string.install_prerelease_key)?.let { pref ->
             pref.isVisible = BuildConfig.FLAVOR == "stable"
             pref.setOnPreferenceClickListener {
                 activity?.installPreReleaseIfNeeded()
-                return@setOnPreferenceClickListener true
+                true
             }
         }
 
+        // Auto-download plugins
         getPref(R.string.auto_download_plugins_key)?.setOnPreferenceClickListener {
             val prefNames = resources.getStringArray(R.array.auto_download_plugin)
-            val prefValues =
-                enumValues<AutoDownloadMode>().sortedBy { x -> x.value }.map { x -> x.value }
-
+            val prefValues = enumValues<AutoDownloadMode>().sortedBy { it.value }.map { it.value }
             val current = settingsManager.getInt(getString(R.string.auto_download_plugins_key), 0)
-
-            activity?.showBottomDialog(
-                prefNames.toList(),
-                prefValues.indexOf(current),
-                getString(R.string.automatic_plugin_download_mode_title),
-                true,
-                {}
-            ) { num ->
-                settingsManager.edit {
-                    putInt(getString(R.string.auto_download_plugins_key), prefValues[num])
-                }
-                (context ?: CloudStreamApp.context)?.let { ctx -> app.initClient(ctx) }
+            activity?.showBottomDialog(prefNames.toList(), prefValues.indexOf(current),
+                getString(R.string.automatic_plugin_download_mode_title), true, {}) { num ->
+                settingsManager.edit { putInt(getString(R.string.auto_download_plugins_key), prefValues[num]) }
+                (context ?: CloudStreamApp.context)?.let { app.initClient(it) }
             }
-            return@setOnPreferenceClickListener true
+            true
         }
 
+        // Manual update plugins
         getPref(R.string.manual_update_plugins_key)?.setOnPreferenceClickListener {
             ioSafe {
                 PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(activity ?: return@ioSafe)
             }
-            return@setOnPreferenceClickListener true // Return true for the listener
+            true
         }
     }
 
@@ -290,8 +240,8 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
                 val first = listOf(defaultDir)
                 (runCatching {
                     first + BackupUtils.getCurrentBackupDir(ctx).let {
-                                it.first?.filePath() ?: it.second
-                            }
+                        it.first?.filePath() ?: it.second
+                    }
                 }.getOrNull() ?: first).filterNotNull().distinct()
             }
         } ?: emptyList()

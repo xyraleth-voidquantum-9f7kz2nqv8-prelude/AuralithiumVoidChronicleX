@@ -26,7 +26,6 @@ import com.lagradost.cloudstream3.utils.setText
 class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     BindingCreator.Inflate(FragmentExtensionsBinding::inflate)
 ) {
-
     private val viewModel: ExtensionsViewModel by activityViewModels()
 
     // Secure repo
@@ -44,13 +43,14 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     override fun onResume() {
         super.onResume()
         afterRepositoryLoadedEvent += ::reloadRepositories
-        PluginManager.pluginChangeEvent += ::reloadPluginStats
+        viewModel.pluginStats.observe(viewLifecycleOwner) {
+            reloadPluginStats()
+        }
     }
 
     override fun onStop() {
         super.onStop()
         afterRepositoryLoadedEvent -= ::reloadRepositories
-        PluginManager.pluginChangeEvent -= ::reloadPluginStats
         fragmentVisible = false
     }
 
