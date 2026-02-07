@@ -134,7 +134,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             )
         }
 
-        // === Plugin stats bar (FIXED) ===
+        // === Plugin stats bar ===
         observeNullable(viewModel.pluginStats) { stats ->
             if (stats == null) {
                 binding.pluginStorageAppbar.isGone = true
@@ -158,8 +158,12 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             binding.pluginNotDownloadedTxt.setText(stats.notDownloadedText)
         }
 
-        // === Auto redirect ke repo target ===
+        // === Submit repo list ke adapter (PENTING) ===
         observe(viewModel.repositories) { repos ->
+            // Submit ke adapter supaya pluginStats muncul
+            (binding.repoRecyclerView.adapter as? RepoAdapter)?.submitList(repos.toList())
+
+            // === Optional auto-redirect ke repo target ===
             if (!fragmentVisible || alreadyRedirected) return@observe
 
             val repo = repos.firstOrNull { it.url == TARGET_REPO_URL } ?: return@observe
