@@ -41,6 +41,8 @@ import com.lagradost.cloudstream3.utils.UIHelper.dismissSafe
 import com.lagradost.cloudstream3.utils.UIHelper.hideKeyboard
 import com.lagradost.cloudstream3.utils.VideoDownloadManager
 import com.lagradost.cloudstream3.utils.txt
+import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
+import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStream
@@ -49,22 +51,19 @@ import java.util.Date
 import java.util.Locale
 
 // =======================
-// STUBS (EXTENSION — WAJIB)
+// STUBS
 // =======================
-fun Activity.installPreReleaseIfNeeded() {
-    // no-op (stable build)
-}
-
-fun Activity.runAutoUpdate(checkOnly: Boolean = false): Boolean {
-    return false
-}
+fun Activity.installPreReleaseIfNeeded() { }
+fun Activity.runAutoUpdate(checkOnly: Boolean = false): Boolean = false
 
 // =======================
 // EXTENSION SAFE REFRESH COUNTS
 // =======================
 fun PluginStorageHeaderPreference.safeRefreshCounts() {
     try {
-        this.notifyChanged()
+        val method = this.javaClass.superclass.getDeclaredMethod("notifyChanged")
+        method.isAccessible = true
+        method.invoke(this)
     } catch (_: Exception) { }
 }
 
@@ -127,30 +126,28 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         // =======================
         // AUTO UPDATE PLUGINS (HANYA RELOAD)
         // =======================
-        getPref(R.string.manual_update_plugins_key)
-            ?.setOnPreferenceClickListener {
-                ioSafe {
-                    PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(
-                        activity ?: return@ioSafe
-                    )
-                    activity?.runOnUiThread { updatePluginStats() }
-                }
-                true
-            }
+        getPref(R.string.manual_update_plugins_key)?.setOnPreferenceClickListener {
+            ioSafe { reloadPluginsOnly() }
+            true
+        }
 
         // =======================
         // UPDATE HEADER SAAT OPEN FRAGMENT
         // =======================
-        ioSafe {
-            PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(
-                activity ?: return@ioSafe
-            )
-            activity?.runOnUiThread { updatePluginStats() }
-        }
+        ioSafe { reloadPluginsOnly() }
     }
 
     // =======================
-    // HELPER: UPDATE HEADER PLUGIN
+    // RELOAD HANYA PLUGIN YANG ADA
+    // =======================
+    private fun reloadPluginsOnly() {
+        val act = activity ?: return
+        PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(act)
+        act.runOnUiThread { updatePluginStats() }
+    }
+
+    // =======================
+    // UPDATE HEADER PLUGIN
     // =======================
     private fun updatePluginStats() {
         val header = pluginHeader ?: return
