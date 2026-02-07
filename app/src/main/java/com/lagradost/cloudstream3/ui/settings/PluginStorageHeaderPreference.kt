@@ -7,9 +7,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.preference.Preference
 import androidx.preference.PreferenceViewHolder
-import com.lagradost.cloudstream3.MainActivity
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.ui.settings.extensions.PluginsFragment
 
 class PluginStorageHeaderPreference @JvmOverloads constructor(
     context: Context,
@@ -25,9 +23,6 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
         isSelectable = true
     }
 
-    /**
-     * DIPANGGIL DARI SettingsFragment
-     */
     fun setStats(downloaded: Int, disabled: Int, notDownloaded: Int) {
         downloadedCount = downloaded
         disabledCount = disabled
@@ -74,17 +69,5 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
             context.getString(R.string.plugin_disabled_format, disabledCount)
         notDownloadedTxt.text =
             context.getString(R.string.plugin_not_downloaded_format, notDownloadedCount)
-
-        // CLICK → PLUGINS LIST
-        view.setOnClickListener {
-            val activity = context as? MainActivity ?: return@setOnClickListener
-            activity.loadFragment(
-                PluginsFragment.newInstance(
-                    context.getString(R.string.extensions),
-                    "",
-                    true
-                )
-            )
-        }
     }
 }
