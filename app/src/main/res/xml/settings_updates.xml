@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <!-- Kategori Ekstensi -->
@@ -23,11 +24,11 @@
             android:key="@string/manual_update_plugins_key"
             android:title="@string/update_plugins"
             android:summary="@string/update_plugins_manually"/>
-
     </PreferenceCategory>
 
-    <!-- HEADER BAR PLUGIN (DITARUH DI BAWAH) -->
-    <com.lagradost.cloudstream3.ui.settings.PluginStorageHeaderPreference
-        android:key="plugin_storage_header" />
+    <!-- HEADER BAR PLUGIN (FIXED) -->
+    <com.lagradost.cloudstream3.ui.settings.extensions.PluginStorageHeaderPreference
+        android:key="@string/plugin_storage_header_key"
+        android:selectable="false"/>
 
 </PreferenceScreen>
