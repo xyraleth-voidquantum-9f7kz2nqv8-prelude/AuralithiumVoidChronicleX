@@ -1208,6 +1208,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         updateLocale()
         setTheme(R.style.AppTheme)  // ✨ ini yang bikin background HP gelap langsung
         super.onCreate(savedInstanceState)
+        initAll()
         
         NebulaGate.probe(this)
         
@@ -1727,7 +1728,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, BiometricCa
         SearchResultBuilder.updateCache(this)
 
         ioSafe {
-            initAll()
             // No duplicates (which can happen by registerMainAPI)
             apis = synchronized(allProviders) {
                 allProviders.distinctBy { it }
