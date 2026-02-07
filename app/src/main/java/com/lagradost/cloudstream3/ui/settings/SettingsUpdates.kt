@@ -97,7 +97,6 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         hideKeyboard()
         setPreferencesFromResource(R.xml.settings_updates, rootKey)
 
-        // Ambil Plugin Header Preference
         pluginHeader = findPreference(getString(R.string.plugin_storage_header_key))
 
         // =======================
@@ -126,18 +125,15 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         }
 
         // =======================
-        // AUTO UPDATE PLUGINS
+        // AUTO UPDATE PLUGINS (HANYA RELOAD)
         // =======================
         getPref(R.string.manual_update_plugins_key)
             ?.setOnPreferenceClickListener {
                 ioSafe {
-                    PluginManager
-                        .___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(
-                            activity ?: return@ioSafe
-                        )
-                    activity?.runOnUiThread {
-                        updatePluginStats()
-                    }
+                    PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(
+                        activity ?: return@ioSafe
+                    )
+                    activity?.runOnUiThread { updatePluginStats() }
                 }
                 true
             }
@@ -146,7 +142,6 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         // UPDATE HEADER SAAT OPEN FRAGMENT
         // =======================
         ioSafe {
-            // Hanya reload plugin yang sudah ada, tanpa menambah repo baru
             PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(
                 activity ?: return@ioSafe
             )
