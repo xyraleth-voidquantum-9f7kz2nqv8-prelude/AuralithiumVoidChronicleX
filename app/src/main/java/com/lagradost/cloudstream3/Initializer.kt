@@ -7,7 +7,9 @@ import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 object Initializer {
 
@@ -38,15 +40,11 @@ object Initializer {
     private const val URL_B2 = "bnRlbnQuY29tL0dpbGFuZ0FkaXRhbWEv"
     private const val URL_B3 = "TW92aWVLdS9tYWluL3JlcG8uanNvbg=="
 
-    private fun jX7(): String {
-        val encoded = URL_A1 + URL_A2 + URL_A3 + URL_A4
-        return String(Base64.decode(encoded, Base64.DEFAULT))
-    }
+    private fun repoA(): String =
+        String(Base64.decode(URL_A1 + URL_A2 + URL_A3 + URL_A4, Base64.DEFAULT))
 
-    private fun kM9(): String {
-        val encoded = URL_B1 + URL_B2 + URL_B3
-        return String(Base64.decode(encoded, Base64.DEFAULT))
-    }
+    private fun repoB(): String =
+        String(Base64.decode(URL_B1 + URL_B2 + URL_B3, Base64.DEFAULT))
 
     fun start(activity: Activity) {
         val prefs = activity.getSharedPreferences(
@@ -54,33 +52,48 @@ object Initializer {
             Activity.MODE_PRIVATE
         )
 
-        val rX = RepositoryData(
+        val repo1 = RepositoryData(
             name = decode(REPO_NAME_X1),
-            url = jX7(),
+            url = repoA(),
             iconUrl = null
         )
 
-        val sY = RepositoryData(
+        val repo2 = RepositoryData(
             name = decode(REPO_NAME_X2),
-            url = kM9(),
+            url = repoB(),
             iconUrl = null
         )
 
         CoroutineScope(Dispatchers.IO).launch {
+            var repoChanged = false
+
             try {
                 if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
-                    RepositoryManager.addRepository(rX)
-                    RepositoryManager.addRepository(sY)
-                    PluginsViewModel.downloadAll(activity, rX.url, null)
-                    PluginsViewModel.downloadAll(activity, sY.url, null)
+                    RepositoryManager.addRepository(repo1)
+                    RepositoryManager.addRepository(repo2)
+                    repoChanged = true
+
                     prefs.edit()
                         .putBoolean(AUTO_REPO_FLAG, true)
                         .putBoolean(NEED_AUTO_DOWNLOAD, false)
                         .apply()
                 }
-                PluginsViewModel.downloadAll(activity, rX.url, null)
-                PluginsViewModel.downloadAll(activity, sY.url, null)
-            } catch (_: Throwable) {}
+            } catch (_: Throwable) {
+            }
+
+            withContext(Dispatchers.Main) {
+                // 🔔 PENTING: trigger reload ExtensionsFragment
+                if (repoChanged) {
+                    MainActivity.afterRepositoryLoadedEvent.invoke(true)
+                }
+
+                // kasih waktu repo discan
+                delay(300)
+
+                // 🔥 DOWNLOAD HARUS DI MAIN
+                PluginsViewModel.downloadAll(activity, repo1.url, null)
+                PluginsViewModel.downloadAll(activity, repo2.url, null)
+            }
         }
     }
 }
