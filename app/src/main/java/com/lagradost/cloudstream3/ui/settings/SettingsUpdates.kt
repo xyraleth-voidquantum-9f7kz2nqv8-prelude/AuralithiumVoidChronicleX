@@ -33,6 +33,7 @@ import com.lagradost.cloudstream3.ui.settings.PluginStorageHeaderPreference
 import com.lagradost.cloudstream3.ui.settings.utils.getChooseFolderLauncher
 import com.lagradost.cloudstream3.utils.BackupUtils
 import com.lagradost.cloudstream3.utils.BackupUtils.restorePrompt
+import com.lagradost.cloudstream3.utils.Coroutines
 import com.lagradost.cloudstream3.utils.Coroutines.ioSafe
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showBottomDialog
 import com.lagradost.cloudstream3.utils.SingleSelectionHelper.showDialog
@@ -47,6 +48,7 @@ import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 // =======================
 // STUBS
@@ -55,7 +57,7 @@ fun Activity.installPreReleaseIfNeeded() { }
 fun Activity.runAutoUpdate(checkOnly: Boolean = false): Boolean = false
 
 // =======================
-// SAFE REFRESH COUNTS
+// EXTENSION SAFE REFRESH COUNTS
 // =======================
 fun PluginStorageHeaderPreference.safeRefreshCounts() {
     try {
@@ -89,6 +91,7 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         }
     }
 
+    @Suppress("DEPRECATION_ERROR")
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         hideKeyboard()
         setPreferencesFromResource(R.xml.settings_updates, rootKey)
@@ -124,8 +127,10 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         // AUTO UPDATE PLUGINS
         // =======================
         getPref(R.string.manual_update_plugins_key)?.setOnPreferenceClickListener {
-            ioSafe {
-                reloadAndDownloadPlugins()
+            activity?.let { act ->
+                Coroutines.mainScope.launch {
+                    reloadPlugins(act)
+                }
             }
             true
         }
@@ -133,19 +138,19 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         // =======================
         // UPDATE HEADER SAAT OPEN FRAGMENT
         // =======================
-        ioSafe { reloadAndDownloadPlugins() }
+        activity?.let { act ->
+            Coroutines.mainScope.launch {
+                reloadPlugins(act)
+            }
+        }
     }
 
     // =======================
-    // RELOAD PLUGIN DAN UPDATE HEADER
+    // RELOAD PLUGINS SUSPEND
     // =======================
-    private suspend fun reloadAndDownloadPlugins() {
-        val act = activity ?: return
-        // Reload semua plugin yang ada (suspend)
-        PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(act)
-
-        // Update header
-        act.runOnUiThread { updatePluginStats() }
+    private suspend fun reloadPlugins(activity: Activity) {
+        PluginManager.___DO_NOT_CALL_FROM_A_PLUGIN_manuallyReloadAndUpdatePlugins(activity)
+        activity.runOnUiThread { updatePluginStats() }
     }
 
     // =======================
@@ -155,9 +160,9 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
         val header = pluginHeader ?: return
         val plugins: List<Plugin> = safe { PluginManager.getPlugins() } ?: emptyList()
 
-        header.downloadedCount = plugins.count { safe { it.isDownloaded } == true }
-        header.disabledCount = plugins.count { safe { it.isDisabled } == true }
-        header.notDownloadedCount = plugins.count { safe { it.isDownloaded } == false }
+        header.downloadedCount = plugins.count { it.isDownloaded }
+        header.disabledCount = plugins.count { it.isDisabled }
+        header.notDownloadedCount = plugins.count { !it.isDownloaded }
 
         header.safeRefreshCounts()
     }
