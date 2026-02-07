@@ -43,8 +43,6 @@ import com.lagradost.cloudstream3.utils.VideoDownloadManager
 import com.lagradost.cloudstream3.utils.txt
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.io.OutputStream
-import java.lang.System.currentTimeMillis
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -165,7 +163,7 @@ class SettingsUpdates : BasePreferenceFragmentCompat() {
                 dialog.dismissSafe(activity)
             }
             binding.saveBtt.setOnClickListener {
-                val date = SimpleDateFormat("yyyy_MM_dd_HH_mm", Locale.getDefault()).format(Date(currentTimeMillis()))
+                val date = SimpleDateFormat("yyyy_MM_dd_HH_mm", Locale.getDefault()).format(Date())
                 try {
                     VideoDownloadManager.setupStream(it.context, "logcat_${date}", null, "txt", false)
                         .openNew().writer().use { writer -> writer.write(logList.joinToString("\n")) }
