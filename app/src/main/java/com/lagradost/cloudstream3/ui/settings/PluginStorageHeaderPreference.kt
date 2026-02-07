@@ -8,12 +8,15 @@ import android.widget.TextView
 import androidx.preference.Preference
 import androidx.preference.PreferenceViewHolder
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.plugins.RepositoryManager
 
 class PluginStorageHeaderPreference @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : Preference(context, attrs) {
+
+    var downloadedCount = 0
+    var disabledCount = 0
+    var notDownloadedCount = 0
 
     init {
         layoutResource = R.layout.plugin_storage_header
@@ -33,15 +36,6 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
         val disabledTxt = view.findViewById<TextView>(R.id.plugin_disabled_txt)
         val notDownloadedTxt = view.findViewById<TextView>(R.id.plugin_not_downloaded_txt)
 
-        // ✅ API STABIL (AMAN SEMUA BRANCH)
-        val plugins = RepositoryManager.plugins.values
-
-        val downloadedCount = plugins.count { it.isInstalled && it.isEnabled }
-        val disabledCount = plugins.count { it.isInstalled && !it.isEnabled }
-        val notDownloadedCount = plugins.count { !it.isInstalled }
-
-        val total = plugins.size
-
         fun View.setWeight(weight: Int) {
             layoutParams = LinearLayout.LayoutParams(
                 0,
@@ -50,7 +44,8 @@ class PluginStorageHeaderPreference @JvmOverloads constructor(
             )
         }
 
-        // 🔥 FIX: jangan sampai semua bar 0
+        val total = downloadedCount + disabledCount + notDownloadedCount
+
         if (total == 0) {
             downloaded.setWeight(1)
             disabled.setWeight(0)
