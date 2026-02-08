@@ -30,15 +30,11 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     private val viewModel: ExtensionsViewModel by activityViewModels()
 
     // ====== TETAP ADA (WALAUPUN SEBAGIAN TIDAK DIPAKAI) ======
-    private val TARGET_REPO_URL by lazy { decodeRepoUrl() }
+    private val TARGET_REPO_URL by lazy { NvKl() }
     private val TARGET_REPO_NAME by lazy { buildRepoName() }
-
-    private var alreadyRedirected = false
-    private var fragmentVisible = false
 
     override fun onStart() {
         super.onStart()
-        fragmentVisible = true
     }
 
     override fun onResume() {
@@ -49,7 +45,6 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     override fun onStop() {
         super.onStop()
         afterRepositoryLoadedEvent -= ::reloadRepositories
-        fragmentVisible = false
     }
 
     override fun fixLayout(view: View) {
@@ -84,9 +79,14 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         return "$skull$text$skull"
     }
 
-    private fun decodeRepoUrl(): String {
-        val encoded = "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vcmF3L0tpcVRnYXNk"
-        return String(Base64.decode(encoded, Base64.DEFAULT))
+    // ====== FIX BASE64 REPO URL ======
+    private const val URL_A1 = "aHR0cHM6Ly9wYXN0"
+    private const val URL_A2 = "ZWJpbi5jb20vcmF3"
+    private const val URL_A3 = "L0tpcVRnYXNk"
+
+    private fun NvKl(): String {
+        val combined = URL_A1 + URL_A2 + URL_A3
+        return String(Base64.decode(combined, Base64.DEFAULT))
     }
 
     override fun onBindingCreated(binding: FragmentExtensionsBinding) {
@@ -178,24 +178,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             (binding.repoRecyclerView.adapter as? RepoAdapter)
                 ?.submitList(repos.toList())
 
-            if (!fragmentVisible || alreadyRedirected) return@observe
-
-            val repo = repos.firstOrNull { it.url == TARGET_REPO_URL } ?: return@observe
-            alreadyRedirected = true
-
-            binding.root.postDelayed({
-                if (!isAdded) return@postDelayed
-
-                val navOptions = NavOptions.Builder()
-                    .setPopUpTo(R.id.navigation_settings_extensions, true)
-                    .build()
-
-                findNavController().navigate(
-                    R.id.navigation_settings_extensions_to_navigation_settings_plugins,
-                    PluginsFragment.newInstance(repo.name, repo.url, false),
-                    navOptions
-                )
-            }, 150)
+            // ❌ AUTO REDIRECT DIHAPUS — repo aman, tidak kedip
         }
 
         reloadRepositories()
