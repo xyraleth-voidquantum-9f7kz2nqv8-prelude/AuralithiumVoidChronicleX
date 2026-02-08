@@ -29,6 +29,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
 
     private val viewModel: ExtensionsViewModel by activityViewModels()
 
+    // ====== TETAP ADA (WALAUPUN SEBAGIAN TIDAK DIPAKAI) ======
     private val TARGET_REPO_URL by lazy { decodeRepoUrl() }
     private val TARGET_REPO_NAME by lazy { buildRepoName() }
 
@@ -68,6 +69,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         )
     }
 
+    // ====== TIDAK DIUBAH ======
     private fun buildRepoName(): String {
         val skull = "\u2620\uFE0F"
         val key = 0x5A
@@ -92,7 +94,7 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         setToolBarScrollFlags()
 
         // ===============================
-        // 🔥 FIX UTAMA: CLICK DI CONTAINER
+        // ✅ FIX: BAR HARUS BISA DI KLIK
         // ===============================
         binding.pluginStorageAppbar.isClickable = true
         binding.pluginStorageAppbar.isFocusable = true
@@ -145,31 +147,33 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             )
         }
 
-        // === Plugin stats bar ===
+        // ===============================
+        // 🔥 FIX INTI: JANGAN GONE SAAT NULL
+        // ===============================
         observeNullable(viewModel.pluginStats) { stats ->
-            if (stats == null) {
-                binding.pluginStorageAppbar.isGone = true
-                return@observeNullable
-            }
-
             binding.pluginStorageAppbar.isGone = false
 
-            if (stats.total == 0) {
+            if (stats == null || stats.total == 0) {
                 binding.pluginDownload.setLayoutWidth(1)
                 binding.pluginDisabled.setLayoutWidth(0)
                 binding.pluginNotDownloaded.setLayoutWidth(0)
-            } else {
-                binding.pluginDownload.setLayoutWidth(stats.downloaded)
-                binding.pluginDisabled.setLayoutWidth(stats.disabled)
-                binding.pluginNotDownloaded.setLayoutWidth(stats.notDownloaded)
+
+                binding.pluginDownloadTxt.setText("0")
+                binding.pluginDisabledTxt.setText("0")
+                binding.pluginNotDownloadedTxt.setText("0")
+                return@observeNullable
             }
+
+            binding.pluginDownload.setLayoutWidth(stats.downloaded)
+            binding.pluginDisabled.setLayoutWidth(stats.disabled)
+            binding.pluginNotDownloaded.setLayoutWidth(stats.notDownloaded)
 
             binding.pluginDownloadTxt.setText(stats.downloadedText)
             binding.pluginDisabledTxt.setText(stats.disabledText)
             binding.pluginNotDownloadedTxt.setText(stats.notDownloadedText)
         }
 
-        // === Submit repo list ke adapter ===
+        // === Repo observer ===
         observe(viewModel.repositories) { repos ->
             (binding.repoRecyclerView.adapter as? RepoAdapter)
                 ?.submitList(repos.toList())

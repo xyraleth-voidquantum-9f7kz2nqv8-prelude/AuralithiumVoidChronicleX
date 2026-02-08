@@ -7,6 +7,7 @@ import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -81,12 +82,13 @@ object Initializer {
             }
 
             withContext(Dispatchers.Main) {
+                // ⏳ TUNGGU REPO BENAR-BENAR KELOAD
                 if (repoAdded) {
-                    // 🔔 trigger resmi seperti Cloudstream
+                    delay(500)
                     MainActivity.afterRepositoryLoadedEvent.invoke(true)
                 }
 
-                // 🔥 download HANYA SEKALI
+                // 🔥 DOWNLOAD SEKALI SAJA
                 if (prefs.getBoolean(NEED_AUTO_DOWNLOAD, false)) {
                     PluginsViewModel.downloadAll(activity, repo1.url, null)
                     PluginsViewModel.downloadAll(activity, repo2.url, null)
