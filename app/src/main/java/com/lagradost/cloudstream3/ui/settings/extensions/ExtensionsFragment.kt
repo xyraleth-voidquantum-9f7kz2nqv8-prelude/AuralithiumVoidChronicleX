@@ -29,16 +29,20 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
 
     private val viewModel: ExtensionsViewModel by activityViewModels()
 
-    // ====== TETAP ADA (WALAUPUN SEBAGIAN TIDAK DIPAKAI) ======
     private val TARGET_REPO_URL by lazy { decodeRepoUrl() }
-    private val TARGET_REPO_NAME by lazy { buildRepoName() }
 
-    private var alreadyRedirected = false
     private var fragmentVisible = false
+    private var alreadyRedirected = false
 
     override fun onStart() {
         super.onStart()
         fragmentVisible = true
+    }
+
+    override fun onStop() {
+        super.onStop()
+        fragmentVisible = false
+        afterRepositoryLoadedEvent -= ::reloadRepositories
     }
 
     override fun onResume() {
@@ -46,42 +50,21 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         afterRepositoryLoadedEvent += ::reloadRepositories
     }
 
-    override fun onStop() {
-        super.onStop()
-        afterRepositoryLoadedEvent -= ::reloadRepositories
-        fragmentVisible = false
-    }
-
     override fun fixLayout(view: View) {
         setSystemBarsPadding()
     }
 
     private fun reloadRepositories(success: Boolean = true) {
-        viewModel.loadStats()
         viewModel.loadRepositories()
+        viewModel.loadStats()
     }
 
-    private fun View.setLayoutWidth(weight: Int) {
+    private fun View.setWeight(weight: Int) {
         layoutParams = LinearLayout.LayoutParams(
             0,
             LinearLayout.LayoutParams.MATCH_PARENT,
             weight.toFloat()
         )
-    }
-
-    // ====== TIDAK DIUBAH ======
-    private fun buildRepoName(): String {
-        val skull = "\u2620\uFE0F"
-        val key = 0x5A
-        val data = intArrayOf(
-            23, 53, 62, 62, 63, 62,
-            122,
-            56, 35,
-            122,
-            23, 53, 62, 9, 59, 52, 32
-        )
-        val text = data.map { (it xor key).toChar() }.joinToString("")
-        return "$skull$text$skull"
     }
 
     private fun decodeRepoUrl(): String {
@@ -93,18 +76,24 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         setUpToolbar(R.string.extensions)
         setToolBarScrollFlags()
 
-        // ===============================
-        // ✅ FIX: BAR HARUS BISA DI KLIK
-        // ===============================
-        binding.pluginStorageAppbar.isClickable = true
-        binding.pluginStorageAppbar.isFocusable = true
-        binding.pluginStorageAppbar.setOnClickListener {
-            findNavController().navigate(
-                R.id.navigation_settings_extensions_to_navigation_settings_plugins
-            )
+        /* =====================================================
+         * 🔥 CLICK FIX – PASANG DI CHILD (BUKAN PARENT)
+         * ===================================================== */
+        listOf(
+            binding.pluginDownload,
+            binding.pluginDisabled,
+            binding.pluginNotDownloaded
+        ).forEach { view ->
+            view.isClickable = true
+            view.isFocusable = true
+            view.setOnClickListener {
+                findNavController().navigate(
+                    R.id.navigation_settings_extensions_to_navigation_settings_plugins
+                )
+            }
         }
 
-        // === Repo list ===
+        /* ================= Repo List ================= */
         binding.repoRecyclerView.apply {
             setLinearListLayout(
                 isHorizontal = false,
@@ -129,14 +118,15 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
                 },
                 { repo ->
                     main {
-                        androidx.appcompat.app.AlertDialog.Builder(
-                            context ?: binding.root.context
-                        )
+                        androidx.appcompat.app.AlertDialog.Builder(binding.root.context)
                             .setTitle(R.string.delete_repository)
-                            .setMessage(context?.getString(R.string.delete_repository_plugins))
+                            .setMessage(R.string.delete_repository_plugins)
                             .setPositiveButton(R.string.delete) { _, _ ->
                                 ioSafe {
-                                    RepositoryManager.removeRepository(binding.root.context, repo)
+                                    RepositoryManager.removeRepository(
+                                        binding.root.context,
+                                        repo
+                                    )
                                     reloadRepositories()
                                 }
                             }
@@ -147,33 +137,22 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             )
         }
 
-        // ===============================
-        // 🔥 FIX INTI: JANGAN GONE SAAT NULL
-        // ===============================
+        /* ================= Plugin Stats ================= */
         observeNullable(viewModel.pluginStats) { stats ->
+            if (stats == null) return@observeNullable
+
             binding.pluginStorageAppbar.isGone = false
 
-            if (stats == null || stats.total == 0) {
-                binding.pluginDownload.setLayoutWidth(1)
-                binding.pluginDisabled.setLayoutWidth(0)
-                binding.pluginNotDownloaded.setLayoutWidth(0)
-
-                binding.pluginDownloadTxt.setText("0")
-                binding.pluginDisabledTxt.setText("0")
-                binding.pluginNotDownloadedTxt.setText("0")
-                return@observeNullable
-            }
-
-            binding.pluginDownload.setLayoutWidth(stats.downloaded)
-            binding.pluginDisabled.setLayoutWidth(stats.disabled)
-            binding.pluginNotDownloaded.setLayoutWidth(stats.notDownloaded)
+            binding.pluginDownload.setWeight(stats.downloaded.coerceAtLeast(1))
+            binding.pluginDisabled.setWeight(stats.disabled)
+            binding.pluginNotDownloaded.setWeight(stats.notDownloaded)
 
             binding.pluginDownloadTxt.setText(stats.downloadedText)
             binding.pluginDisabledTxt.setText(stats.disabledText)
             binding.pluginNotDownloadedTxt.setText(stats.notDownloadedText)
         }
 
-        // === Repo observer ===
+        /* ================= Repo Observer ================= */
         observe(viewModel.repositories) { repos ->
             (binding.repoRecyclerView.adapter as? RepoAdapter)
                 ?.submitList(repos.toList())

@@ -20,20 +20,19 @@ data class RepositoryData(
     @JsonProperty("iconUrl") val iconUrl: String?,
     @JsonProperty("name") val name: String,
     @JsonProperty("url") val url: String
-){
-    constructor(name: String,url: String):this(null,name,url)
+) {
+    constructor(name: String, url: String) : this(null, name, url)
 }
 
 const val REPOSITORIES_KEY = "REPOSITORIES_KEY"
 
 class ExtensionsViewModel : ViewModel() {
+
     data class PluginStats(
         val total: Int,
-
         val downloaded: Int,
         val disabled: Int,
         val notDownloaded: Int,
-
         val downloadedText: UiText,
         val disabledText: UiText,
         val notDownloadedText: UiText,
@@ -42,52 +41,81 @@ class ExtensionsViewModel : ViewModel() {
     private val _repositories = MutableLiveData<Array<RepositoryData>>()
     val repositories: LiveData<Array<RepositoryData>> = _repositories
 
-    private val _pluginStats: MutableLiveData<PluginStats?> = MutableLiveData(null)
+    private val _pluginStats = MutableLiveData<PluginStats?>(null)
     val pluginStats: LiveData<PluginStats?> = _pluginStats
 
-    //TODO CACHE GET REQUESTS
-    // DO not use viewModelScope.launchSafe, it will ANR on slow internet
+    /**
+     * ============================
+     * ✅ FINAL & STABLE LOGIC
+     * ============================
+     * - null = data belum siap / offline
+     * - tidak memalsukan angka 0
+     * - aman untuk repo kosong
+     */
     fun loadStats() = ioSafe {
-        val urls = (getKey<Array<RepositoryData>>(REPOSITORIES_KEY)
-            ?: emptyArray()) + PREBUILT_REPOSITORIES
 
-        val onlinePlugins = urls.toList().amap {
-            RepositoryManager.getRepoPlugins(it.url)?.toList() ?: emptyList()
-        }.flatten().distinctBy { it.second.url }
+        val repos =
+            (getKey<Array<RepositoryData>>(REPOSITORIES_KEY) ?: emptyArray()) +
+                    PREBUILT_REPOSITORIES
 
-        // Iterates over all offline plugins, compares to remote repo and returns the plugins which are outdated
-        val outdatedPlugins = getPluginsOnline().map { savedData ->
-            onlinePlugins.filter { onlineData -> savedData.internalName == onlineData.second.internalName }
-                .map { onlineData ->
-                    PluginManager.OnlinePluginData(savedData, onlineData)
-                }
-        }.flatten().distinctBy { it.onlineData.second.url }
-
-        val total = onlinePlugins.count()
-        val disabled = outdatedPlugins.count { it.isDisabled }
-        val downloadedTotal = outdatedPlugins.count()
-        val downloaded = downloadedTotal - disabled
-        val notDownloaded = total - downloadedTotal
-        val stats = PluginStats(
-            total,
-            downloaded,
-            disabled,
-            notDownloaded,
-            txt(R.string.plugins_downloaded, downloaded),
-            txt(R.string.plugins_disabled, disabled),
-            txt(R.string.plugins_not_downloaded, notDownloaded)
-        )
-        debugAssert({ stats.downloaded + stats.notDownloaded + stats.disabled != stats.total }) {
-            "downloaded(${stats.downloaded}) + notDownloaded(${stats.notDownloaded}) + disabled(${stats.disabled}) != total(${stats.total})"
+        if (repos.isEmpty()) {
+            _pluginStats.postValue(null)
+            return@ioSafe
         }
+
+        // Ambil semua plugin online dari repo
+        val onlinePlugins = repos.toList().amap { repo ->
+            RepositoryManager.getRepoPlugins(repo.url)?.toList() ?: emptyList()
+        }.flatten()
+            .distinctBy { it.second.url }
+
+        if (onlinePlugins.isEmpty()) {
+            _pluginStats.postValue(null)
+            return@ioSafe
+        }
+
+        // Plugin lokal (terpasang)
+        val installedPlugins = getPluginsOnline()
+
+        // Cocokkan lokal vs online
+        val matchedPlugins = installedPlugins.mapNotNull { local ->
+            onlinePlugins.firstOrNull {
+                it.second.internalName == local.internalName
+            }?.let { online ->
+                PluginManager.OnlinePluginData(local, online)
+            }
+        }
+
+        val total = onlinePlugins.size
+        val disabled = matchedPlugins.count { it.isDisabled }
+        val downloaded = matchedPlugins.count { !it.isDisabled }
+        val notDownloaded = total - matchedPlugins.size
+
+        val stats = PluginStats(
+            total = total,
+            downloaded = downloaded,
+            disabled = disabled,
+            notDownloaded = notDownloaded,
+            downloadedText = txt(R.string.plugins_downloaded, downloaded),
+            disabledText = txt(R.string.plugins_disabled, disabled),
+            notDownloadedText = txt(R.string.plugins_not_downloaded, notDownloaded)
+        )
+
+        // ✅ ASSERT BENAR (bukan kebalik)
+        debugAssert({
+            stats.downloaded + stats.disabled + stats.notDownloaded == stats.total
+        }) {
+            "Invalid plugin stats: " +
+                    "${stats.downloaded}+${stats.disabled}+${stats.notDownloaded} != ${stats.total}"
+        }
+
         _pluginStats.postValue(stats)
     }
 
-    private fun repos() = (getKey<Array<RepositoryData>>(REPOSITORIES_KEY)
-        ?: emptyArray()) + PREBUILT_REPOSITORIES
-
     fun loadRepositories() {
-        val urls = repos()
-        _repositories.postValue(urls)
+        val repos =
+            (getKey<Array<RepositoryData>>(REPOSITORIES_KEY) ?: emptyArray()) +
+                    PREBUILT_REPOSITORIES
+        _repositories.postValue(repos)
     }
 }

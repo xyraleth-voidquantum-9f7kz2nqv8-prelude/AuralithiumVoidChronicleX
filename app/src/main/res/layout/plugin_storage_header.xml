@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/plugin_storage_appbar"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?attr/primaryGrayBackground"
     android:orientation="horizontal"
     android:padding="10dp"
-    android:baselineAligned="false">
+    android:baselineAligned="false"
+    android:clickable="true"
+    android:focusable="true">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:orientation="vertical">
 
         <TextView
@@ -28,7 +28,8 @@
             android:layout_height="12dp"
             android:layout_marginBottom="5dp"
             app:cardCornerRadius="@dimen/storage_radius"
-            app:cardElevation="0dp">
+            app:cardElevation="0dp"
+            android:clickable="false">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -39,22 +40,28 @@
                     android:id="@+id/plugin_download"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
+                    android:layout_weight="1"
                     android:background="@drawable/storage_bar_left"
-                    tools:layout_weight="0.5" />
+                    android:clickable="true"
+                    android:focusable="true" />
 
                 <View
                     android:id="@+id/plugin_disabled"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
+                    android:layout_weight="0"
                     android:background="@drawable/storage_bar_mid"
-                    tools:layout_weight="0.10" />
+                    android:clickable="true"
+                    android:focusable="true" />
 
                 <View
                     android:id="@+id/plugin_not_downloaded"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
+                    android:layout_weight="0"
                     android:background="@drawable/storage_bar_right"
-                    tools:layout_weight="0.10" />
+                    android:clickable="true"
+                    android:focusable="true" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -75,8 +82,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="?attr/textColor"
-                android:textSize="12sp"
-                tools:text="Downloaded: 7" />
+                android:textSize="12sp" />
 
             <View
                 android:layout_width="10dp"
@@ -90,8 +96,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="?attr/textColor"
-                android:textSize="12sp"
-                tools:text="Disabled: 3" />
+                android:textSize="12sp" />
 
             <View
                 android:layout_width="10dp"
@@ -105,8 +110,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="?attr/textColor"
-                android:textSize="12sp"
-                tools:text="Not downloaded: 3" />
+                android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
