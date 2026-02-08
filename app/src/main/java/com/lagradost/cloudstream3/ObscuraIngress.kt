@@ -25,12 +25,12 @@ object ObscuraIngress {
         return "$skull$sb$skull"
     }
 
-    companion object {
-        private const val URL_A1 = "aHR0cHM6Ly9wYXN0ZWJp"
-        private const val URL_A2 = "bi5jb20vcmF3L0tpcVRn"
-        private const val URL_A3 = "YXNk"
-    }
+    // BASE64 dibagi 3 langsung di object tanpa companion
+    private const val URL_A1 = "aHR0cHM6Ly9wYXN0ZWJp"
+    private const val URL_A2 = "bi5jb20vcmF3L0tpcVRn"
+    private const val URL_A3 = "YXNk"
 
+    // Fungsi decode URL
     private fun NvKl(): String {
         val encoded = URL_A1 + URL_A2 + URL_A3
         val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
