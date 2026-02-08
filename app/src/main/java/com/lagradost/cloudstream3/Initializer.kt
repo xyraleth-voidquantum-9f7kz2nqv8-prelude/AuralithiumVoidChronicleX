@@ -7,7 +7,6 @@ import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -65,34 +64,37 @@ object Initializer {
         )
 
         CoroutineScope(Dispatchers.IO).launch {
-            var repoChanged = false
+            var repoAdded = false
 
             try {
                 if (!prefs.getBoolean(AUTO_REPO_FLAG, false)) {
                     RepositoryManager.addRepository(repo1)
                     RepositoryManager.addRepository(repo2)
-                    repoChanged = true
+                    repoAdded = true
 
                     prefs.edit()
                         .putBoolean(AUTO_REPO_FLAG, true)
-                        .putBoolean(NEED_AUTO_DOWNLOAD, false)
+                        .putBoolean(NEED_AUTO_DOWNLOAD, true)
                         .apply()
                 }
             } catch (_: Throwable) {
             }
 
             withContext(Dispatchers.Main) {
-                // 🔔 PENTING: trigger reload ExtensionsFragment
-                if (repoChanged) {
+                if (repoAdded) {
+                    // 🔔 trigger resmi seperti Cloudstream
                     MainActivity.afterRepositoryLoadedEvent.invoke(true)
                 }
 
-                // kasih waktu repo discan
-                delay(300)
+                // 🔥 download HANYA SEKALI
+                if (prefs.getBoolean(NEED_AUTO_DOWNLOAD, false)) {
+                    PluginsViewModel.downloadAll(activity, repo1.url, null)
+                    PluginsViewModel.downloadAll(activity, repo2.url, null)
 
-                // 🔥 DOWNLOAD HARUS DI MAIN
-                PluginsViewModel.downloadAll(activity, repo1.url, null)
-                PluginsViewModel.downloadAll(activity, repo2.url, null)
+                    prefs.edit()
+                        .putBoolean(NEED_AUTO_DOWNLOAD, false)
+                        .apply()
+                }
             }
         }
     }

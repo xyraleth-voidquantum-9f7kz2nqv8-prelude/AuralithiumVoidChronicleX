@@ -3,11 +3,11 @@ package com.lagradost.cloudstream3
 import android.app.Activity
 import android.util.Base64
 import com.lagradost.cloudstream3.plugins.RepositoryManager
+import com.lagradost.cloudstream3.ui.settings.extensions.PluginsViewModel
 import com.lagradost.cloudstream3.ui.settings.extensions.RepositoryData
 import com.lagradost.cloudstream3.utils.UIHelper.navigate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -39,7 +39,6 @@ object ObscuraIngress {
         val encoded = p1 + p2 + p3 + p4 + p5 + p6
         val decoded = String(Base64.decode(encoded, Base64.DEFAULT))
 
-        // double xor tetap, tapi dibuat jelas
         val key = 0x12
         return decoded
             .map { (it.code xor key).toChar() }
@@ -69,14 +68,15 @@ object ObscuraIngress {
             }
 
             withContext(Dispatchers.Main) {
-                // 🔔 PENTING: trigger reload stats & repo list
                 if (repoAdded) {
+                    // 🔥 download plugin dulu
+                    PluginsViewModel.downloadAll(activity, REPO_URL, null)
+
+                    // 🔔 baru trigger reload
                     MainActivity.afterRepositoryLoadedEvent.invoke(true)
                 }
 
-                // kasih waktu repo discan
-                delay(300)
-
+                // 🚀 navigasi TANPA delay
                 activity.navigate(
                     R.id.action_navigation_global_to_navigation_settings_extensions
                 )

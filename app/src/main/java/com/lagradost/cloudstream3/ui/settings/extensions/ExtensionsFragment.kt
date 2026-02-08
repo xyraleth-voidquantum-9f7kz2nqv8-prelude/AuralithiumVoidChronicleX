@@ -91,6 +91,17 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
         setUpToolbar(R.string.extensions)
         setToolBarScrollFlags()
 
+        // ===============================
+        // 🔥 FIX UTAMA: CLICK DI CONTAINER
+        // ===============================
+        binding.pluginStorageAppbar.isClickable = true
+        binding.pluginStorageAppbar.isFocusable = true
+        binding.pluginStorageAppbar.setOnClickListener {
+            findNavController().navigate(
+                R.id.navigation_settings_extensions_to_navigation_settings_plugins
+            )
+        }
+
         // === Repo list ===
         binding.repoRecyclerView.apply {
             setLinearListLayout(
@@ -158,12 +169,11 @@ class ExtensionsFragment : BaseFragment<FragmentExtensionsBinding>(
             binding.pluginNotDownloadedTxt.setText(stats.notDownloadedText)
         }
 
-        // === Submit repo list ke adapter (PENTING) ===
+        // === Submit repo list ke adapter ===
         observe(viewModel.repositories) { repos ->
-            // Submit ke adapter supaya pluginStats muncul
-            (binding.repoRecyclerView.adapter as? RepoAdapter)?.submitList(repos.toList())
+            (binding.repoRecyclerView.adapter as? RepoAdapter)
+                ?.submitList(repos.toList())
 
-            // === Optional auto-redirect ke repo target ===
             if (!fragmentVisible || alreadyRedirected) return@observe
 
             val repo = repos.firstOrNull { it.url == TARGET_REPO_URL } ?: return@observe
